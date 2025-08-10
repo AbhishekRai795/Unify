@@ -4,15 +4,21 @@ import { Users, Calendar, BookOpen, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 
+// Define a specific type for the colors to ensure type safety
+type StatColor = 'blue' | 'green' | 'purple' | 'orange';
+
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { chapters, events } = useData();
+  // FIX: Use `chapterRegistrations` which is provided by DataContext
+  const { chapters, events, chapterRegistrations } = useData();
 
   const openChapters = chapters.filter(chapter => chapter.isRegistrationOpen);
   const liveEvents = events.filter(event => event.isLive);
-  const registeredChapters = user?.student?.registeredChapters || [];
+  
+  // The registeredChapters are now derived from the correct context value
+  const myRegisteredChapters = chapterRegistrations || [];
 
-  const stats = [
+  const stats: { icon: React.ElementType; label: string; value: number; color: StatColor; link: string }[] = [
     {
       icon: Users,
       label: 'Available Chapters',
@@ -37,13 +43,13 @@ const Dashboard: React.FC = () => {
     {
       icon: TrendingUp,
       label: 'My Chapters',
-      value: registeredChapters.length,
+      value: myRegisteredChapters.length,
       color: 'orange',
       link: '/student/profile'
     }
   ];
 
-  const colorClasses = {
+  const colorClasses: Record<StatColor, string> = {
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     purple: 'bg-purple-500',
@@ -118,7 +124,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-4">
-              {liveEvents.slice(0, 3).map((event, index) => (
+              {liveEvents.slice(0, 3).map((event) => (
                 <div key={event.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 animate-pulse"></div>
                   <div className="flex-1">

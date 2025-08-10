@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Settings, TrendingUp, Plus, Eye } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
 
-const AdminDashboard: React.FC = () => {
+// Define a specific type for the colors to ensure type safety
+type StatColor = 'blue' | 'green' | 'purple' | 'orange';
+
+const HeadDashboard: React.FC = () => {
   const { user } = useAuth();
   const { chapters, events, chapterRegistrations } = useData();
 
@@ -14,38 +17,39 @@ const AdminDashboard: React.FC = () => {
   const activeEvents = events.filter(event => event.isLive).length;
   const openRegistrations = chapters.filter(chapter => chapter.isRegistrationOpen).length;
 
-  const stats = [
+  const stats: { icon: React.ElementType; label: string; value: number; color: StatColor; link: string }[] = [
     {
       icon: Users,
       label: 'Total Chapters',
       value: managedChapters.length,
       color: 'blue',
-      link: '/admin/chapters'
+      link: '/head/chapters'
     },
     {
       icon: Calendar,
       label: 'Active Events',
       value: activeEvents,
       color: 'green',
-      link: '/admin/events'
+      link: '/head/events'
     },
     {
       icon: TrendingUp,
       label: 'Registrations',
       value: totalRegistrations,
       color: 'purple',
-      link: '/admin/registrations'
+      link: '/head/registrations'
     },
     {
       icon: Settings,
       label: 'Open Registrations',
       value: openRegistrations,
       color: 'orange',
-      link: '/admin/chapters'
+      link: '/head/chapters'
     }
   ];
 
-  const colorClasses = {
+  // Use a Record to map the StatColor type to string class names
+  const colorClasses: Record<StatColor, string> = {
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     purple: 'bg-purple-500',
@@ -67,7 +71,7 @@ const AdminDashboard: React.FC = () => {
             Welcome, {user?.name}! 👋
           </h1>
           <p className="text-gray-600">
-            Manage your chapters, events, and student registrations from your admin dashboard.
+            Manage your chapters, events, and student registrations from your dashboard.
           </p>
         </div>
 
@@ -98,7 +102,7 @@ const AdminDashboard: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
               <Link
-                to="/admin/events/create"
+                to="/head/events/create"
                 className="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-all duration-200 group"
               >
                 <Plus className="h-5 w-5 text-green-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
@@ -109,7 +113,7 @@ const AdminDashboard: React.FC = () => {
               </Link>
               
               <Link
-                to="/admin/chapters"
+                to="/head/chapters"
                 className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group"
               >
                 <Settings className="h-5 w-5 text-blue-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
@@ -120,7 +124,7 @@ const AdminDashboard: React.FC = () => {
               </Link>
               
               <Link
-                to="/admin/registrations"
+                to="/head/registrations"
                 className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group"
               >
                 <Eye className="h-5 w-5 text-purple-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
@@ -161,7 +165,7 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Chapter Overview</h2>
             <Link
-              to="/admin/chapters"
+              to="/head/chapters"
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
               View All →
@@ -194,4 +198,4 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-export default AdminDashboard;
+export default HeadDashboard;

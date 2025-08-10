@@ -1,103 +1,196 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { DataProvider } from './contexts/DataContext';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth, Role } from './contexts/AuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
-import Home from './pages/Home';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
 import StudentPortal from './pages/StudentPortal';
+import HeadPortal from './pages/HeadPortal';
 import AdminPortal from './pages/AdminPortal';
+import AuthPage from './pages/AuthPage';
 import Loader from './components/common/Loader';
+import { Shield, User, UserCog } from 'lucide-react';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: 'student' | 'admin' }> = ({ 
-  children, 
-  requiredRole 
+// This component will wrap pages that need the Header and Footer
+const MainLayout: React.FC = () => (
+  <div className="flex flex-col min-h-screen bg-gray-50">
+    <Header />
+    <main className="flex-1">
+      <Outlet /> {/* Child routes will render here */}
+    </main>
+    <Footer />
+  </div>
+);
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Role[] }> = ({
+  children,
+  allowedRoles,
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" text="Loading..." />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // If user has multiple roles but hasn't selected one, redirect to selection
+  if (user.groups.length > 1 && !user.activeRole) {
+    return <Navigate to="/select-role" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/student'} replace />;
+  if (!allowedRoles.includes(user.activeRole as Role)) {
+    // Fallback logic if they try to access a page they aren't allowed on
+    if (user.groups.includes('admin')) return <Navigate to="/admin/dashboard" replace />;
+    if (user.groups.includes('chapter-head')) return <Navigate to="/head/dashboard" replace />;
+    if (user.groups.includes('student')) return <Navigate to="/student/dashboard" replace />;
+    return <Navigate to="/" replace />; 
   }
 
   return <>{children}</>;
 };
 
-const AppContent: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+// New Component for Role Selection
+const RoleSelectionPage: React.FC = () => {
+    const { user, setActiveRole } = useAuth();
+    const [selectedRole, setSelectedRole] = useState<string | null>(null);
+    const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route 
-            path="/login" 
-            element={
-              isAuthenticated ? (
-                <Navigate to={user?.role === 'admin' ? '/admin' : '/student'} replace />
-              ) : (
-                <LoginForm />
-              )
-            } 
-          />
-          <Route 
-            path="/register" 
-            element={
-              isAuthenticated ? (
-                <Navigate to="/student" replace />
-              ) : (
-                <RegisterForm />
-              )
-            } 
-          />
-          <Route 
-            path="/student/*" 
-            element={
-              <ProtectedRoute requiredRole="student">
-                <StudentPortal />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/*" 
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminPortal />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
-  );
+    const roleDetails: { [key: string]: { icon: React.ElementType, name: string } } = {
+        student: { icon: User, name: 'Student' },
+        'chapter-head': { icon: Shield, name: 'Chapter Head' },
+        admin: { icon: UserCog, name: 'Admin' },
+    };
+
+    // This effect will run when the activeRole is set, triggering navigation
+    useEffect(() => {
+        if (user && user.activeRole) {
+            const path = user.activeRole === 'student' ? '/student/dashboard' : user.activeRole === 'chapter-head' ? '/head/dashboard' : '/admin/dashboard';
+            navigate(path, { replace: true });
+        }
+    }, [user, navigate]);
+
+
+    if (!user || user.groups.length < 2) {
+        // This is a safeguard. If a user with one role lands here, send them away.
+        return <Navigate to="/" replace />;
+    }
+
+    const handleProceed = () => {
+        if (selectedRole) {
+            setActiveRole(selectedRole);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg text-center">
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">Select Your Role</h1>
+                <p className="text-gray-500 mb-8">You have multiple roles. Please choose how you'd like to proceed for this session.</p>
+                <div className="space-y-4">
+                    {user.groups.map(group => {
+                        const details = roleDetails[group] || { icon: User, name: group };
+                        const isSelected = selectedRole === group;
+                        return (
+                            <button
+                                key={group}
+                                onClick={() => setSelectedRole(group)}
+                                className={`w-full flex items-center justify-center gap-3 p-4 border-2 rounded-lg transition-all ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-400'}`}
+                            >
+                                <details.icon className={`h-6 w-6 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                                <span className={`text-lg font-semibold ${isSelected ? 'text-blue-800' : 'text-gray-700'}`}>{details.name}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+                <button
+                    onClick={handleProceed}
+                    disabled={!selectedRole}
+                    className="w-full mt-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                    Proceed
+                </button>
+            </div>
+        </div>
+    );
 };
 
+
 function App() {
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  const getRedirectPath = (user: { activeRole: string, groups: string[] } | null): string => {
+      if (!user) return '/';
+      
+      // If user has multiple groups but no active role, send to selection page
+      if (user.groups.length > 1 && !user.activeRole) {
+          return '/select-role';
+      }
+
+      // Prioritize the active role
+      const role = user.activeRole;
+      if (role === 'student') return '/student/dashboard';
+      if (role === 'chapter-head') return '/head/dashboard';
+      if (role === 'admin') return '/admin/dashboard';
+
+      // Fallback if activeRole is somehow invalid but they have groups
+      if (user.groups.includes('admin')) return '/admin/dashboard';
+      if (user.groups.includes('chapter-head')) return '/head/dashboard';
+      if (user.groups.includes('student')) return '/student/dashboard';
+      
+      return '/';
+  }
+
+  if (isLoading) {
+      return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
+  }
+
   return (
-    <Router>
-      <AuthProvider>
-        <DataProvider>
-          <AppContent />
-        </DataProvider>
-      </AuthProvider>
-    </Router>
+    <Routes>
+      <Route 
+        path="/" 
+        element={
+          isAuthenticated && user ? (
+            <Navigate to={getRedirectPath(user)} replace />
+          ) : (
+            <AuthPage />
+          )
+        } 
+      />
+      
+      {/* Add the new route for role selection */}
+      <Route path="/select-role" element={<RoleSelectionPage />} />
+
+      <Route element={<MainLayout />}>
+        <Route
+          path="/student/*"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentPortal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/head/*"
+          element={
+            <ProtectedRoute allowedRoles={['chapter-head', 'admin']}>
+              <HeadPortal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminPortal />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
 }
 
