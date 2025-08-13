@@ -3,9 +3,7 @@ import {
   Calendar, 
   Users, 
   BookOpen, 
-  TrendingUp, 
   Clock, 
-  MapPin,
   ArrowRight,
   Activity
 } from 'lucide-react';
@@ -13,6 +11,30 @@ import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import Loader from '../common/Loader';
+import { motion, Variants } from 'framer-motion';
+
+// Animation variants for Framer Motion with explicit types
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+    },
+  },
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -24,7 +46,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   if (isLoading && !dashboardData) {
-    return <Loader />;
+    return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
   }
 
   const stats = [
@@ -44,14 +66,14 @@ const Dashboard: React.FC = () => {
     },
     {
       label: 'Events Attended',
-      value: '0', // Will be updated when events are implemented
+      value: '0',
       icon: Calendar,
       color: 'purple',
       change: 'This semester'
     },
     {
       label: 'Learning Hours',
-      value: '0', // Will be calculated based on events
+      value: '0',
       icon: Clock,
       color: 'orange',
       change: 'This month'
@@ -59,106 +81,118 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-8 p-4 md:p-6 lg:p-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+      <motion.div variants={itemVariants}>
+        <h1 className="text-4xl font-bold text-gray-800">
           Welcome back, {user?.name}!
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-500 mt-2 text-lg">
           Discover new opportunities and stay connected with your chapters.
         </p>
-      </div>
+      </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        variants={containerVariants}
+      >
         {stats.map((stat) => {
           const IconComponent = stat.icon;
           return (
-            <div
+            <motion.div
               key={stat.label}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                  <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
+                  <p className="text-sm font-medium text-gray-700">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                  <p className="text-xs text-gray-600 mt-1">{stat.change}</p>
                 </div>
-                <div className={`p-3 rounded-lg bg-${stat.color}-50`}>
-                  <IconComponent className={`h-6 w-6 text-${stat.color}-600`} />
+                <div className={`p-3 rounded-xl bg-white/50`}>
+                  <IconComponent className={`h-7 w-7 text-${stat.color}-600`} />
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      {/* Quick Actions & Recent Activity Grid */}
+      <motion.div 
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+        variants={containerVariants}
+      >
+        <motion.div 
+          className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6"
+          variants={itemVariants}
+        >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-            <Activity className="h-5 w-5 text-gray-400" />
+            <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+            <Activity className="h-5 w-5 text-gray-500" />
           </div>
           <div className="space-y-3">
-            <Link
-              to="/student/chapters"
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
+            <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Link to="/student/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-100/70 rounded-lg"><Users className="h-5 w-5 text-blue-600" /></div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Browse Chapters</p>
+                    <p className="text-sm text-gray-600">Find and join new chapters</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">Browse Chapters</p>
-                  <p className="text-sm text-gray-600">Find and join new chapters</p>
+                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Link to="/student/events" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-green-100/70 rounded-lg"><Calendar className="h-5 w-5 text-green-600" /></div>
+                  <div>
+                    <p className="font-semibold text-gray-900">View Events</p>
+                    <p className="text-sm text-gray-600">See what's happening</p>
+                  </div>
                 </div>
-              </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-            </Link>
-            <Link
-              to="/student/events"
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">View Events</p>
-                  <p className="text-sm text-gray-600">See what's happening</p>
-                </div>
-              </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-            </Link>
+                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <motion.div 
+          className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6"
+          variants={itemVariants}
+        >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <Clock className="h-5 w-5 text-gray-400" />
+            <h2 className="text-xl font-semibold text-gray-800">Recent Activity</h2>
+            <Clock className="h-5 w-5 text-gray-500" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 p-3 bg-white/30 rounded-lg">
             {dashboardData?.recentActivity ? (
-              <p className="text-gray-600">{dashboardData.recentActivity}</p>
+              <p className="text-gray-700">{dashboardData.recentActivity}</p>
             ) : (
               <p className="text-gray-500 italic">No recent activity</p>
             )}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* My Chapters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <motion.div 
+        className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6"
+        variants={itemVariants}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">My Chapters</h2>
-          <Link
-            to="/student/chapters"
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
+          <h2 className="text-xl font-semibold text-gray-800">My Chapters</h2>
+          <Link to="/student/chapters" className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
             View All
           </Link>
         </div>
@@ -166,13 +200,14 @@ const Dashboard: React.FC = () => {
         {myChapters.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myChapters.slice(0, 4).map((chapter) => (
-              <div
+              <motion.div
                 key={chapter.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                className="border border-white/30 rounded-xl p-4 hover:bg-white/50 transition-colors cursor-pointer"
+                whileHover={{ scale: 1.03 }}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-medium text-gray-900">{chapter.name}</h3>
+                    <h3 className="font-semibold text-gray-900">{chapter.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       Joined on {new Date(chapter.registeredAt).toLocaleDateString()}
                     </p>
@@ -182,9 +217,9 @@ const Dashboard: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm mt-1"></div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
@@ -199,8 +234,8 @@ const Dashboard: React.FC = () => {
             </Link>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
