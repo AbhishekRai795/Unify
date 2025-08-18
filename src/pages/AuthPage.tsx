@@ -10,7 +10,9 @@ import {
     CognitoUserSession
 } from 'amazon-cognito-identity-js';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import Loader from '../components/common/Loader';
+import ThemeToggle from '../components/common/ThemeToggle';
 import { Eye, EyeOff, Mail, Lock, User, Users, Shield, Hash, Calendar, Library } from 'lucide-react';
 
 const poolData = {
@@ -186,6 +188,7 @@ const QuotePanel: React.FC<{ isLoginView: boolean; setIsLoginView: (isLogin: boo
 );
 
 const AuthPage: React.FC = () => {
+    const { isDark } = useTheme();
     const [isLoginView, setIsLoginView] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -382,7 +385,23 @@ const AuthPage: React.FC = () => {
     }
     
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className={`
+          min-h-screen transition-all duration-500
+          ${isDark ? 'bg-dark-bg' : 'bg-gray-100'}
+        `}>
+            {/* Theme Toggle */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+            
+            {/* Dark mode background effects */}
+            {isDark && (
+                <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+                    <div className="absolute top-1/2 left-0 w-64 h-64 bg-accent-400/5 rounded-full blur-2xl animate-float"></div>
+                </div>
+            )}
             <style>{`
                 @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0.8; } 100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; } }
                 .bubble { position: absolute; bottom: -150px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; animation: float linear infinite; }

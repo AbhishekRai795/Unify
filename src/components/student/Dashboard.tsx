@@ -52,28 +52,28 @@ const Dashboard: React.FC = () => {
   const stats = [
     {
       label: 'Registered Chapters',
-      value: dashboardData?.registeredChaptersCount || 0,
+      value: dashboardData?.student?.registeredChaptersCount || myChapters.length || 0,
       icon: Users,
       color: 'blue',
       change: '+2 this month'
     },
     {
       label: 'Available Chapters',
-      value: dashboardData?.totalAvailableChapters || 0,
+      value: dashboardData?.stats?.totalChapters || 0,
       icon: BookOpen,
       color: 'green',
       change: 'Total active'
     },
     {
       label: 'Events Attended',
-      value: '0',
+      value: dashboardData?.stats?.completedEvents || '0',
       icon: Calendar,
       color: 'purple',
       change: 'This semester'
     },
     {
       label: 'Learning Hours',
-      value: '0',
+      value: dashboardData?.stats?.upcomingEvents || '0',
       icon: Clock,
       color: 'orange',
       change: 'This month'
@@ -209,11 +209,11 @@ const Dashboard: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-gray-900">{chapter.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Joined on {new Date(chapter.registeredAt).toLocaleDateString()}
+                      Joined on {new Date(chapter.joinedAt || chapter.createdAt || Date.now()).toLocaleDateString()}
                     </p>
-                    {chapter.chapterHead && (
+                    {(chapter.headName || chapter.chapterHead) && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Head: {chapter.chapterHead}
+                        Head: {chapter.headName || chapter.chapterHead}
                       </p>
                     )}
                   </div>

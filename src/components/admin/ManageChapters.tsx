@@ -1,152 +1,251 @@
 import React, { useState } from 'react';
-import { Users, Settings, Eye, Mail, Calendar, Tag } from 'lucide-react';
-import { useData } from '../../contexts/DataContext';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import Modal from '../common/Modal';
+import Loader from '../common/Loader';
 
 const ManageChapters: React.FC = () => {
-  const { chapters, updateChapterRegistration } = useData();
+  const { 
+    chapters, 
+    toggleChapterRegistration, 
+    isLoading, 
+    error, 
+    refreshData 
+  } = useChapterHead();
+  
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
-  const handleToggleRegistration = async (chapterId: string, currentStatus: boolean) => {
+  const handleToggleRegistration = async (chapterId: string, currentStatus: string) => {
     setUpdating(chapterId);
     try {
-      const success = await updateChapterRegistration(chapterId, !currentStatus);
+      const newStatus = currentStatus === 'open';
+      const success = await toggleChapterRegistration(chapterId, !newStatus);
       if (success) {
-        // Success feedback could be added here
+        setNotification({
+          type: 'success',
+          message: `Registration ${!newStatus ? 'opened' : 'closed'} successfully`
+        });
+        setTimeout(() => setNotification(null), 3000);
       } else {
-        alert('Failed to update registration status');
+        setNotification({
+          type: 'error',
+          message: 'Failed to update registration status'
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      alert('An error occurred while updating');
+      setNotification({
+        type: 'error',
+        message: 'An error occurred while updating'
+      });
+      setTimeout(() => setNotification(null), 3000);
     } finally {
       setUpdating(null);
     }
   };
 
-  const selectedChapterData = chapters.find(c => c.id === selectedChapter);
+  const selectedChapterData = chapters.find(c => c.chapterId === selectedChapter);
+
+  if (isLoading && chapters.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Notification */}
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`mb-6 p-4 rounded-lg flex items-center ${
+              notification.type === 'success'
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 mr-2" />
+            ) : (
+              <AlertCircle className="h-5 w-5 mr-2" />
+            )}
+            {notification.message}
+          </motion.div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
+                <p className="text-red-800">{error}</p>
+              </div>
+              <button
+                onClick={refreshData}
+                className="ml-3 text-red-600 hover:text-red-700"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Header */}
-        <div className="mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Chapters</h1>
           <p className="text-gray-600">
-            Control registration status and view chapter details.
+            Control registration status and view chapter details for your assigned chapters.
           </p>
-        </div>
+        </motion.div>
 
         {/* Chapters List */}
-        <div className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50/80">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Chapter
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Members
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Registration Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {chapters.map((chapter) => (
-                  <tr key={chapter.id} className="hover:bg-gray-50/50 transition-colors duration-200">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {chapter.imageUrl && (
-                          <img
-                            src={chapter.imageUrl}
-                            alt={chapter.name}
-                            className="h-10 w-10 rounded-lg object-cover mr-3"
-                          />
-                        )}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {chapter.name}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden"
+        >
+          {chapters.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Chapters Assigned</h3>
+              <p className="text-gray-500">You don't have any chapters assigned to manage yet.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50/80">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Chapter
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Members
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Registration
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {chapters.map((chapter, index) => (
+                    <motion.tr 
+                      key={chapter.chapterId}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="hover:bg-gray-50/50 transition-colors duration-200"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <span className="text-white font-semibold text-sm">
+                              {chapter.chapterName.charAt(0).toUpperCase()}
+                            </span>
                           </div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">
-                            {chapter.description}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {chapter.chapterName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Head: {chapter.headName}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {chapter.category}
-                      </span>
-                    </td>
-                    
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-1 text-gray-400" />
-                        {chapter.memberCount}
-                        {chapter.maxMembers && (
-                          <span className="text-gray-500">/{chapter.maxMembers}</span>
-                        )}
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        chapter.isRegistrationOpen
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {chapter.isRegistrationOpen ? 'Open' : 'Closed'}
-                      </span>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedChapter(chapter.id);
-                            setShowDetailsModal(true);
-                          }}
-                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => handleToggleRegistration(chapter.id, chapter.isRegistrationOpen)}
-                          disabled={updating === chapter.id}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                            chapter.isRegistrationOpen
-                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                              : 'bg-green-100 text-green-800 hover:bg-green-200'
-                          } ${updating === chapter.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          {updating === chapter.id
-                            ? 'Updating...'
-                            : chapter.isRegistrationOpen
-                              ? 'Close Registration'
-                              : 'Open Registration'
-                          }
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          chapter.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {chapter.status}
+                        </span>
+                      </td>
+                      
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-1 text-gray-400" />
+                          {chapter.memberCount}
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          chapter.registrationStatus === 'open'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {chapter.registrationStatus === 'open' ? 'Open' : 'Closed'}
+                        </span>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedChapter(chapter.chapterId);
+                              setShowDetailsModal(true);
+                            }}
+                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleToggleRegistration(chapter.chapterId, chapter.registrationStatus || 'closed')}
+                            disabled={updating === chapter.chapterId}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                              chapter.registrationStatus === 'open'
+                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            } ${updating === chapter.chapterId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {updating === chapter.chapterId
+                              ? 'Updating...'
+                              : chapter.registrationStatus === 'open'
+                                ? 'Close Registration'
+                                : 'Open Registration'
+                            }
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
 
         {/* Chapter Details Modal */}
         <Modal
@@ -160,84 +259,67 @@ const ManageChapters: React.FC = () => {
         >
           {selectedChapterData && (
             <div className="space-y-6">
-              {selectedChapterData.imageUrl && (
-                <img
-                  src={selectedChapterData.imageUrl}
-                  alt={selectedChapterData.name}
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-              )}
-              
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {selectedChapterData.name}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {selectedChapterData.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-700">
-                    <Users className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>{selectedChapterData.memberCount} members</span>
-                    {selectedChapterData.maxMembers && (
-                      <span className="text-gray-500"> (max: {selectedChapterData.maxMembers})</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-700">
-                    <Calendar className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>{selectedChapterData.meetingSchedule}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-700">
-                    <Mail className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>{selectedChapterData.contactEmail}</span>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {selectedChapterData.chapterName.charAt(0).toUpperCase()}
+                  </span>
                 </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Requirements</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {selectedChapterData.requirements.map((req, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-blue-600 mr-2">•</span>
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Benefits</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {selectedChapterData.benefits.map((benefit, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-green-600 mr-2">•</span>
-                          {benefit}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {selectedChapterData.tags.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Tags</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedChapterData.tags.map((tag, index) => (
-                      <span key={index} className="inline-flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {tag}
-                      </span>
-                    ))}
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {selectedChapterData.chapterName}
+                  </h3>
+                  <p className="text-gray-600">
+                    Chapter Head: {selectedChapterData.headName}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Chapter Information</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center text-sm text-gray-700">
+                        <Users className="h-4 w-4 mr-2 text-blue-600" />
+                        <span>{selectedChapterData.memberCount} members</span>
+                      </div>
+                      
+                      <div className="flex items-center text-sm text-gray-700">
+                        <Mail className="h-4 w-4 mr-2 text-blue-600" />
+                        <span>{selectedChapterData.headEmail}</span>
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-700">
+                        <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                        <span>Status: <span className="font-medium capitalize">{selectedChapterData.status}</span></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Registration Status</h4>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedChapterData.registrationStatus === 'open'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedChapterData.registrationStatus === 'open' ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Chapter ID</h4>
+                    <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">
+                      {selectedChapterData.chapterId}
+                    </code>
+                  </div>
+                </div>
+              </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <div className="text-sm text-gray-500">

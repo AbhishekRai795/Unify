@@ -33,9 +33,9 @@ export const studentAPI = {
     return handleResponse(response);
   },
 
-  // Chapters
+  // Chapters - using consistent endpoint names with backend
   getAvailableChapters: async () => {
-    const response = await fetch(`${API_BASE_URL}/student/available-chapters`, {
+    const response = await fetch(`${API_BASE_URL}/get-chapters`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
@@ -55,7 +55,7 @@ export const studentAPI = {
     return handleResponse(response);
   },
 
-  // Chapter Registration
+  // Chapter Registration - consistent with backend expectations
   registerForChapter: async (chapterName: string, studentData: { name: string; email: string }) => {
     const response = await fetch(`${API_BASE_URL}/register-student`, {
       method: 'POST',
@@ -72,6 +72,14 @@ export const studentAPI = {
   leaveChapter: async (chapterId: string) => {
     const response = await fetch(`${API_BASE_URL}/student/chapters/${chapterId}/leave`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Registration Requests
+  getPendingRegistrations: async () => {
+    const response = await fetch(`${API_BASE_URL}/student/pending-registrations`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);

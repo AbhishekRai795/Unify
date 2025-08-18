@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth, Role } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import StudentPortal from './pages/StudentPortal';
@@ -12,7 +13,7 @@ import { Shield, User, UserCog } from 'lucide-react';
 
 // This component will wrap pages that need the Header and Footer
 const MainLayout: React.FC = () => (
-  <div className="flex flex-col min-h-screen bg-gray-50">
+  <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
     <Header />
     <main className="flex-1">
       <Outlet /> {/* Child routes will render here */}
@@ -84,10 +85,10 @@ const RoleSelectionPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg text-center">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Select Your Role</h1>
-                <p className="text-gray-500 mb-8">You have multiple roles. Please choose how you'd like to proceed for this session.</p>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-dark-bg p-4 transition-colors duration-300">
+            <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-lg dark:shadow-2xl text-center backdrop-blur-md border border-gray-200 dark:border-dark-border">
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-2">Select Your Role</h1>
+                <p className="text-gray-500 dark:text-dark-text-secondary mb-8">You have multiple roles. Please choose how you'd like to proceed for this session.</p>
                 <div className="space-y-4">
                     {user.groups.map(group => {
                         const details = roleDetails[group] || { icon: User, name: group };
@@ -118,6 +119,14 @@ const RoleSelectionPage: React.FC = () => {
 
 
 function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
   const { isAuthenticated, user, isLoading } = useAuth();
 
   const getRedirectPath = (user: { activeRole: string, groups: string[] } | null): string => {
