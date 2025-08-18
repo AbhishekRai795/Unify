@@ -4,6 +4,7 @@ import { LogOut, User, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
+import RoleToggle from './RoleToggle';
 
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -64,6 +65,10 @@ const Header: React.FC = () => {
           {isAuthenticated && user && user.activeRole ? (
             <div className="flex items-center space-x-4">
               <ThemeToggle />
+              
+              {/* Role Toggle - only show if user has multiple roles */}
+              <RoleToggle />
+              
               <div className={`
                 flex items-center space-x-2 px-3 py-1 rounded-full backdrop-blur-md border transition-all duration-300
                 ${isDark 

@@ -37,7 +37,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Role[]
   }
   
   // If user has multiple roles but hasn't selected one, redirect to selection
-  if (user.groups.length > 1 && !user.activeRole) {
+  // But only if they're accessing the root paths - the role toggle allows switching on the fly
+  if (user.groups.length > 1 && !user.activeRole && window.location.pathname === '/') {
+    return <Navigate to="/select-role" replace />;
+  }
+
+  // If no active role is set, but user has roles, try to set a default
+  if (!user.activeRole && user.groups.length > 0) {
+    // This will be handled by the role selection or role toggle
+    if (user.groups.length === 1) {
+      // Auto-set single role
+      return <Navigate to="/" replace />;
+    }
     return <Navigate to="/select-role" replace />;
   }
 
