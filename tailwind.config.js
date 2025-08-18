@@ -5,19 +5,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Custom dark mode palette
+        // Custom dark mode palette inspired by the image
         dark: {
-          bg: '#0a0a0b',
-          surface: '#1a1a1d',
-          card: '#2a2a2e',
-          border: '#3a3a3f',
+          bg: '#0D0B14', // Deep purple-black background
+          surface: '#1A1820', // Slightly lighter surface for cards
+          card: '#1F1D28', // Card background
+          border: '#393649', // Borders and dividers
           text: {
-            primary: '#ffffff',
-            secondary: '#b3b3b3',
-            muted: '#8b8b8b'
-          }
+            primary: '#E0DDF0', // Light lavender text
+            secondary: '#A09CB8', // Muted purple-gray text
+            muted: '#6E6A8A',
+          },
         },
-        // Purple-blue gradient palette
+        // Accent color for buttons and highlights
+        accent: {
+          DEFAULT: '#7F56D9',
+          50: '#F9F5FF',
+          100: '#F4EBFF',
+          200: '#E9D7FE',
+          300: '#D6BBFB',
+          400: '#B692F6',
+          500: '#9E77ED',
+          600: '#7F56D9',
+          700: '#6941C6',
+          800: '#53389E',
+          900: '#42307D',
+        },
+        // Keeping the original palettes for light mode
         primary: {
           50: '#f0f0ff',
           100: '#e5e5ff',
@@ -31,37 +45,15 @@ export default {
           900: '#1a1aff',
           950: '#0d0dcc'
         },
-        accent: {
-          50: '#f8f0ff',
-          100: '#f0e5ff',
-          200: '#e6ccff',
-          300: '#d9b3ff',
-          400: '#cc99ff',
-          500: '#bf80ff',
-          600: '#b366ff',
-          700: '#a64dff',
-          800: '#9933ff',
-          900: '#8c1aff',
-          950: '#7300e6'
-        },
-        // Glassmorphism colors
         glass: {
           light: 'rgba(255, 255, 255, 0.1)',
-          dark: 'rgba(0, 0, 0, 0.3)',
-          purple: 'rgba(179, 179, 255, 0.1)',
+          dark: 'rgba(25, 24, 32, 0.5)', // Updated dark glass
+          purple: 'rgba(127, 86, 217, 0.1)',
           blue: 'rgba(128, 128, 255, 0.1)'
         },
-        nebula: {
-          900: '#07070a',
-          800: '#0d0f17',
-          700: '#111426',
-          600: '#181b32'
-        },
-        plasma: {
-          400: '#8a3dff',
-          500: '#6f30ff',
-          600: '#5524d6'
-        }
+      },
+      backgroundImage: {
+        'icon-gradient': 'linear-gradient(to right, #E0DDF0, #9E77ED)',
       },
       backdropBlur: {
         xs: '2px',
@@ -72,74 +64,62 @@ export default {
         'gradient-y': 'gradient-y 15s ease infinite',
         'gradient-xy': 'gradient-xy 15s ease infinite',
         'float': 'float 6s ease-in-out infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-        aurora: 'aurora 18s ease-in-out infinite',
-        shimmer: 'shimmer 4s linear infinite',
-        'pulse-border': 'pulse-border 3s ease-in-out infinite'
+        'glow': 'glow 4s ease-in-out infinite alternate', // Slower glow
+        'pulse-border': 'pulse-border 3s ease-in-out infinite',
+        'aurora': 'aurora 60s linear infinite',
       },
       keyframes: {
         'gradient-y': {
           '0%, 100%': {
-            transform: 'translateY(-50px)',
+            'background-size':'400% 400%',
+            'background-position': 'center top'
           },
           '50%': {
-            transform: 'translateY(50px)',
-          },
+            'background-size':'200% 200%',
+            'background-position': 'center center'
+          }
         },
         'gradient-x': {
           '0%, 100%': {
-            transform: 'translateX(-50px)',
+            'background-size':'400% 400%',
+            'background-position': 'left center'
           },
           '50%': {
-            transform: 'translateX(50px)',
-          },
+            'background-size':'200% 200%',
+            'background-position': 'right center'
+          }
         },
         'gradient-xy': {
           '0%, 100%': {
-            transform: 'translate(-50px, -50px)',
-          },
-          '25%': {
-            transform: 'translate(50px, -50px)',
+            'background-size':'400% 400%',
+            'background-position': 'left center'
           },
           '50%': {
-            transform: 'translate(50px, 50px)',
-          },
-          '75%': {
-            transform: 'translate(-50px, 50px)',
-          },
+            'background-size':'200% 200%',
+            'background-position': 'right center'
+          }
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-20px)' }
         },
         glow: {
-          from: {
-            'box-shadow': '0 0 20px rgba(179, 179, 255, 0.4)'
-          },
-          to: {
-            'box-shadow': '0 0 30px rgba(179, 179, 255, 0.8)'
-          }
+          'from': { 'box-shadow': '0 0 10px -5px #7F56D9' },
+          'to': { 'box-shadow': '0 0 20px 5px #7F56D9' }
         },
         aurora: {
-          '0%': { transform: 'translateY(0) scale(1)', filter: 'hue-rotate(0deg)' },
-          '50%': { transform: 'translateY(-20%) scale(1.1)', filter: 'hue-rotate(45deg)' },
-          '100%': { transform: 'translateY(0) scale(1)', filter: 'hue-rotate(0deg)' }
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '0% 50%' },
-          '100%': { backgroundPosition: '200% 50%' }
+          from: {
+            backgroundPosition: '50% 50%, 50% 50%',
+          },
+          to: {
+            backgroundPosition: '350% 50%, 350% 50%',
+          },
         },
         'pulse-border': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(128,128,255,0.35), 0 0 0 0 rgba(179,128,255,0.25)' },
-          '50%': { boxShadow: '0 0 25px 2px rgba(128,128,255,0.55), 0 0 45px 8px rgba(179,128,255,0.25)' }
+          '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(127, 86, 217, 0.4)' },
+          '50%': { 'box-shadow': '0 0 0 4px rgba(127, 86, 217, 0)' }
         }
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'dark-gradient': 'linear-gradient(135deg, #0a0a0b 0%, #1a1a1d 50%, #2a2a2e 100%)',
-        'purple-gradient': 'linear-gradient(135deg, #8c1aff 0%, #6666ff 50%, #4d4dff 100%)',
-      }
     },
   },
   plugins: [],

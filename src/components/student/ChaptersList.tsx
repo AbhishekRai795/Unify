@@ -39,28 +39,36 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
   
   return (
     <div className={`
-      group relative rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 overflow-hidden backdrop-blur-md border
+      group relative rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden backdrop-blur-md border hover:scale-[1.02]
       ${isDark 
-        ? 'bg-dark-surface/90 border-dark-border hover:shadow-2xl hover:shadow-accent-500/10' 
-        : 'bg-white border-gray-200'
+        ? 'bg-dark-surface/40 border-accent-500/20 hover:shadow-2xl hover:shadow-accent-500/20 shadow-accent-500/10' 
+        : 'bg-white/40 border-white/20 hover:shadow-xl'
       }
-      hover:scale-[1.02] glow-effect
     `}>
-      {/* Subtle background gradient */}
+      {/* Enhanced glassmorphism background */}
       <div className={`
-        absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300
+        absolute inset-0 transition-all duration-300
         ${isDark 
-          ? 'from-accent-500/10 to-primary-500/10' 
-          : 'from-gray-50/50 to-white/80'
+          ? 'bg-gradient-to-br from-dark-surface/60 to-dark-card/40 group-hover:from-dark-surface/80 group-hover:to-dark-card/60' 
+          : 'bg-gradient-to-br from-white/80 to-gray-50/40 group-hover:from-white/90 group-hover:to-gray-50/60'
+        }
+      `}></div>
+      
+      {/* Subtle accent gradient overlay */}
+      <div className={`
+        absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500
+        ${isDark 
+          ? 'from-accent-500/5 to-primary-500/5' 
+          : 'from-blue-500/5 to-purple-500/5'
         }
       `}></div>
       
       {/* Header */}
       <div className={`
-        relative p-6 border-b transition-all duration-300
+        relative p-6 border-b transition-all duration-300 backdrop-blur-sm
         ${isDark 
-          ? 'bg-dark-card/50 border-dark-border' 
-          : 'bg-gray-50 border-gray-200'
+          ? 'bg-dark-card/20 border-accent-500/20' 
+          : 'bg-white/30 border-gray-200/50'
         }
       `}>
         <div className="flex items-start justify-between mb-4">
@@ -68,17 +76,23 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
             <h3 className={`
               text-xl font-semibold mb-2 transition-colors duration-200
               ${isDark 
-                ? 'text-dark-text-primary group-hover:text-accent-400' 
+                ? 'text-dark-text-primary group-hover:text-accent-300' 
                 : 'text-gray-900 group-hover:text-blue-600'
               }
             `}>{chapter.name}</h3>
             {chapter.category && (
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 mb-2">
+              <span className={`
+                inline-flex items-center px-2 py-1 rounded text-xs font-medium mb-2 backdrop-blur-sm
+                ${isDark 
+                  ? 'bg-accent-500/20 text-accent-200 border border-accent-500/30' 
+                  : 'bg-blue-100 text-blue-800'
+                }
+              `}>
                 {chapter.category}
               </span>
             )}
             {chapter.description && (
-              <p className="text-gray-600 text-sm leading-relaxed">{chapter.description}</p>
+              <p className={`text-sm leading-relaxed transition-colors duration-200 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>{chapter.description}</p>
             )}
           </div>
           
@@ -140,42 +154,48 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
       </div>
 
       {/* Content */}
-      <div className="relative p-6">
+      <div className="relative p-6 backdrop-blur-sm">
         <div className="space-y-3 mb-6">
           {chapter.chapterHead && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Users className="h-4 w-4 mr-2 text-gray-400" />
+            <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+              <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
               <span className="font-medium">Head: {chapter.chapterHead}</span>
             </div>
           )}
           
-          <div className="flex items-center text-sm text-gray-600">
-            <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+          <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+            <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
             <span>Active Chapter</span>
           </div>
           
           {chapter.memberCount !== undefined && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Users className="h-4 w-4 mr-2 text-gray-400" />
+            <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+              <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
               <span>{chapter.memberCount} members</span>
             </div>
           )}
 
           {chapter.contactEmail && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Mail className="h-4 w-4 mr-2 text-gray-400" />
+            <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+              <Mail className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
               <span className="truncate">{chapter.contactEmail}</span>
             </div>
           )}
         </div>
 
         {/* Action Button */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className={`pt-4 border-t ${isDark ? 'border-accent-500/20' : 'border-gray-200'}`}>
           {isApproved ? (
             <button
               onClick={onLeave}
               disabled={isLoading}
-              className="w-full inline-flex items-center justify-center px-4 py-3 border border-red-300 text-red-700 bg-white rounded-lg hover:bg-red-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`
+                w-full inline-flex items-center justify-center px-4 py-3 border rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm
+                ${isDark 
+                  ? 'border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20' 
+                  : 'border-red-300 text-red-700 bg-white hover:bg-red-50'
+                }
+              `}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -187,7 +207,13 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
           ) : isPending ? (
             <button
               disabled
-              className="w-full inline-flex items-center justify-center px-4 py-3 bg-yellow-100 text-yellow-800 rounded-lg cursor-not-allowed font-medium"
+              className={`
+                w-full inline-flex items-center justify-center px-4 py-3 rounded-lg cursor-not-allowed font-medium backdrop-blur-sm
+                ${isDark 
+                  ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' 
+                  : 'bg-yellow-100 text-yellow-800'
+                }
+              `}
             >
               <Clock className="h-4 w-4 mr-2" />
               Waiting for Approval
@@ -195,7 +221,13 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
           ) : isRejected ? (
             <button
               disabled
-              className="w-full inline-flex items-center justify-center px-4 py-3 bg-red-100 text-red-800 rounded-lg cursor-not-allowed font-medium"
+              className={`
+                w-full inline-flex items-center justify-center px-4 py-3 rounded-lg cursor-not-allowed font-medium backdrop-blur-sm
+                ${isDark 
+                  ? 'bg-red-500/20 text-red-300 border border-red-500/30' 
+                  : 'bg-red-100 text-red-800'
+                }
+              `}
             >
               <XCircle className="h-4 w-4 mr-2" />
               Application Rejected
@@ -204,7 +236,13 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
             <button
               onClick={onRegister}
               disabled={isLoading}
-              className="w-full inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`
+                w-full inline-flex items-center justify-center px-4 py-3 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm
+                ${isDark 
+                  ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                }
+              `}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -217,11 +255,19 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
             <button
               onClick={onRegister}
               disabled={isLoading || !isRegistrationOpen}
-              className={`w-full inline-flex items-center justify-center px-4 py-3 rounded-lg transition-colors font-medium disabled:cursor-not-allowed ${
-                canRegister
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              }`}
+              className={`
+                w-full inline-flex items-center justify-center px-4 py-3 rounded-lg transition-colors font-medium disabled:cursor-not-allowed backdrop-blur-sm
+                ${canRegister
+                  ? (isDark 
+                      ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                    )
+                  : (isDark 
+                      ? 'bg-dark-card/40 text-dark-text-muted border border-dark-border/30'
+                      : 'bg-gray-200 text-gray-500'
+                    )
+                }
+              `}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -432,21 +478,7 @@ const ChaptersList: React.FC = () => {
   const closedChapters = availableChapters.filter(chapter => !chapter.isRegistrationOpen);
 
   return (
-    <div className={`
-      min-h-screen transition-all duration-300
-      ${isDark 
-        ? 'bg-dark-bg' 
-        : 'bg-gray-50'
-      }
-    `}>
-      {/* Background decoration for dark mode */}
-      {isDark && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        </div>
-      )}
-      
+    <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gray-50'}`}>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -469,15 +501,31 @@ const ChaptersList: React.FC = () => {
 
       {/* Search */}
       <div className="max-w-2xl mx-auto mb-8">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search chapters by name or chapter head..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className={`
+          relative rounded-xl p-6 backdrop-blur-sm border
+          ${isDark 
+            ? 'bg-gradient-to-br from-dark-surface/80 to-dark-card/60 border-accent-500/20 shadow-2xl shadow-accent-500/10' 
+            : 'bg-white shadow-sm border-gray-200'
+          }
+        `}>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Search className={`h-5 w-5 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search chapters by name or chapter head..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`
+                w-full pl-10 pr-4 py-3 rounded-lg transition-all duration-200 backdrop-blur-sm
+                ${isDark 
+                  ? 'bg-dark-card/50 border border-accent-500/30 text-dark-text placeholder-gray-400 focus:border-accent-400 focus:ring-2 focus:ring-accent-500/20 focus:bg-dark-card/70' 
+                  : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                }
+              `}
+            />
+          </div>
         </div>
       </div>
 
@@ -491,50 +539,98 @@ const ChaptersList: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className={`
+          rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105
+          ${isDark 
+            ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30 shadow-xl shadow-accent-500/10' 
+            : 'bg-white border border-gray-200'
+          }
+        `}>
           <div className="flex items-center">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className={`
+              p-3 rounded-lg transition-all duration-300
+              ${isDark 
+                ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' 
+                : 'bg-blue-50'
+              }
+            `}>
+              <Users className={`h-6 w-6 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{chapters.length}</p>
-              <p className="text-sm text-gray-600">Total Chapters</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{chapters.length}</p>
+              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Total Chapters</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className={`
+          rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105
+          ${isDark 
+            ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30 shadow-xl shadow-accent-500/10' 
+            : 'bg-white border border-gray-200'
+          }
+        `}>
           <div className="flex items-center">
-            <div className="p-3 bg-green-50 rounded-lg">
-              <UserPlus className="h-6 w-6 text-green-600" />
+            <div className={`
+              p-3 rounded-lg transition-all duration-300
+              ${isDark 
+                ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' 
+                : 'bg-green-50'
+              }
+            `}>
+              <UserPlus className={`h-6 w-6 ${isDark ? 'text-accent-400' : 'text-green-600'}`} />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{registeredChapters.length}</p>
-              <p className="text-sm text-gray-600">Registered</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{registeredChapters.length}</p>
+              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Registered</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className={`
+          rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105
+          ${isDark 
+            ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30 shadow-xl shadow-accent-500/10' 
+            : 'bg-white border border-gray-200'
+          }
+        `}>
           <div className="flex items-center">
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
+            <div className={`
+              p-3 rounded-lg transition-all duration-300
+              ${isDark 
+                ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' 
+                : 'bg-yellow-50'
+              }
+            `}>
+              <Clock className={`h-6 w-6 ${isDark ? 'text-accent-400' : 'text-yellow-600'}`} />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{pendingChapters.length}</p>
-              <p className="text-sm text-gray-600">Pending Approval</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{pendingChapters.length}</p>
+              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Pending Approval</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className={`
+          rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105
+          ${isDark 
+            ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30 shadow-xl shadow-accent-500/10' 
+            : 'bg-white border border-gray-200'
+          }
+        `}>
           <div className="flex items-center">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <UserPlus className="h-6 w-6 text-blue-600" />
+            <div className={`
+              p-3 rounded-lg transition-all duration-300
+              ${isDark 
+                ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' 
+                : 'bg-blue-50'
+              }
+            `}>
+              <UserPlus className={`h-6 w-6 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
             </div>
             <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{openChapters.length}</p>
-              <p className="text-sm text-gray-600">Open for Registration</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{openChapters.length}</p>
+              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Open for Registration</p>
             </div>
           </div>
         </div>
