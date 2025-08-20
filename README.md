@@ -1,6 +1,44 @@
+
 # Unify Frontend
 
-Unify is a modern, full-stack web application designed to streamline the management of college chapters and events. It provides dedicated portals for students, chapter heads, and administrators, each with role-specific functionalities and a stunning glassmorphism dark mode UI.
+## About the Project
+
+**Unify** is a modern, full-stack web application designed to centralize and simplify the management of college chapters, events, and memberships. Built for educational institutions, Unify empowers students, chapter heads, and administrators with dedicated portals, real-time dashboards, and a beautiful, responsive user interface.
+
+### 🎯 Purpose
+Unify solves the problem of fragmented chapter and event management in colleges by providing a single platform where:
+- Students can discover, join, and participate in chapters and events.
+- Chapter heads can manage their chapter’s members, events, and registrations.
+- Administrators can oversee all chapters, create events, and monitor platform-wide activity.
+
+### 🏗️ Architecture Overview
+- **Frontend:** React + TypeScript SPA, styled with Tailwind CSS, built with Vite, and hosted on AWS Amplify.
+- **Backend:** AWS API Gateway + Lambda (Node.js/Python) for RESTful APIs.
+- **Authentication:** AWS Cognito for secure, scalable user management and role-based access.
+- **Deployment:** CI/CD via Amplify, with environment variable support for seamless dev/staging/prod workflows.
+
+### 👤 User Roles & Portals
+- **Student Portal:**
+   - Browse all available chapters and events
+   - Register for chapters and events
+   - View personal profile and participation history
+- **Chapter Head Portal:**
+   - Manage chapter details and members
+   - Approve/reject student registrations
+   - Create and manage chapter-specific events
+- **Admin Portal:**
+   - Create and manage all chapters and events
+   - View and manage all users and registrations
+   - Platform analytics and health monitoring
+
+### ✨ Key Features
+- Glassmorphism dark mode UI with purple-to-blue gradients
+- Fully responsive design with mobile hamburger navigation
+- Real-time API health and config status monitoring
+- Secure, role-based access control for all routes
+- Modern developer experience with TypeScript, ESLint, and hot reload
+
+---
 
 ## 🌟 Features
 
