@@ -41,8 +41,8 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const poolData = {
-  UserPoolId: 'ap-south-1_ueutDQExM', // Your User Pool ID
-  ClientId: '6uac5t9b0oub9b1cjoot94uplc', // Your App Client ID
+  UserPoolId: import.meta.env.VITE_USER_POOL_ID || 'ap-south-1_ueutDQExM', // Your User Pool ID
+  ClientId: import.meta.env.VITE_USER_POOL_WEB_CLIENT_ID || '6uac5t9b0oub9b1cjoot94uplc', // Your App Client ID
 };
 
 const userPool = new CognitoUserPool(poolData);

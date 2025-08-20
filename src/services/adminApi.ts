@@ -1,5 +1,5 @@
 // src/services/adminApi.ts
-const API_BASE_URL = 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
 
 async function getAuthHeaders() {
   // Use the same token storage method as your AuthContext

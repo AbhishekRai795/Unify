@@ -4,6 +4,7 @@ import { useAuth, Role } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
+import ConfigStatus from './components/common/ConfigStatus';
 import StudentPortal from './pages/StudentPortal';
 import HeadPortal from './pages/HeadPortal';
 import AdminPortal from './pages/AdminPortal';
@@ -167,50 +168,55 @@ function AppContent() {
   }
 
   return (
-    <Routes>
-      <Route 
-        path="/" 
-        element={
-          isAuthenticated && user ? (
-            <Navigate to={getRedirectPath(user)} replace />
-          ) : (
-            <AuthPage />
-          )
-        } 
-      />
+    <>
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            isAuthenticated && user ? (
+              <Navigate to={getRedirectPath(user)} replace />
+            ) : (
+              <AuthPage />
+            )
+          } 
+        />
+        
+        {/* Add the new route for role selection */}
+        <Route path="/select-role" element={<RoleSelectionPage />} />
+
+        <Route element={<MainLayout />}>
+          <Route
+            path="/student/*"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentPortal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/head/*"
+            element={
+              <ProtectedRoute allowedRoles={['chapter-head', 'admin']}>
+                <HeadPortal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPortal />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
       
-      {/* Add the new route for role selection */}
-      <Route path="/select-role" element={<RoleSelectionPage />} />
-
-      <Route element={<MainLayout />}>
-        <Route
-          path="/student/*"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentPortal />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/head/*"
-          element={
-            <ProtectedRoute allowedRoles={['chapter-head', 'admin']}>
-              <HeadPortal />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminPortal />
-            </ProtectedRoute>
-          }
-        />
-      </Route>
-
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      {/* Add ConfigStatus for debugging in development */}
+      {import.meta.env.DEV && <ConfigStatus />}
+    </>
   );
 }
 

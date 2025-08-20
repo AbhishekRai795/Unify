@@ -1,12 +1,28 @@
 // src/services/api.ts
-const API_BASE_URL = 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('idToken');
   console.log('JWT Token exists:', !!token);
+  console.log('API Base URL:', API_BASE_URL);
+  
   if (token) {
     console.log('Token preview:', token.substring(0, 50) + '...');
+    
+    // Check if token is expired
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const isExpired = Date.now() >= payload.exp * 1000;
+      console.log('Token expired:', isExpired);
+      if (isExpired) {
+        console.warn('Token is expired! User should re-authenticate.');
+      }
+    } catch (error) {
+      console.error('Error checking token expiry:', error);
+    }
+  } else {
+    console.warn('No JWT token found in localStorage');
   }
   
   return {
@@ -17,14 +33,50 @@ const getAuthHeaders = () => {
 
 // Helper function to handle API responses
 const handleResponse = async (response: Response) => {
+  console.log(`API Response: ${response.status} ${response.statusText}`, response.url);
+  
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(errorData.error || `HTTP ${response.status}`);
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
+    
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { error: errorText || 'Unknown error' };
+    }
+    
+    // Log detailed error information for debugging
+    console.error('API Error Details:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      errorData
+    });
+    
+    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log('API Success Response:', data);
+  return data;
 };
 
 export const studentAPI = {
+  // Health check
+  healthCheck: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return handleResponse(response);
+    } catch (error) {
+      console.error('Health check failed:', error);
+      throw error;
+    }
+  },
+
   // Dashboard
   getDashboard: async () => {
     const response = await fetch(`${API_BASE_URL}/student/dashboard`, {
