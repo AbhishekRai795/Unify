@@ -170,9 +170,10 @@ const EditChapter: React.FC = () => {
       setError(null);
 
       // Call the edit API (only works for admins)
-      await adminApi.editChapterHead({
-        email: formData.headEmail.trim(),
-        chapterId: chapterId,
+      // Try using updateChapter directly instead of editChapterHead
+      console.log('Trying updateChapter directly...');
+      await adminApi.updateChapter(chapterId, {
+        headEmail: formData.headEmail.trim(),
         headName: formData.headName.trim() || undefined
       });
 
