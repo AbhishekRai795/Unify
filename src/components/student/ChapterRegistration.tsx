@@ -198,20 +198,24 @@ const ChapterRegistration: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center text-sm text-gray-700">
                     <User className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>{user?.student?.name}</span>
+                    <span>{user?.name}</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-700">
                     <Mail className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>{user?.student?.email}</span>
+                    <span>{user?.email}</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-700">
-                    <Hash className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>SAP ID: {user?.student?.sapId}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-700">
-                    <GraduationCap className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>Year: {user?.student?.year}</span>
-                  </div>
+                  {user?.sapId && (
+                    <div className="flex items-center text-sm text-gray-700">
+                      <Hash className="h-4 w-4 mr-2 text-blue-600" />
+                      <span>SAP ID: {user.sapId}</span>
+                    </div>
+                  )}
+                  {user?.year && (
+                    <div className="flex items-center text-sm text-gray-700">
+                      <GraduationCap className="h-4 w-4 mr-2 text-blue-600" />
+                      <span>Year: {user.year}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

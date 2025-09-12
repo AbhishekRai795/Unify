@@ -12,6 +12,8 @@ interface DecodedToken {
   family_name?: string;
   preferred_username?: string;
   'cognito:groups'?: string[] | string;
+  'custom:sapId'?: string;
+  'custom:year'?: string;
   exp: number;
   sub: string;
   aud?: string;
@@ -27,6 +29,8 @@ interface AuthUser {
   name: string;
   groups: string[]; // Groups from cognito:groups claim
   activeRole: string; // One of the groups
+  sapId?: string; // SAP ID from custom:sapId
+  year?: string; // Year from custom:year
 }
 
 interface AuthContextType {
@@ -138,6 +142,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: userName,
             groups: userGroups,
             activeRole,
+            sapId: decodedToken['custom:sapId'],
+            year: decodedToken['custom:year']
           });
         } else {
           localStorage.removeItem('idToken');
@@ -191,6 +197,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: userName,
         groups: userGroups,
         activeRole,
+        sapId: decodedToken['custom:sapId'],
+        year: decodedToken['custom:year']
       });
     } catch (error) {
       console.error("Failed to process login:", error);

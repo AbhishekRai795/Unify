@@ -337,17 +337,19 @@ const Registrations: React.FC = () => {
                             <Mail className="h-3 w-3 mr-1" />
                             {registration.studentEmail}
                           </div>
-                          {registration.sapId && (
-                            <div className="text-sm text-gray-500 flex items-center">
-                              <Hash className="h-3 w-3 mr-1" />
-                              {registration.sapId}
-                            </div>
-                          )}
-                          {registration.year && (
-                            <div className="text-xs text-gray-400">
-                              Year: {registration.year}
-                            </div>
-                          )}
+                          <div className="flex items-center space-x-4">
+                            {registration.year && (
+                              <div className="text-xs text-gray-400 flex items-center">
+                                <span>Year: {registration.year}</span>
+                              </div>
+                            )}
+                            {registration.sapId && (
+                              <div className="text-xs text-gray-400 flex items-center">
+                                <Hash className="h-3 w-3 mr-1" />
+                                <span>SAP: {registration.sapId}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>

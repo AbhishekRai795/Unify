@@ -360,33 +360,17 @@ const kickStudent = async (chapterHead, body, headers) => {
       }));
     }
 
-    // Update chapter member count (ensure it doesn't go below 0)
+    // Update chapter member count
     await dynamoDB.send(new UpdateCommand({
       TableName: 'Chapters',
       Key: { chapterId: chapterHead.chapterId },
       UpdateExpression: 'SET memberCount = if_not_exists(memberCount, :zero) - :dec, updatedAt = :updatedAt',
-      ConditionExpression: 'memberCount > :zero',
       ExpressionAttributeValues: {
         ':dec': 1,
         ':zero': 0,
         ':updatedAt': new Date().toISOString()
       }
-    })).catch(async (error) => {
-      // If condition fails, set memberCount to 0
-      if (error.name === 'ConditionalCheckFailedException') {
-        await dynamoDB.send(new UpdateCommand({
-          TableName: 'Chapters',
-          Key: { chapterId: chapterHead.chapterId },
-          UpdateExpression: 'SET memberCount = :zero, updatedAt = :updatedAt',
-          ExpressionAttributeValues: {
-            ':zero': 0,
-            ':updatedAt': new Date().toISOString()
-          }
-        }));
-      } else {
-        throw error;
-      }
-    });
+    }));
 
     // Create an activity record
     const activityId = `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

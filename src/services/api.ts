@@ -108,7 +108,7 @@ export const studentAPI = {
   },
 
   // Chapter Registration - consistent with backend expectations
-  registerForChapter: async (chapterName: string, studentData: { name: string; email: string }) => {
+  registerForChapter: async (chapterName: string, studentData: { name: string; email: string; sapId?: string; year?: string }) => {
     const response = await fetch(`${API_BASE_URL}/register-student`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -116,6 +116,8 @@ export const studentAPI = {
         studentEmail: studentData.email,
         studentName: studentData.name,
         chapterName: chapterName,
+        sapId: studentData.sapId,
+        year: studentData.year
       }),
     });
     return handleResponse(response);

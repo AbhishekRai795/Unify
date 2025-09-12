@@ -146,7 +146,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       await studentAPI.registerForChapter(chapterName, {
         name: user.name,
-        email: user.email
+        email: user.email,
+        sapId: user.sapId,
+        year: user.year
       });
       
       // Refresh data after successful registration

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom'; // No longer needed
 import { motion, AnimatePresence, Transition, Variants } from 'framer-motion';
 import { 
@@ -197,6 +197,32 @@ const AuthPage: React.FC = () => {
     const [year, setYear] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     
+    // Debug helper - expose to console
+    useEffect(() => {
+        (window as any).debugCognitoSignup = (testEmail = 'debug@test.com', testPassword = 'DebugPass123!@#') => {
+            console.log('🔧 DEBUGGING SIGNUP WITH:', { testEmail, testPassword });
+            const attributeList = [
+                new CognitoUserAttribute({ Name: 'email', Value: testEmail }),
+                new CognitoUserAttribute({ Name: 'name', Value: 'Debug User' }),
+                new CognitoUserAttribute({ Name: 'custom:sapId', Value: '99999' }),
+                new CognitoUserAttribute({ Name: 'custom:year', Value: '2024' }),
+            ];
+            
+            userPool.signUp(testEmail, testPassword, attributeList, [], (err: any, result: any) => {
+                if (err) {
+                    console.error('❌ DEBUG SIGNUP FAILED:');
+                    console.error('Code:', err.code || err.name);
+                    console.error('Message:', err.message);
+                    console.error('Status:', err.statusCode);
+                    console.error('Full Error:', err);
+                } else {
+                    console.log('✅ DEBUG SIGNUP SUCCESS:', result);
+                }
+            });
+        };
+        console.log('🔧 Debug function loaded. Try: debugCognitoSignup()');
+    }, []);
+    
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
@@ -223,10 +249,28 @@ const AuthPage: React.FC = () => {
         event.preventDefault();
         setError('');
         setLoading(true);
-        if (isLoginView) handleSignIn();
-        else {
+        
+        if (isLoginView) {
+            handleSignIn();
+        } else {
+            // Signup validation
             if (password !== confirmPassword) {
                 setError('Passwords do not match');
+                setLoading(false);
+                return;
+            }
+            if (password.length < 8) {
+                setError('Password must be at least 8 characters long');
+                setLoading(false);
+                return;
+            }
+            if (!name.trim() || !sapId.trim() || !year.trim()) {
+                setError('Please fill in all required fields');
+                setLoading(false);
+                return;
+            }
+            if (!email.trim() || !email.includes('@')) {
+                setError('Please enter a valid email address');
                 setLoading(false);
                 return;
             }
@@ -235,21 +279,81 @@ const AuthPage: React.FC = () => {
     };
 
     const handleSignUp = () => {
-        const attributeList = [
-            new CognitoUserAttribute({ Name: 'email', Value: email }),
-            new CognitoUserAttribute({ Name: 'name', Value: name }),
-            new CognitoUserAttribute({ Name: 'custom:sap_id', Value: sapId }),
-            new CognitoUserAttribute({ Name: 'custom:year', Value: year }),
+        // Validate required fields
+        if (!name.trim()) {
+            setError('Full name is required');
+            setLoading(false);
+            return;
+        }
+        if (!sapId.trim()) {
+            setError('SAP ID is required');
+            setLoading(false);
+            return;
+        }
+        if (!year.trim()) {
+            setError('Year of study is required');
+            setLoading(false);
+            return;
+        }
+
+        // Try signup with custom attributes first
+        const attributeListWithCustom = [
+            new CognitoUserAttribute({ Name: 'email', Value: email.trim() }),
+            new CognitoUserAttribute({ Name: 'name', Value: name.trim() }),
+            new CognitoUserAttribute({ Name: 'custom:sapId', Value: sapId.trim() }),
+            new CognitoUserAttribute({ Name: 'custom:year', Value: year.trim() }),
         ];
-        userPool.signUp(email, password, attributeList, [], (err?: Error, result?: ISignUpResult) => {
+        
+        console.log('Attempting signup with custom attributes:', attributeListWithCustom.map(attr => ({ Name: attr.Name, Value: attr.Value })));
+        
+        // First attempt with custom attributes
+        trySignupWithAttributes(attributeListWithCustom, true);
+    };
+
+    const trySignupWithAttributes = (attributeList: any[], hasCustomAttributes: boolean) => {
+        userPool.signUp(email.trim(), password, attributeList, [], (err?: any, result?: ISignUpResult) => {
             setLoading(false);
             if (err) {
-                setError(err.message || 'An error occurred during sign-up.');
+                // Detailed error logging for debugging
+                console.error('=== COGNITO SIGNUP ERROR ===');
+                console.error('Error name:', err.name);
+                console.error('Error code:', err.code);
+                console.error('Error message:', err.message);
+                console.error('Status code:', err.statusCode);
+                console.error('Full error object:', err);
+                console.error('Request details:', {
+                    email: email.trim(),
+                    attributeNames: attributeList.map(attr => attr.Name),
+                    attributeValues: attributeList.map(attr => ({ name: attr.Name, value: attr.Value }))
+                });
+                console.error('==============================');
+                
+                // If custom attributes failed and this was the first attempt, try without them
+                if (hasCustomAttributes && (err.code === 'InvalidParameterException' || err.message?.includes('custom'))) {
+                    console.log('Retrying signup without custom attributes...');
+                    const basicAttributes = [
+                        new CognitoUserAttribute({ Name: 'email', Value: email.trim() }),
+                        new CognitoUserAttribute({ Name: 'name', Value: name.trim() }),
+                    ];
+                    setLoading(true);
+                    trySignupWithAttributes(basicAttributes, false);
+                    return;
+                }
+                
+                // User-friendly error message
+                let friendlyError = err.message || 'An error occurred during sign-up.';
+                if (err.code) {
+                    friendlyError = `${err.code}: ${friendlyError}`;
+                }
+                
+                setError(friendlyError);
                 return;
             }
             if (result?.userConfirmed) {
+                // User is confirmed, sign them in directly
                 handleSignIn();
             } else {
+                // User needs to verify email
                 setShowOtpView(true);
             }
         });
