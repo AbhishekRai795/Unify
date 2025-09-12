@@ -1,7 +1,10 @@
 // src/pages/AdminPortal.tsx
 import React, { useEffect, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/adminApi';
 import { useAuth } from '../contexts/AuthContext';
+import EditChapter from '../components/admin/EditChapter';
+import { ChapterHeadProvider } from '../contexts/ChapterHeadContext';
 
 interface Chapter {
   chapterId: string;
@@ -14,8 +17,9 @@ interface Chapter {
   status: string;
 }
 
-const AdminPortal: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -60,6 +64,11 @@ const AdminPortal: React.FC = () => {
     } catch (e: any) {
       setError(e?.error || e?.message || 'Delete failed');
     }
+  };
+
+  const handleEditChapter = (chapter: Chapter) => {
+    console.log('Edit button clicked for chapter:', chapter.chapterId);
+    navigate(`/admin/chapters/edit/${chapter.chapterId}`);
   };
 
   if (!user?.groups.includes('admin')) {
@@ -141,7 +150,7 @@ const AdminPortal: React.FC = () => {
                     <div className="flex space-x-2">
                       <button 
                         className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                        onClick={() => {/* TODO: Add edit functionality */}}
+                        onClick={() => handleEditChapter(chapter)}
                       >
                         Edit
                       </button>
@@ -280,6 +289,20 @@ const CreateChapterForm: React.FC<{
         </div>
       </form>
     </div>
+  );
+};
+
+// Main AdminPortal component with routing
+const AdminPortal: React.FC = () => {
+  return (
+    <ChapterHeadProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/dashboard" element={<AdminDashboard />} />
+        <Route path="/chapters/edit/:chapterId" element={<EditChapter />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      </Routes>
+    </ChapterHeadProvider>
   );
 };
 
