@@ -274,17 +274,11 @@ export const adminApi = {
     console.log('Editing chapter head with payload:', payload);
     
     try {
-      // Use the updateChapter endpoint instead of the non-existent chapter-heads PUT endpoint
-      const updatePayload = {
-        headEmail: payload.email,
-        headName: payload.headName || payload.email
-      };
-      
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapters/${payload.chapterId}`, {
+      const res = await fetch(`${API_BASE_URL}/admin/chapter-heads`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(updatePayload)
+        body: JSON.stringify(payload)
       });
 
       console.log('Edit chapter head response status:', res.status);
