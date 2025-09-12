@@ -13,7 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Loader from '../components/common/Loader';
 import ThemeToggle from '../components/common/ThemeToggle';
-import { Eye, EyeOff, Mail, Lock, User, Users, Shield, Hash, Calendar, Library } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Users, Hash, Calendar, Library } from 'lucide-react';
 
 const poolData = {
     // Replace with your Cognito User Pool data
@@ -138,7 +138,7 @@ const NewPasswordForm: React.FC<{
     newPasswordError: string;
     showNewPassword: boolean; setShowNewPassword: (show: boolean) => void;
     showConfirmNewPassword: boolean; setShowConfirmNewPassword: (show: boolean) => void;
-}> = ({ handleNewPasswordSubmit, newPasswordName, setNewPasswordName, newPasswordChapterName, setNewPasswordChapterName, newPassword, setNewPassword, confirmNewPassword, setConfirmNewPassword, newPasswordError, showNewPassword, setShowNewPassword, showConfirmNewPassword, setShowConfirmNewPassword }) => (
+}>= ({ handleNewPasswordSubmit, newPasswordName, setNewPasswordName, newPasswordChapterName, setNewPasswordChapterName, newPassword, setNewPassword, confirmNewPassword, setConfirmNewPassword, newPasswordError, showNewPassword, setShowNewPassword, showConfirmNewPassword, setShowConfirmNewPassword }) => (
     <div className="w-full max-w-sm">
         <div className="flex items-center gap-3 mb-4">
             <Users className="h-8 w-8 text-blue-600" />

@@ -17,7 +17,7 @@ const MainLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
     <Header />
     <main className="flex-1">
-      <Outlet /> {/* Child routes will render here */}
+    <Outlet /> {/* Child routes will render here */}
     </main>
     <Footer />
   </div>
@@ -86,7 +86,6 @@ const RoleSelectionPage: React.FC = () => {
 
 
     if (!user || user.groups.length < 2) {
-        // This is a safeguard. If a user with one role lands here, send them away.
         return <Navigate to="/" replace />;
     }
 
