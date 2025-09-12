@@ -39,6 +39,16 @@ const AdminDashboard: React.FC = () => {
       setError('');
       const data = await adminApi.listChapters();
       setChapters(data.chapters || []);
+      
+      // Test listChapterHeads to compare with updateChapter
+      console.log('=== Testing listChapterHeads for comparison ===');
+      try {
+        const headsData = await adminApi.listChapterHeads();
+        console.log('ListChapterHeads works! Data:', headsData);
+      } catch (headError) {
+        console.error('ListChapterHeads failed:', headError);
+      }
+      
     } catch (e: any) {
       setError(e?.error || e?.message || 'Failed to load chapters');
       console.error('Error loading chapters:', e);

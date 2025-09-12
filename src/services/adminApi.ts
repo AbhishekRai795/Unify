@@ -232,6 +232,7 @@ export const adminApi = {
   },
 
   async listChapterHeads() {
+    console.log('=== Testing listChapterHeads for comparison ===');
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/admin/chapter-heads`, { 
@@ -239,8 +240,12 @@ export const adminApi = {
         headers 
       });
       
+      console.log('ListChapterHeads response status:', res.status);
+      
       if (!res.ok) {
         const errorText = await res.text();
+        console.error('ListChapterHeads error response:', errorText);
+        
         let error;
         try {
           error = JSON.parse(errorText);
@@ -250,7 +255,9 @@ export const adminApi = {
         throw error;
       }
       
-      return res.json();
+      const result = await res.json();
+      console.log('ListChapterHeads success:', result);
+      return result;
     } catch (error) {
       console.error('List heads error:', error);
       throw error;

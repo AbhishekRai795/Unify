@@ -20,12 +20,21 @@ export const handler = async (event) => {
 
   // Verify admin role
   const claims = event.requestContext?.authorizer?.jwt?.claims || {};
+  console.log('=== LAMBDA DEBUG ===');
+  console.log('Full event.requestContext:', JSON.stringify(event.requestContext, null, 2));
+  console.log('Raw claims:', JSON.stringify(claims, null, 2));
+  console.log('Raw groups from claims:', claims['cognito:groups']);
+  
   const rawGroups = claims['cognito:groups'];
   const groups = Array.isArray(rawGroups) 
     ? rawGroups 
     : typeof rawGroups === 'string' 
       ? rawGroups.split(',').map(s => s.trim()).filter(Boolean)
       : [];
+
+  console.log('Processed groups:', groups);
+  console.log('Groups includes admin?', groups.includes('admin'));
+  console.log('====================');
 
   if (!groups.includes('admin')) {
     return {
