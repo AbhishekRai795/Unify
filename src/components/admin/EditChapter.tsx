@@ -32,21 +32,47 @@ const EditChapter: React.FC = () => {
 
   // Load chapter data
   useEffect(() => {
-    if (chapterId && chapters.length > 0) {
-      const foundChapter = chapters.find(c => c.chapterId === chapterId);
-      if (foundChapter) {
-        setChapter(foundChapter);
+    const loadChapterData = async () => {
+      if (!chapterId) {
+        setError('Chapter ID is missing');
+        setLoading(false);
+        return;
+      }
+
+      // First try to find in chapters array from context
+      if (chapters.length > 0) {
+        const foundChapter = chapters.find(c => c.chapterId === chapterId);
+        if (foundChapter) {
+          setChapter(foundChapter);
+          setFormData({
+            chapterName: foundChapter.chapterName || '',
+            headEmail: foundChapter.headEmail || '',
+            headName: foundChapter.headName || ''
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If not found in context or context is empty, fetch directly from API
+      try {
+        console.log('Fetching chapter data directly from API for:', chapterId);
+        const chapterData = await adminApi.getChapter(chapterId);
+        setChapter(chapterData);
         setFormData({
-          chapterName: foundChapter.chapterName || '',
-          headEmail: foundChapter.headEmail || '',
-          headName: foundChapter.headName || ''
+          chapterName: chapterData.chapterName || '',
+          headEmail: chapterData.headEmail || '',
+          headName: chapterData.headName || ''
         });
         setLoading(false);
-      } else {
-        setError('Chapter nott found');
+      } catch (error: any) {
+        console.error('Error fetching chapter:', error);
+        setError('Chapter not found or failed to load');
         setLoading(false);
       }
-    }
+    };
+
+    loadChapterData();
   }, [chapterId, chapters]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -97,7 +123,13 @@ const EditChapter: React.FC = () => {
       await refreshData();
       
       setTimeout(() => {
-        navigate('/head/chapters');
+        // Navigate back to appropriate portal based on current path
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/admin/')) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/head/chapters');
+        }
       }, 2000);
 
     } catch (error: any) {
@@ -113,7 +145,13 @@ const EditChapter: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/head/chapters');
+    // Navigate back to appropriate portal based on current path
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/admin/')) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/head/chapters');
+    }
   };
 
   if (loading) {
