@@ -118,7 +118,7 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
       setChapters(response.chapters || []);
     } catch (error) {
       console.error('Error fetching chapters:', error);
-      setError('Failed to fetch chapters');
+      setError('Failed to feetch chapters');
     }
   };
 
