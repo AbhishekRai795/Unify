@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../services/adminApi';
 import Loader from '../common/Loader';
 
@@ -10,10 +11,12 @@ const EditChapter: React.FC = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
   const { chapters, refreshData } = useChapterHead();
+  const { user } = useAuth();
   
   console.log('EditChapter component loaded');
   console.log('Chapter ID from params:', chapterId);
   console.log('Available chapters:', chapters.map(c => c.chapterId));
+  console.log('User role:', user?.activeRole, 'User groups:', user?.groups);
   
   const [chapter, setChapter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,30 @@ const EditChapter: React.FC = () => {
     headName: ''
   });
 
+  // Check user permissions
+  const canEditChapter = () => {
+    if (!user) return false;
+    
+    // Admin can edit any chapter
+    if (user.groups.includes('admin')) {
+      return true;
+    }
+    
+    // Chapter heads can only view but not actually change head assignments
+    // (since they can't assign/remove their own role)
+    if (user.groups.includes('chapter_head')) {
+      // Check if this is their chapter
+      const isTheirChapter = chapters.some(c => 
+        c.chapterId === chapterId && c.headEmail === user.email
+      );
+      return isTheirChapter;
+    }
+    
+    return false;
+  };
+
+  const isAdminUser = () => user?.groups.includes('admin') || false;
+
   // Load chapter data
   useEffect(() => {
     const loadChapterData = async () => {
@@ -39,25 +66,50 @@ const EditChapter: React.FC = () => {
         return;
       }
 
-      // First try to find in chapters array from context
-      if (chapters.length > 0) {
-        const foundChapter = chapters.find(c => c.chapterId === chapterId);
-        if (foundChapter) {
-          setChapter(foundChapter);
-          setFormData({
-            chapterName: foundChapter.chapterName || '',
-            headEmail: foundChapter.headEmail || '',
-            headName: foundChapter.headName || ''
-          });
-          setLoading(false);
-          return;
-        }
+      // Check permissions first
+      if (!canEditChapter()) {
+        setError('You do not have permission to edit this chapter');
+        setLoading(false);
+        return;
       }
 
-      // If not found in context or context is empty, fetch directly from API
       try {
-        console.log('Fetching chapter data directly from API for:', chapterId);
-        const chapterData = await adminApi.getChapter(chapterId);
+        let chapterData;
+        
+        // First try to find in chapters array from context
+        if (chapters.length > 0) {
+          const foundChapter = chapters.find(c => c.chapterId === chapterId);
+          if (foundChapter) {
+            chapterData = foundChapter;
+          }
+        }
+
+        // If not found in context or context is empty, fetch directly from API
+        if (!chapterData) {
+          console.log('Fetching chapter data directly from API for:', chapterId);
+          
+          if (isAdminUser()) {
+            // Admin can use the admin API
+            chapterData = await adminApi.getChapter(chapterId);
+          } else {
+            // For chapter heads, we need to find another way to get chapter data
+            // Since there's no direct chapter head API for getting chapter details,
+            // we'll try the admin API and handle the 403 gracefully
+            try {
+              chapterData = await adminApi.getChapter(chapterId);
+            } catch (apiError: any) {
+              // If 403, it means chapter head can't access admin API
+              // In this case, we'll use the context data or show an error
+              if (apiError.message?.includes('403') || apiError.message?.includes('Forbidden')) {
+                setError('Chapter heads cannot modify chapter head assignments. Please contact an administrator.');
+                setLoading(false);
+                return;
+              }
+              throw apiError;
+            }
+          }
+        }
+        
         setChapter(chapterData);
         setFormData({
           chapterName: chapterData.chapterName || '',
@@ -67,13 +119,13 @@ const EditChapter: React.FC = () => {
         setLoading(false);
       } catch (error: any) {
         console.error('Error fetching chapter:', error);
-        setError('Chapter not found or failed to load');
+        setError(error.message || 'Chapter not found or failed to load');
         setLoading(false);
       }
     };
 
     loadChapterData();
-  }, [chapterId, chapters]);
+  }, [chapterId, chapters, user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -84,6 +136,16 @@ const EditChapter: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Only admins can actually submit changes
+    if (!isAdminUser()) {
+      setNotification({
+        type: 'error',
+        message: 'Only administrators can modify chapter head assignments'
+      });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
     
     if (!formData.headEmail.trim()) {
       setNotification({
@@ -107,7 +169,7 @@ const EditChapter: React.FC = () => {
       setSaving(true);
       setError(null);
 
-      // Call the edit API
+      // Call the edit API (only works for admins)
       await adminApi.editChapterHead({
         email: formData.headEmail.trim(),
         chapterId: chapterId,
@@ -272,14 +334,20 @@ const EditChapter: React.FC = () => {
                     type="email"
                     id="headEmail"
                     required
+                    disabled={!isAdminUser()}
                     value={formData.headEmail}
                     onChange={(e) => handleInputChange('headEmail', e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                     placeholder="Enter new chapter head email"
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  This email will be used to assign chapter head role to the user
+                  {isAdminUser() 
+                    ? 'This email will be used to assign chapter head role to the user'
+                    : 'Only administrators can modify chapter head assignments'
+                  }
                 </p>
               </div>
 
@@ -292,9 +360,12 @@ const EditChapter: React.FC = () => {
                   <input
                     type="text"
                     id="headName"
+                    disabled={!isAdminUser()}
                     value={formData.headName}
                     onChange={(e) => handleInputChange('headName', e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                     placeholder="Enter chapter head full name"
                   />
                 </div>
@@ -303,23 +374,40 @@ const EditChapter: React.FC = () => {
                 </p>
               </div>
 
-              {/* Warning Message */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
-                  <div>
-                    <h3 className="text-sm font-medium text-yellow-800">Important</h3>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Changing the chapter head will:
-                    </p>
-                    <ul className="text-sm text-yellow-700 mt-2 list-disc list-inside space-y-1">
-                      <li>Remove the current head from the chapter_head role</li>
-                      <li>Assign the chapter_head role to the new email address</li>
-                      <li>Update the chapter information to point to the new head</li>
-                    </ul>
+              {/* Warning Message - Different for admin vs chapter head */}
+              {isAdminUser() ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                    <div>
+                      <h3 className="text-sm font-medium text-yellow-800">Important</h3>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Changing the chapter head will:
+                      </p>
+                      <ul className="text-sm text-yellow-700 mt-2 list-disc list-inside space-y-1">
+                        <li>Remove the current head from the chapter_head role</li>
+                        <li>Assign the chapter_head role to the new email address</li>
+                        <li>Update the chapter information to point to the new head</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">Chapter Head View</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        You are viewing this chapter's information as a chapter head. Only administrators can modify chapter head assignments.
+                      </p>
+                      <p className="text-sm text-blue-700 mt-2">
+                        If you need to transfer your chapter head role to someone else, please contact an administrator.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -328,25 +416,27 @@ const EditChapter: React.FC = () => {
                   onClick={handleCancel}
                   className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
                 >
-                  Cancel
+                  {isAdminUser() ? 'Cancel' : 'Back'}
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving || !formData.headEmail.trim()}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
+                {isAdminUser() && (
+                  <button
+                    type="submit"
+                    disabled={saving || !formData.headEmail.trim()}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </form>
           </div>
