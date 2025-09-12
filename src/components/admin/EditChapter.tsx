@@ -11,6 +11,10 @@ const EditChapter: React.FC = () => {
   const navigate = useNavigate();
   const { chapters, refreshData } = useChapterHead();
   
+  console.log('EditChapter component loaded');
+  console.log('Chapter ID from params:', chapterId);
+  console.log('Available chapters:', chapters.map(c => c.chapterId));
+  
   const [chapter, setChapter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -54,6 +54,8 @@ const ManageChapters: React.FC = () => {
   };
 
   const handleEditChapterHead = (chapter: any) => {
+    console.log('Edit button clicked for chapter:', chapter.chapterId);
+    console.log('Navigating to:', `/head/chapters/edit/${chapter.chapterId}`);
     navigate(`/head/chapters/edit/${chapter.chapterId}`);
   };
 
@@ -228,7 +230,10 @@ const ManageChapters: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleEditChapterHead(chapter)}
+                            onClick={() => {
+                              alert(`Edit clicked for chapter: ${chapter.chapterName}`);
+                              handleEditChapterHead(chapter);
+                            }}
                             className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
                             title="Edit Chapter Head"
                           >
