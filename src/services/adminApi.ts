@@ -8,6 +8,19 @@ async function getAuthHeaders() {
     throw new Error('No authentication token found. Please sign in.');
   }
   
+  // Debug the token to see what groups are included
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('=== AUTH HEADERS DEBUG ===');
+    console.log('Token groups:', payload['cognito:groups']);
+    console.log('Token expiry:', new Date(payload.exp * 1000));
+    console.log('Current time:', new Date());
+    console.log('Token valid:', new Date() < new Date(payload.exp * 1000));
+    console.log('===========================');
+  } catch (error) {
+    console.error('Error decoding token in getAuthHeaders:', error);
+  }
+  
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
