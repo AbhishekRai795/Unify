@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { adminApi } from '../../services/adminApi';
 import Modal from '../common/Modal';
 import Loader from '../common/Loader';
 
@@ -17,6 +18,12 @@ const ManageChapters: React.FC = () => {
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditHeadModal, setShowEditHeadModal] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<any>(null);
+  const [editHeadForm, setEditHeadForm] = useState({
+    email: '',
+    headName: ''
+  });
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -44,6 +51,55 @@ const ManageChapters: React.FC = () => {
       setNotification({
         type: 'error',
         message: 'An error occurred while updating'
+      });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleEditChapterHead = (chapter: any) => {
+    setEditingChapter(chapter);
+    setEditHeadForm({
+      email: chapter.headEmail || '',
+      headName: chapter.headName || ''
+    });
+    setShowEditHeadModal(true);
+  };
+
+  const handleSaveChapterHead = async () => {
+    if (!editingChapter || !editHeadForm.email.trim()) {
+      setNotification({
+        type: 'error',
+        message: 'Email is required'
+      });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
+
+    try {
+      setUpdating(editingChapter.chapterId);
+      
+      await adminApi.editChapterHead({
+        email: editHeadForm.email.trim(),
+        chapterId: editingChapter.chapterId,
+        headName: editHeadForm.headName.trim() || undefined
+      });
+
+      setNotification({
+        type: 'success',
+        message: 'Chapter head updated successfully'
+      });
+      
+      setShowEditHeadModal(false);
+      setEditingChapter(null);
+      refreshData(); // Refresh the chapters list
+      
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to update chapter head'
       });
       setTimeout(() => setNotification(null), 3000);
     } finally {
@@ -220,6 +276,14 @@ const ManageChapters: React.FC = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
+
+                          <button
+                            onClick={() => handleEditChapterHead(chapter)}
+                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
+                            title="Edit Chapter Head"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
                           
                           <button
                             onClick={() => handleToggleRegistration(chapter.chapterId, chapter.registrationStatus || 'closed')}
@@ -328,6 +392,87 @@ const ManageChapters: React.FC = () => {
                 <div className="text-sm text-gray-500">
                   Updated: {new Date(selectedChapterData.updatedAt).toLocaleDateString()}
                 </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Edit Chapter Head Modal */}
+        <Modal
+          isOpen={showEditHeadModal}
+          onClose={() => {
+            setShowEditHeadModal(false);
+            setEditingChapter(null);
+          }}
+          title="Edit Chapter Head"
+          size="md"
+        >
+          {editingChapter && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">
+                    {editingChapter.chapterName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {editingChapter.chapterName}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Current Head: {editingChapter.headName || 'Not assigned'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="headEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                    New Chapter Head Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="headEmail"
+                    value={editHeadForm.email}
+                    onChange={(e) => setEditHeadForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="headName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Chapter Head Name
+                  </label>
+                  <input
+                    type="text"
+                    id="headName"
+                    value={editHeadForm.headName}
+                    onChange={(e) => setEditHeadForm(prev => ({ ...prev, headName: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter full name"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setShowEditHeadModal(false);
+                    setEditingChapter(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveChapterHead}
+                  disabled={updating === editingChapter?.chapterId || !editHeadForm.email.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {updating === editingChapter?.chapterId ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
             </div>
           )}

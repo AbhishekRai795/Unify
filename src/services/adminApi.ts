@@ -268,5 +268,42 @@ export const adminApi = {
       console.error('Remove head error:', error);
       throw error;
     }
+  },
+
+  async editChapterHead(payload: { email: string; chapterId: string; headName?: string }) {
+    console.log('Editing chapter head with payload:', payload);
+    
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/admin/chapter-heads`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      console.log('Edit chapter head response status:', res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Edit chapter head error response:', errorText);
+        
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: `Edit chapter head failed with status ${res.status}`, details: errorText };
+        }
+        
+        throw error;
+      }
+
+      const result = await res.json();
+      console.log('Edit chapter head success:', result);
+      return result;
+      
+    } catch (error) {
+      console.error('Edit chapter head error:', error);
+      throw error;
+    }
   }
 };
