@@ -39,7 +39,7 @@ const EditChapter: React.FC = () => {
         });
         setLoading(false);
       } else {
-        setError('Chapter not found');
+        setError('Chapter nott found');
         setLoading(false);
       }
     }
