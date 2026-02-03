@@ -176,6 +176,7 @@ function AppContent() {
               <Navigate to={getRedirectPath(user)} replace />
             ) : (
               <AuthPage />
+              
             )
           } 
         />
