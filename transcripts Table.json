@@ -1,0 +1,15 @@
+{
+  "tableName": "transcripts",
+  "primaryKey": {
+    "partitionKey": "jobId"
+  },
+  "attributes": {
+    "jobId": "String",
+    "completedAt": "String (ISO Date)",
+    "fileName": "String",
+    "status": "String",
+    "txtFileBucket": "String",
+    "txtFileKey": "String",
+    "txtFileUrl": "String (S3 URL)"
+  }
+}
