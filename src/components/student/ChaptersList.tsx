@@ -4,7 +4,9 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { studentAPI } from '../../services/api';
+import { paymentAPI } from '../../services/paymentApi';
 import ErrorMessage from '../common/ErrorMessage';
+import ChapterPaymentModal from './ChapterPaymentModal';
 
 interface Chapter {
   id: string;
@@ -322,6 +324,8 @@ const ChaptersList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedChapterForPayment, setSelectedChapterForPayment] = useState<Chapter | null>(null);
 
   useEffect(() => {
     fetchChapters();
@@ -411,7 +415,22 @@ const ChaptersList: React.FC = () => {
       setError('Registration is currently closed for this chapter.');
       return;
     }
+
+    // Check if chapter requires payment
+    try {
+      const feeInfo = await paymentAPI.getChapterFees(chapterId);
+      
+      if (feeInfo.feeInfo?.isPaid) {
+        // Show payment modal for paid chapters
+        setSelectedChapterForPayment(chapter);
+        setShowPaymentModal(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('Could not fetch fee info, proceeding with free registration:', err);
+    }
     
+    // Free registration flow
     setActionLoading(chapterId);
     setError(null);
     
@@ -809,6 +828,28 @@ const ChaptersList: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Payment Modal */}
+      {selectedChapterForPayment && (
+        <ChapterPaymentModal
+          isOpen={showPaymentModal}
+          chapterId={selectedChapterForPayment.id}
+          chapterName={selectedChapterForPayment.name}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedChapterForPayment(null);
+          }}
+          onPaymentSuccess={async () => {
+            setShowPaymentModal(false);
+            setSelectedChapterForPayment(null);
+            // Refresh chapters list after successful payment
+            await fetchChapters();
+          }}
+          onPaymentFailed={(errorMsg) => {
+            setError(errorMsg);
+          }}
+        />
       )}
       </div>
     </div>

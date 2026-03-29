@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../services/adminApi';
+import { paymentAPI } from '../../services/paymentApi';
 import Loader from '../common/Loader';
 
 const EditChapter: React.FC = () => {
@@ -30,7 +31,9 @@ const EditChapter: React.FC = () => {
   const [formData, setFormData] = useState({
     chapterName: '',
     headEmail: '',
-    headName: ''
+    headName: '',
+    isPaid: false,
+    registrationFee: 0
   });
 
   // Check user permissions
@@ -76,30 +79,31 @@ const EditChapter: React.FC = () => {
       try {
         let chapterData;
         
-        // First try to find in chapters array from context
-        if (chapters.length > 0) {
-          const foundChapter = chapters.find(c => c.chapterId === chapterId);
-          if (foundChapter) {
-            chapterData = foundChapter;
+        if (isAdminUser()) {
+          // For admins: use listChapters which returns full data including headEmail/headName.
+          // The old getChapter lambda only returns a legacy `chapterHead` field, not headEmail/headName.
+          try {
+            const listResult = await adminApi.listChapters({ limit: 200 });
+            const allChapters = listResult.chapters || [];
+            chapterData = allChapters.find((c: any) => c.chapterId === chapterId);
+          } catch (listError) {
+            console.warn('listChapters failed, falling back to getChapter:', listError);
           }
-        }
 
-        // If not found in context or context is empty, fetch directly from API
-        if (!chapterData) {
-          console.log('Fetching chapter data directly from API for:', chapterId);
-          
-          if (isAdminUser()) {
-            // Admin can use the admin API
+          // Fallback: try the old getChapter endpoint
+          if (!chapterData) {
+            console.log('Fetching chapter data directly from API for:', chapterId);
             chapterData = await adminApi.getChapter(chapterId);
-          } else {
-            // For chapter heads, we need to find another way to get chapter data
-            // Since there's no direct chapter head API for getting chapter details,
-            // we'll try the admin API and handle the 403 gracefully
+          }
+        } else {
+          // For chapter heads: look in context first (their own chapters)
+          if (chapters.length > 0) {
+            chapterData = chapters.find(c => c.chapterId === chapterId);
+          }
+          if (!chapterData) {
             try {
               chapterData = await adminApi.getChapter(chapterId);
             } catch (apiError: any) {
-              // If 403, it means chapter head can't access admin API
-              // In this case, we'll use the context data or show an error
               if (apiError.message?.includes('403') || apiError.message?.includes('Forbidden')) {
                 setError('Chapter heads cannot modify chapter head assignments. Please contact an administrator.');
                 setLoading(false);
@@ -109,12 +113,27 @@ const EditChapter: React.FC = () => {
             }
           }
         }
+
+        if (!chapterData) {
+          setError('Chapter not found');
+          setLoading(false);
+          return;
+        }
         
+        
+        // Load payment config
+        let feeData = { feeInfo: { isPaid: false, registrationFee: 0 } };
+        if (isAdminUser()) {
+           feeData = await paymentAPI.getChapterFees(chapterId);
+        }
+
         setChapter(chapterData);
         setFormData({
           chapterName: chapterData.chapterName || '',
           headEmail: chapterData.headEmail || '',
-          headName: chapterData.headName || ''
+          headName: chapterData.headName || '',
+          isPaid: feeData?.feeInfo?.isPaid || false,
+          registrationFee: feeData?.feeInfo?.registrationFee ? feeData.feeInfo.registrationFee / 100 : 0
         });
         setLoading(false);
       } catch (error: any) {
@@ -130,7 +149,7 @@ const EditChapter: React.FC = () => {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: field === 'registrationFee' ? Number(value) : value
     }));
   };
 
@@ -172,10 +191,16 @@ const EditChapter: React.FC = () => {
       // Call the edit API (only works for admins)
       // Try using updateChapter directly instead of editChapterHead
       console.log('Trying updateChapter directly...');
-      await adminApi.updateChapter(chapterId, {
-        headEmail: formData.headEmail.trim(),
-        headName: formData.headName.trim() || undefined
-      });
+      await Promise.all([
+        adminApi.updateChapter(chapterId, {
+          headEmail: formData.headEmail.trim(),
+          headName: formData.headName.trim() || undefined
+        }),
+        paymentAPI.updateChapterPaymentConfig(chapterId, {
+          isPaid: formData.isPaid,
+          registrationFee: formData.isPaid ? formData.registrationFee * 100 : 0
+        })
+      ]);
 
       setNotification({
         type: 'success',
@@ -374,6 +399,55 @@ const EditChapter: React.FC = () => {
                   Display name for the chapter head (can be updated later)
                 </p>
               </div>
+
+              {/* Payment Configuration Options */}
+              {isAdminUser() && (
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Configuration</h3>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-medium text-gray-700">Paid Chapter</p>
+                      <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPaid}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
+                        className="sr-only peer"
+                        disabled={!isAdminUser()}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  {formData.isPaid && (
+                    <div className="mt-4">
+                      <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
+                        Registration Fee (₹)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                        <input
+                          type="number"
+                          id="registrationFee"
+                          min="0"
+                          step="0.01"
+                          disabled={!isAdminUser()}
+                          value={formData.registrationFee}
+                          onChange={(e) => handleInputChange('registrationFee', e.target.value)}
+                          className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                          }`}
+                          placeholder="e.g. 100"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Warning Message - Different for admin vs chapter head */}
               {isAdminUser() ? (

@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/adminApi';
 import { useAuth } from '../contexts/AuthContext';
 import EditChapter from '../components/admin/EditChapter';
+import CreateChapterWithPayment from '../components/admin/CreateChapterWithPayment';
 import { ChapterHeadProvider } from '../contexts/ChapterHeadContext';
 
 interface Chapter {
@@ -94,7 +95,7 @@ const AdminDashboard: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Portal</h1>
         <button 
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => navigate('/admin/chapters/create-with-payment')}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Create Chapter
@@ -310,6 +311,7 @@ const AdminPortal: React.FC = () => {
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/chapters/edit/:chapterId" element={<EditChapter />} />
+        <Route path="/chapters/create-with-payment" element={<CreateChapterWithPayment />} />
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </ChapterHeadProvider>

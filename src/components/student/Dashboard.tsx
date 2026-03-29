@@ -5,7 +5,8 @@ import {
   BookOpen, 
   Clock, 
   ArrowRight,
-  Activity
+  Activity,
+  CreditCard
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -180,6 +181,20 @@ const Dashboard: React.FC = () => {
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-dark-text-primary">View Events</p>
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">See what's happening</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <Link to="/student/payments/history" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-purple-600/20 to-accent-600/20 border border-purple-500/30' : 'bg-purple-100/70'}`}>
+                        <CreditCard className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Payment History</p>
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">View your transactions</p>
                     </div>
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />

@@ -1,0 +1,13 @@
+{
+  "tableName": "ChapterHead",
+  "primaryKey": {
+    "partitionKey": "email"
+  },
+  "attributes": {
+    "email": "String",
+    "chapterId": "String",
+    "chapterName": "String",
+    "headName": "String",
+    "linkedAt": "String (ISO Date)"
+  }
+}
