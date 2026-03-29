@@ -101,13 +101,11 @@ export const handler = async (event) => {
       const response = await docClient.send(new QueryCommand({
         TableName: PAYMENTS_TABLE,
         IndexName: "UserIdIndex",
-        KeyConditionExpression: "userId = :userId AND begins_with(#t, :txType)",
-        ExpressionAttributeNames: {
-          "#t": "transactionId"
-        },
+        KeyConditionExpression: "userId = :userId",
+        FilterExpression: "recordType = :recordType",
         ExpressionAttributeValues: {
           ":userId": userId,
-          ":txType": "TRANSACTION"
+          ":recordType": "TRANSACTION"
         },
         ScanIndexForward: false, // Most recent first
         Limit: 50

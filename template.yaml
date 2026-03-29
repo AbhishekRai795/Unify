@@ -174,12 +174,12 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub unify-payment-receipts-${Environment}
+      BucketName: !Sub unify-payment-receipts-${Environment}-${AWS::AccountId}
       PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
       LifecycleConfiguration:
         Rules:
           - Id: ExpireOldReceipts
@@ -190,6 +190,19 @@ Resources:
           Value: Unify
         - Key: Component
           Value: Payment
+
+  ReceiptsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UnifyPaymentReceiptsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${UnifyPaymentReceiptsBucket}/receipts/*"
+            Principal: "*"
 
   # ──────────────────────────────────────────────────────────────────────────
   # Secrets Manager — Razorpay Credentials

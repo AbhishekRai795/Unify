@@ -12,7 +12,7 @@ const s3Client = new S3Client({ region: "ap-south-1" });
 const PAYMENTS_TABLE = "ChapterPayments";
 const REGISTRATION_TABLE = "RegistrationRequests";
 const USERS_TABLE = "Unify-Users";
-const RECEIPTS_BUCKET = "unify-payment-receipts";
+const RECEIPTS_BUCKET = process.env.RECEIPTS_BUCKET;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
