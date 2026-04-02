@@ -11,15 +11,22 @@ import AdminPortal from './pages/AdminPortal';
 import AuthPage from './pages/AuthPage';
 import Loader from './components/common/Loader';
 import { Shield, User, UserCog } from 'lucide-react';
+import { ChatProvider } from './contexts/ChatContext';
+import ChatWidget from './components/chat/ChatWidget';
 
 // This component will wrap pages that need the Header and Footer
 const MainLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
-    <Header />
+    <header>
+      <Header />
+    </header>
     <main className="flex-1">
-    <Outlet /> {/* Child routes will render here */}
+      <Outlet /> {/* Child routes will render here */}
     </main>
-    <Footer />
+    <ChatWidget />
+    <footer>
+      <Footer />
+    </footer>
   </div>
 );
 
@@ -132,7 +139,9 @@ const RoleSelectionPage: React.FC = () => {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <ChatProvider>
+        <AppContent />
+      </ChatProvider>
     </ThemeProvider>
   );
 }

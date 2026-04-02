@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
-  const { chapters, profile } = useChapterHead();
+  const { chapters, profile, createEvent } = useChapterHead();
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
@@ -27,7 +27,9 @@ const CreateEvent: React.FC = () => {
     registrationRequired: true,
     registrationDeadline: '',
     tags: '',
-    imageUrl: ''
+    imageUrl: '',
+    isPaid: false,
+    registrationFee: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -43,21 +45,28 @@ const CreateEvent: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // For now, just show a success message since we don't have createEvent in ChapterHeadContext
-      // In a real implementation, this would call an API to create the event
-      setNotification({
-        type: 'success',
-        message: 'Event created successfully! (Demo implementation)'
-      });
+      const success = await createEvent(formData);
       
-      setTimeout(() => {
-        navigate('/head/dashboard');
-      }, 2000);
-      
-    } catch (error) {
+      if (success) {
+        setNotification({
+          type: 'success',
+          message: 'Event created successfully!'
+        });
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate('/head/dashboard');
+        }, 2000);
+      } else {
+        setNotification({
+          type: 'error',
+          message: 'Failed to create event. Please try again.'
+        });
+      }
+    } catch (error: any) {
       setNotification({
         type: 'error',
-        message: 'An error occurred while creating the event.'
+        message: error.message || 'An unexpected error occurred'
       });
     } finally {
       setIsLoading(false);
@@ -368,11 +377,55 @@ const CreateEvent: React.FC = () => {
               </div>
             </div>
 
+            {/* Paid vs Free Toggle */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <div className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isPaid"
+                      checked={formData.isPaid}
+                      onChange={handleChange}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-900">Paid Event</span>
+                    <span className="text-xs text-gray-500">Require Razorpay payment to join</span>
+                  </div>
+                </label>
+              </div>
+
+              {formData.isPaid && (
+                <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                  <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-1">
+                    Registration Fee (INR)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                    <input
+                      type="number"
+                      id="registrationFee"
+                      name="registrationFee"
+                      value={formData.registrationFee}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      required={formData.isPaid}
+                      min="1"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Submit Buttons */}
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={() => navigate('/admin')}
+                onClick={() => navigate('/head/dashboard')}
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
               >
                 Cancel

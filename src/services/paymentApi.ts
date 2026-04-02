@@ -150,7 +150,67 @@ export const paymentAPI = {
       body: JSON.stringify(data)
     });
     return handleResponse(response);
+  },
+  
+  // Events
+  listEvents: async () => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  },
+
+  joinFreeEvent: async (data: { eventId: string, studentName: string, studentEmail: string, chapterId: string }) => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/join`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  createEventOrder: async (data: { eventId: string, studentName: string, studentEmail: string }) => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/create-order`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  verifyEventPayment: async (data: {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    eventId: string;
+    userId: string;
+    transactionId: string;
+  }) => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  getMyEventRegistrations: async () => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/my-registrations`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
+    ,
+    // For chapter heads: get all registrations for a given event
+    getEventRegistrationsForEvent: async (eventId: string) => {
+      const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/registrations?eventId=${encodeURIComponent(eventId)}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+      return handleResponse(response);
+    }
 };
 
 export default paymentAPI;

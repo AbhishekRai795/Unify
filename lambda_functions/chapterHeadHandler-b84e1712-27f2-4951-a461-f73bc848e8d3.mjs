@@ -163,11 +163,24 @@ const getDashboardStats = async (chapterHead, headers) => {
 
     const recentRegistrations = (recentApprovedResult.Items || []).filter(r => !!r.processedAt).length;
 
+    // Fetch active events count
+    let activeEvents = 0;
+    try {
+      const eventsResult = await dynamoDB.send(new ScanCommand({
+        TableName: 'ChapterEvents',
+        FilterExpression: 'chapterId = :c AND (isLive = :true OR attribute_not_exists(isLive))',
+        ExpressionAttributeValues: { ':c': chapterHead.chapterId, ':true': true }
+      }));
+      activeEvents = eventsResult.Items ? eventsResult.Items.length : 0;
+    } catch (err) {
+      console.log('Events scan issue:', err.message);
+    }
+
     const stats = {
       totalChapters: 1,
       totalMembers: chapter.memberCount || 0,
       pendingRegistrations: pendingCount,
-      activeEvents: 0,
+      activeEvents,
       recentRegistrations
     };
     return { statusCode: 200, headers, body: JSON.stringify({ stats }) };
@@ -492,6 +505,22 @@ const getRecentActivities = async (chapterHead, queryParams, headers) => {
   }
 };
 
+// GET: events managed by the chapter head
+const getMyEvents = async (chapterHead, headers) => {
+  try {
+    const result = await dynamoDB.send(new ScanCommand({
+      TableName: 'ChapterEvents',
+      FilterExpression: 'chapterId = :c',
+      ExpressionAttributeValues: { ':c': chapterHead.chapterId }
+    }));
+    const events = result.Items || [];
+    return { statusCode: 200, headers, body: JSON.stringify({ events }) };
+  } catch (error) {
+    console.error('Error getting events:', error);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to fetch events', details: error.message }) };
+  }
+};
+
 export const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -560,6 +589,8 @@ export const handler = async (event) => {
         return await getRegistrations(chapterHead, queryStringParameters, headers);
       case httpMethod === 'GET' && path === '/chapterhead/registrations/{chapterId}':
         return await getChapterRegistrations(chapterHead, pathParameters.chapterId, headers);
+      case httpMethod === 'GET' && path === '/chapterhead/events':
+        return await getMyEvents(chapterHead, headers);
       case httpMethod === 'PUT' && path === '/chapterhead/toggle-registration':
         return await toggleRegistration(chapterHead, JSON.parse(event.body), headers);
       case httpMethod === 'PUT' && path === '/chapterhead/registration/{registrationId}':

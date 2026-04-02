@@ -58,28 +58,15 @@ Globals:
         USERS_TABLE: Unify-Users
         REGISTRATION_TABLE: RegistrationRequests
         RECEIPTS_BUCKET: !Ref UnifyPaymentReceiptsBucket
+        EVENTS_TABLE: !Ref ChapterEventsTable
+        EVENT_PAYMENTS_TABLE: !Ref EventPaymentsTable
+        CHAT_MESSAGES_TABLE: !Ref ChatMessagesTable
+        CHAT_THREADS_TABLE: !Ref ChatThreadsTable
         RAZORPAY_SECRET_NAME: unify/razorpay/credentials
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         USER_POOL_ID: !Ref CognitoUserPoolId
         ALLOWED_ORIGIN: !Ref FrontendOrigin
         ENVIRONMENT: !Ref Environment
-
-  HttpApi:
-    CorsConfiguration:
-      AllowOrigins:
-        - !Ref FrontendOrigin
-      AllowHeaders:
-        - Content-Type
-        - Authorization
-        - X-Amz-Date
-        - X-Api-Key
-      AllowMethods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - OPTIONS
-      MaxAge: 600
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resources
@@ -94,6 +81,21 @@ Resources:
     Properties:
       StageName: !Ref Environment
       Description: Unify Payment API - handles Razorpay payment flows
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref FrontendOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Amz-Date
+          - X-Api-Key
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        MaxAge: 600
       Auth:
         Authorizers:
           CognitoAuth:
@@ -166,6 +168,185 @@ Resources:
           Value: Unify
         - Key: Component
           Value: Payment
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — ChapterEvents Table
+  # ──────────────────────────────────────────────────────────────────────────
+  ChapterEventsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: ChapterEvents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: chapterId
+          AttributeType: S
+        - AttributeName: eventId
+          AttributeType: S
+        - AttributeName: eventType
+          AttributeType: S
+        - AttributeName: startDateTime
+          AttributeType: S
+      KeySchema:
+        - AttributeName: chapterId
+          KeyType: HASH
+        - AttributeName: eventId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: EventIdIndex
+          KeySchema:
+            - AttributeName: eventId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: EventTypeIndex
+          KeySchema:
+            - AttributeName: eventType
+              KeyType: HASH
+            - AttributeName: startDateTime
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — EventPayments Table
+  # Tracks event registrations and payment status
+  # ──────────────────────────────────────────────────────────────────────────
+  EventPaymentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: EventPayments
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: eventId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: paymentStatus
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: eventId
+          KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: PaymentStatusIndex
+          KeySchema:
+            - AttributeName: paymentStatus
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — ChatThreads Table
+  # Stores conversation metadata between Chapter Head and Students
+  # ──────────────────────────────────────────────────────────────────────────
+  ChatThreadsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: ChatThreads1To1
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: conversationId
+          AttributeType: S
+        - AttributeName: chapterId
+          AttributeType: S
+        - AttributeName: lastMessageAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: conversationId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ChapterThreadsIndex
+          KeySchema:
+            - AttributeName: chapterId
+              KeyType: HASH
+            - AttributeName: lastMessageAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Chat
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — ChatMessages Table
+  # Stores individual chat messages with full conversation history
+  # ──────────────────────────────────────────────────────────────────────────
+  ChatMessagesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: ChatMessages1To1
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: conversationId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: senderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: conversationId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ConversationTimeIndex
+          KeySchema:
+            - AttributeName: conversationId
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: SenderIdIndex
+          KeySchema:
+            - AttributeName: senderId
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Chat
 
   # ──────────────────────────────────────────────────────────────────────────
   # S3 Bucket — Payment Receipts
@@ -488,6 +669,8 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref ChapterPaymentsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventPaymentsTable
       Events:
         GetPaymentDetailsApi:
           Type: HttpApi
@@ -508,8 +691,603 @@ Resources:
         Component: Payment
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Outputs
-# ─────────────────────────────────────────────────────────────────────────────
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 7: Create Event
+  # Chapter Head creates a new event
+  # POST /api/events
+  # ──────────────────────────────────────────────────────────────────────────
+  CreateEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-create-event-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/createEvent-payment/
+      Description: Creates a new event for a chapter
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+      Events:
+        CreateEventApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 12: Update Event
+  # Chapter Head updates an existing event
+  # PUT /api/events/{chapterId}/{eventId}
+  # ──────────────────────────────────────────────────────────────────────────
+  UpdateEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-update-event-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/updateEvent-payment/
+      Description: Updates an existing chapter event
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+      Events:
+        UpdateEventApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/{chapterId}/{eventId}
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 13: Delete Event
+  # Chapter Head deletes an existing event (soft delete)
+  # DELETE /api/events/{chapterId}/{eventId}
+  # ──────────────────────────────────────────────────────────────────────────
+  DeleteEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-delete-event-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/deleteEvent-payment/
+      Description: Deletes an existing chapter event (marks as not live)
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+      Events:
+        DeleteEventApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/{chapterId}/{eventId}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 14: List Chapter Events
+  # Returns all events for a specific chapter
+  # GET /api/chapter-events/{chapterId}
+  # ──────────────────────────────────────────────────────────────────────────
+  ListChapterEventsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-chapter-events-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/listChapterEvents-payment/
+      Description: Returns all events for a specific chapter
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ChapterEventsTable
+      Events:
+        ListChapterEventsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapter-events/{chapterId}
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 8: List Events
+  # Returns all live events
+  # GET /api/events
+  # ──────────────────────────────────────────────────────────────────────────
+  ListEventsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-events-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/listEvents-payment/
+      Description: Lists all live events
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ChapterEventsTable
+      Events:
+        ListEventsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events
+            Method: GET
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 9: Join Free Event
+  # Student joins a free event
+  # POST /api/events/join
+  # ──────────────────────────────────────────────────────────────────────────
+  JoinFreeEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-join-free-event-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/joinFreeEvent-payment/
+      Description: Student joins a free chapter event
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: Unify-Users
+      Events:
+        JoinFreeEventApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/join
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 10: Create Event Razorpay Order
+  # Student initiates payment for a paid event
+  # POST /api/events/create-order
+  # ──────────────────────────────────────────────────────────────────────────
+  CreateEventOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-create-event-order-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/createEventOrder-payment/
+      Description: Creates Razorpay order for a paid event registration
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - !Ref SecretsManagerPolicy
+      Events:
+        CreateEventOrderApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/create-order
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 11: Verify Event Payment
+  # Verifies Razorpay signature and finalizes event registration
+  # POST /api/events/verify
+  # ──────────────────────────────────────────────────────────────────────────
+  VerifyEventPaymentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-verify-event-payment-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/verifyEventPayment-payment/
+      Description: Verifies Razorpay payment and completes event registration
+      Timeout: 30
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: Unify-Users
+        - S3CrudPolicy:
+            BucketName: !Ref UnifyPaymentReceiptsBucket
+        - !Ref SecretsManagerPolicy
+      Events:
+        VerifyEventPaymentApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/verify
+            Method: POST
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda 12: List Student Event Registrations
+  # Returns all events a student has registered for
+  # GET /api/events/my-registrations
+  # ──────────────────────────────────────────────────────────────────────────
+  ListStudentEventRegistrationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-my-event-registrations-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/listStudentEventRegistrations-payment/
+      Description: Returns all events a student has registered for
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventPaymentsTable
+      Events:
+        ListMyEventRegistrationsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/my-registrations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: List Event Registrations For Event (Chapter Head)
+  # Returns all registrations for a given event
+  # GET /api/events/registrations?eventId=xxx
+  # ──────────────────────────────────────────────────────────────────────────
+  ListEventRegistrationsForEventFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-event-registrations-for-event-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/listEventRegistrationsForEvent-payment/
+      Description: Returns all registrations for a given event (chapter head view)
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventPaymentsTable
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+      Events:
+        ListEventRegistrationsForEventApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/events/registrations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Events
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Send Chat Message
+  # Chapter head or student sends a message to the other party
+  # POST /api/chat/send-message
+  # ──────────────────────────────────────────────────────────────────────────
+  SendChatMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-send-chat-message-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/sendChatMessage-payment/
+      Description: Sends chat message between chapter head and students
+      Environment:
+        Variables:
+          CHAT_MESSAGES_TABLE: !Ref ChatMessagesTable
+          CHAT_THREADS_TABLE: !Ref ChatThreadsTable
+          CHAPTERS_TABLE: Chapters
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatMessagesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatThreadsTable
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+      Events:
+        SendChatMessageApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chat/send-message
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Chat
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Get Chat Messages
+  # Retrieve conversation history between two users
+  # GET /api/chat/messages
+  # ──────────────────────────────────────────────────────────────────────────
+  GetChatMessagesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-get-chat-messages-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/getChatMessages-payment/
+      Description: Retrieves chat message history
+      Environment:
+        Variables:
+          CHAT_MESSAGES_TABLE: !Ref ChatMessagesTable
+          CHAT_THREADS_TABLE: !Ref ChatThreadsTable
+          CHAPTERS_TABLE: Chapters
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatMessagesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatThreadsTable
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+      Events:
+        GetChatMessagesApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chat/messages
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Chat
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: List Chat Conversations
+  # List all conversations for a user in a chapter
+  # GET /api/chat/conversations
+  # ──────────────────────────────────────────────────────────────────────────
+  ListChatConversationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-chat-conversations-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/listChatConversations-payment/
+      Description: Lists all chat conversations for a user in a chapter
+      Environment:
+        Variables:
+          CHAT_THREADS_TABLE: !Ref ChatThreadsTable
+          CHAPTERS_TABLE: Chapters
+          USERS_TABLE: Unify-Users
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ChatThreadsTable
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+      Events:
+        ListChatConversationsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chat/conversations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Chat
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — WebSocket Connections Table
+  # ──────────────────────────────────────────────────────────────────────────
+  WebSocketConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnections1To1
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: connectionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: connectionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # WebSocket API Gateway
+  # ──────────────────────────────────────────────────────────────────────────
+  ChapterChatWebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: ChapterChatWebSocketApi
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  # Routes
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      RouteKey: "$connect"
+      AuthorizationType: NONE
+      Target: !Join [ '/', [ 'integrations', !Ref ConnectIntegration ] ]
+
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      RouteKey: "$disconnect"
+      Target: !Join [ '/', [ 'integrations', !Ref DisconnectIntegration ] ]
+
+  SendMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      RouteKey: "sendMessage"
+      Target: !Join [ '/', [ 'integrations', !Ref SendMessageIntegration ] ]
+
+  # Integrations
+  ConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketOnConnectFunction.Arn}/invocations"
+
+  DisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketOnDisconnectFunction.Arn}/invocations"
+
+  SendMessageIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      Description: Send Message Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketSendMessageFunction.Arn}/invocations"
+
+  # Deployment & Stage
+  WebSocketDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ConnectRoute
+      - DisconnectRoute
+      - SendMessageRoute
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ChapterChatWebSocketApi
+      DeploymentId: !Ref WebSocketDeployment
+      StageName: !Ref Environment
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Chat Lambda Functions
+  # ──────────────────────────────────────────────────────────────────────────
+  WebSocketOnConnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-ws-on-connect-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/wsOnConnect/
+      Environment:
+        Variables:
+          WebSocketConnectionsTable: !Ref WebSocketConnectionsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WebSocketConnectionsTable
+
+  WebSocketOnDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-ws-on-disconnect-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/wsOnDisconnect/
+      Environment:
+        Variables:
+          WebSocketConnectionsTable: !Ref WebSocketConnectionsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WebSocketConnectionsTable
+
+  WebSocketSendMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-ws-send-message-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/wsSendMessage/
+      Environment:
+        Variables:
+          WebSocketConnectionsTable: !Ref WebSocketConnectionsTable
+          ChatMessagesTable: !Ref ChatMessagesTable
+          CHAT_MESSAGES_TABLE: !Ref ChatMessagesTable
+          CHAT_THREADS_TABLE: !Ref ChatThreadsTable
+          CHAPTERS_TABLE: Chapters
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WebSocketConnectionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatMessagesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatThreadsTable
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "execute-api:ManageConnections"
+              Resource:
+                - !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ChapterChatWebSocketApi}/${Environment}/POST/@connections/*"
+
+  # Lambda Permissions
+  ConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketOnConnectFunction
+      Principal: apigateway.amazonaws.com
+
+  DisconnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketOnDisconnectFunction
+      Principal: apigateway.amazonaws.com
+
+  SendMessagePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketSendMessageFunction
+      Principal: apigateway.amazonaws.com
+
 Outputs:
   PaymentApiUrl:
     Description: "Payment API Gateway URL — add this to VITE_PAYMENT_API_BASE_URL in .env"
@@ -558,3 +1336,9 @@ Outputs:
   GetPaymentDetailsFunctionArn:
     Description: ARN of the GetPaymentDetails Lambda
     Value: !GetAtt GetPaymentDetailsFunction.Arn
+
+  ChapterChatWebSocketUrl:
+    Description: "WebSocket URL for Chapter Chat — add to VITE_CHAT_WS_URL in .env"
+    Value: !Sub "wss://${ChapterChatWebSocketApi}.execute-api.ap-south-1.amazonaws.com/${Environment}/"
+    Export:
+      Name: !Sub UnifyChatWebSocketUrl-${Environment}

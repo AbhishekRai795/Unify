@@ -82,15 +82,62 @@ export const handler = async (event) => {
     const user = userResult.Items[0];
     // registeredChapters is stored as an array in your schema
     const registeredChapters = user.registeredChapters?.SS || user.registeredChapters?.L?.map(item => item.S) || [];
+    
+    // Extract attendedEvents set
+    const attendedEvents = user.attendedEvents?.SS || user.attendedEvents?.L?.map(item => item.S) || [];
+
+    // Fetch events attended
+    let eventsAttended = 0;
+    try {
+      const { ScanCommand } = await import("@aws-sdk/client-dynamodb");
+      const eventRegs = await dynamo.send(new ScanCommand({
+        TableName: "EventPayments",
+        FilterExpression: "userId = :userId AND (paymentStatus = :completed OR paymentStatus = :na)",
+        ExpressionAttributeValues: {
+          ":userId": { S: user.userId.S },
+          ":completed": { S: "COMPLETED" },
+          ":na": { S: "NA" }
+        }
+      }));
+      eventsAttended = eventRegs.Items ? eventRegs.Items.length : 0;
+    } catch (err) {
+      console.log('Event payments scan issue:', err.message);
+    }
+
+    // Fetch recent activity
+    let recentActivities = [];
+    try {
+      const activitiesResult = await dynamo.send(new ScanCommand({
+        TableName: "Activities",
+        FilterExpression: "userId = :userId OR (attribute_not_exists(userId) AND chapterId IN (:chapters))",
+        ExpressionAttributeValues: {
+          ":userId": { S: user.userId.S },
+          ":chapters": { L: registeredChapters.map(c => ({ S: c })) }
+        }
+      }));
+      recentActivities = (activitiesResult.Items || [])
+        .sort((a, b) => new Date(b.timestamp.S).getTime() - new Date(a.timestamp.S).getTime())
+        .slice(0, 5)
+        .map(a => ({
+          id: a.activityId.S,
+          message: a.message.S,
+          timestamp: a.timestamp.S,
+          type: a.type.S
+        }));
+    } catch (err) {
+      console.log('Activities scan issue:', err.message);
+    }
 
     const dashboardData = {
       registeredChaptersCount: registeredChapters.length,
       totalAvailableChapters: allChapters.Items?.length || 0,
+      eventsAttended,
+      attendedEvents,
       registeredChapters: registeredChapters.map(chapter => ({
         name: chapter,
         registeredAt: user.createdAt?.S || new Date().toISOString()
       })),
-      recentActivity: `Active in ${registeredChapters.length} chapters`,
+      recentActivities,
       userEmail: userEmail,
       userName: user.name?.S || 'Unknown User'
     };

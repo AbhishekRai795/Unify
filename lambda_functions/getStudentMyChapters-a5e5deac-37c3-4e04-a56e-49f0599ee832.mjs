@@ -85,19 +85,31 @@ export const handler = async (event) => {
 
     const allChaptersResult = await dynamo.send(new ScanCommand(chapterParams));
     
+    // Get all users to resolve head emails to head IDs (sub)
+    const userMap = {}; // lowercase email -> userId (sub)
+    allUsersResult.Items?.forEach(u => {
+      if (u.email?.S && u.userId?.S) {
+        userMap[u.email.S.toLowerCase()] = u.userId.S;
+      }
+    });
+ 
     // Filter chapters that the user is registered for
     const userChapters = (allChaptersResult.Items || [])
       .filter(chapter => registeredChapterNames.includes(chapter.chapterName?.S))
-      .map(chapter => ({
-        id: chapter.chapterId?.S || 'unknown',
-        name: chapter.chapterName?.S || 'Unknown Chapter',
-        registeredAt: user.createdAt?.S || new Date().toISOString(),
-        studentName: user.name?.S || 'Unknown',
-        chapterHead: chapter.headName?.S || "Not assigned",
-        headEmail: chapter.headEmail?.S || "",
-        status: chapter.status?.S || "active",
-        memberCount: chapter.memberCount?.N || "0"
-      }));
+      .map(chapter => {
+        const hEmail = (chapter.headEmail?.S || "").toLowerCase();
+        return {
+          id: chapter.chapterId?.S || 'unknown',
+          name: chapter.chapterName?.S || 'Unknown Chapter',
+          registeredAt: user.createdAt?.S || new Date().toISOString(),
+          studentName: user.name?.S || 'Unknown',
+          chapterHead: chapter.headName?.S || "Not assigned",
+          headEmail: chapter.headEmail?.S || "", // Keep original case for display
+          headId: userMap[hEmail] || chapter.headEmail?.S || "", // Use sub, fallback to original email
+          status: chapter.status?.S || "active",
+          memberCount: chapter.memberCount?.N || "0"
+        };
+      });
 
     return {
       statusCode: 200,

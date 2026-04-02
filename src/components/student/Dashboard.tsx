@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Calendar, 
   Users, 
@@ -6,11 +6,13 @@ import {
   Clock, 
   ArrowRight,
   Activity,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useChat } from '../../contexts/ChatContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
 import { motion, Variants } from 'framer-motion';
@@ -41,9 +43,10 @@ const itemVariants: Variants = {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { dashboardData, myChapters, isLoading, fetchDashboard, fetchMyChapters } = useData();
+  const { setActiveConversation, setIsWidgetOpen } = useChat();
   const { isDark } = useTheme();
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchDashboard();
     fetchMyChapters();
   }, []);
@@ -217,11 +220,32 @@ const Dashboard: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Recent Activity</h2>
               <Clock className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
             </div>
-            <div className="space-y-3 p-3 bg-white/30 dark:bg-dark-bg/80 rounded-lg">
-              {dashboardData?.recentActivity ? (
-                <p className="text-gray-700 dark:text-dark-text-secondary">{dashboardData.recentActivity}</p>
+            <div className={`space-y-4 p-4 ${isDark ? 'bg-dark-bg/80' : 'bg-gray-50/50'} rounded-2xl border border-gray-100 dark:border-dark-border/50 max-h-[300px] overflow-y-auto custom-scrollbar`}>
+              {dashboardData?.recentActivities && dashboardData.recentActivities.length > 0 ? (
+                dashboardData.recentActivities.map((activity: any) => (
+                  <div key={activity.id} className="flex items-start space-x-3 group cursor-default">
+                    <div className={`mt-1 p-1.5 rounded-lg ${
+                      activity.type.includes('event') ? 'bg-green-100 text-green-600' :
+                      activity.type.includes('registration') ? 'bg-blue-100 text-blue-600' :
+                      'bg-purple-100 text-purple-600'
+                    }`}>
+                      <Activity className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary line-clamp-1 group-hover:text-accent transition-colors">
+                        {activity.message}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-0.5">
+                        {new Date(activity.timestamp).toLocaleDateString()} • {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <p className="text-gray-500 dark:text-dark-text-muted italic">No recent activity</p>
+                <div className="text-center py-6">
+                  <Clock className="h-8 w-8 text-gray-300 dark:text-dark-text-muted mx-auto mb-2" />
+                  <p className="text-gray-500 dark:text-dark-text-muted text-sm italic">No recent activities found</p>
+                </div>
               )}
             </div>
           </motion.div>
@@ -259,7 +283,26 @@ const Dashboard: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm mt-1"></div>
+                    
+                    <div className="flex flex-col items-end space-y-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                      {chapter.headEmail && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveConversation({
+                              chapterId: chapter.id,
+                              recipientId: chapter.headId || chapter.headEmail,
+                              recipientName: chapter.headName || chapter.chapterHead || 'Chapter Head'
+                            });
+                            setIsWidgetOpen(true);
+                          }}
+                          className="bg-accent/10 hover:bg-accent/20 text-accent font-medium text-xs px-2 py-1 rounded-md transition-colors flex items-center"
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}

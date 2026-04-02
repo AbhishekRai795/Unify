@@ -394,6 +394,47 @@ const getStudentDashboard = async (userEmail, headers) => {
 
     const registeredChapters = user.registeredChapters ? Array.from(user.registeredChapters) : [];
     
+    // Fetch events attended
+    let eventsAttended = 0;
+    try {
+      const eventRegs = await dynamoDB.send(new ScanCommand({
+        TableName: 'EventPayments',
+        FilterExpression: 'userId = :userId AND (paymentStatus = :completed OR paymentStatus = :na)',
+        ExpressionAttributeValues: {
+          ':userId': user.userId,
+          ':completed': 'COMPLETED',
+          ':na': 'NA'
+        }
+      }));
+      eventsAttended = eventRegs.Items ? eventRegs.Items.length : 0;
+    } catch (err) {
+      console.log('Event payments scan issue:', err.message);
+    }
+
+    // Fetch recent activities
+    let recentActivities = [];
+    try {
+      const activitiesResult = await dynamoDB.send(new ScanCommand({
+        TableName: 'Activities',
+        FilterExpression: 'userId = :userId OR (attribute_not_exists(userId) AND chapterId IN (:chapters))',
+        ExpressionAttributeValues: {
+          ':userId': user.userId,
+          ':chapters': registeredChapters.length > 0 ? registeredChapters : ['NONE']
+        }
+      }));
+      recentActivities = (activitiesResult.Items || [])
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5)
+        .map(a => ({
+          id: a.activityId,
+          message: a.message,
+          timestamp: a.timestamp,
+          type: a.type
+        }));
+    } catch (err) {
+      console.log('Activities scan issue:', err.message);
+    }
+
     // Get chapter details
     const chapterPromises = registeredChapters.map(async (chapterName) => {
       return await getChapterByName(chapterName);
@@ -408,7 +449,8 @@ const getStudentDashboard = async (userEmail, headers) => {
         email: user.email,
         sapId: user.sapId,
         year: user.year,
-        registeredChaptersCount: registeredChapters.length
+        registeredChaptersCount: registeredChapters.length,
+        attendedEvents: user.attendedEvents || []
       },
       chapters: validChapters.map(chapter => ({
         id: chapter.chapterId,
@@ -418,9 +460,11 @@ const getStudentDashboard = async (userEmail, headers) => {
       })),
       stats: {
         totalChapters: registeredChapters.length,
-        upcomingEvents: 0, // Implement when you add events
-        completedEvents: 0
-      }
+        upcomingEvents: 0,
+        completedEvents: eventsAttended,
+        eventsAttended: eventsAttended
+      },
+      recentActivities
     };
 
     return { statusCode: 200, headers, body: JSON.stringify(dashboardData) };

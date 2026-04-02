@@ -63,4 +63,148 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["EditChapterPaymentFunction"]
 
+[function_build_definitions.2ccdc24b-bbab-4bb1-b707-663cf8eb4557]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/createEvent-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["CreateEventFunction"]
+
+[function_build_definitions.6df0ac99-51b2-47bc-b710-e032fc8d00b5]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/listEvents-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ListEventsFunction"]
+
+[function_build_definitions.42a9dbbb-8ee4-46ab-9c30-28492f3e8dc9]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/joinFreeEvent-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["JoinFreeEventFunction"]
+
+[function_build_definitions.40b0429e-5cb0-4987-acd2-b78f3819d54f]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/createEventOrder-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["CreateEventOrderFunction"]
+
+[function_build_definitions.43e5b3c8-c006-469e-b3fe-19900512e0ce]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/verifyEventPayment-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["VerifyEventPaymentFunction"]
+
+[function_build_definitions.ea3177fc-dc00-4e6a-87f9-05ccfb320037]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/updateEvent-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["UpdateEventFunction"]
+
+[function_build_definitions.aa2b2c46-514d-43f1-941d-ebeb70177a7e]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/deleteEvent-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["DeleteEventFunction"]
+
+[function_build_definitions.05391c3d-f412-476c-ac84-510f9819b868]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/listChapterEvents-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ListChapterEventsFunction"]
+
+[function_build_definitions.2660a661-3e4a-46c2-bf80-b1077e6f2e1c]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/listStudentEventRegistrations-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ListStudentEventRegistrationsFunction"]
+
+[function_build_definitions.8fb60765-e6e0-4dc7-8a7f-b86fd16b08da]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/sendChatMessage-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["SendChatMessageFunction"]
+
+[function_build_definitions.c842d0d3-180b-4dc0-8142-9b6f9fd97d9f]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/getChatMessages-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["GetChatMessagesFunction"]
+
+[function_build_definitions.ade48806-b7d8-4a69-bddc-586d79f03ce8]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/listChatConversations-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ListChatConversationsFunction"]
+
+[function_build_definitions.78529ad5-8390-44ee-9a7c-ef6f094a32fd]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/wsOnConnect"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["WebSocketOnConnectFunction"]
+
+[function_build_definitions.8239d3bc-2f5a-4ada-a105-07b2b9fbcfd2]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/wsOnDisconnect"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["WebSocketOnDisconnectFunction"]
+
+[function_build_definitions.ebfc2f08-b5b7-4116-ad45-31daee4663a4]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/wsSendMessage"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["WebSocketSendMessageFunction"]
+
+[function_build_definitions.cb38f89a-701a-4e1b-ba8d-9d6b8a57c4ea]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/listEventRegistrationsForEvent-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ListEventRegistrationsForEventFunction"]
+
 [layer_build_definitions]

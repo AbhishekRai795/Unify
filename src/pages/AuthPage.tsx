@@ -17,8 +17,8 @@ import { Eye, EyeOff, Mail, Lock, User, Users, Hash, Calendar, Library } from 'l
 
 const poolData = {
     // Replace with your Cognito User Pool data
-    UserPoolId: 'ap-south-1_ueutDQExM',
-    ClientId: '6uac5t9b0oub9b1cjoot94uplc',
+    UserPoolId: import.meta.env.VITE_USER_POOL_ID || 'ap-south-1_ueutDQExM',
+    ClientId: import.meta.env.VITE_USER_POOL_WEB_CLIENT_ID || '6uac5t9b0oub9b1cjoot94uplc',
 };
 
 const userPool = new CognitoUserPool(poolData);
@@ -412,7 +412,7 @@ const AuthPage: React.FC = () => {
                 setNewPasswordError(""); // Clear old errors
                 try {
                     const apiRes = await fetch(
-                        "https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev/chapterhead-profile",
+                        `${import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev'}/chapterhead-profile`,
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },

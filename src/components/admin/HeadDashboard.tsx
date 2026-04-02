@@ -4,8 +4,9 @@ import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircl
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useChat } from '../../contexts/ChatContext';
+import ConversationsList from '../chat/ConversationsList';
 import Loader from '../common/Loader';
-
 import { formatDistanceToNow } from 'date-fns';
 
 // Define a specific type for the colors to ensure type safety
@@ -22,12 +23,26 @@ const HeadDashboard: React.FC = () => {
     error,
     refreshData
   } = useChapterHead();
+  const { setActiveChapterId, refreshConversations } = useChat();
 
   useEffect(() => {
     if (user?.activeRole === 'chapter-head') {
       refreshData();
     }
   }, [user?.activeRole]);
+
+  useEffect(() => {
+    const chapterIds = Array.from(new Set([
+      ...(profile?.chapterId ? [profile.chapterId] : []),
+      ...chapters.map(ch => ch.chapterId).filter(Boolean)
+    ]));
+    const defaultChapterId = chapterIds.length > 0 ? chapterIds[0] : null;
+
+    if (defaultChapterId) {
+      setActiveChapterId(defaultChapterId);
+      refreshConversations(chapterIds);
+    }
+  }, [profile?.chapterId, chapters, setActiveChapterId, refreshConversations]);
 
   if (isLoading && !dashboardStats) {
     return (
@@ -162,6 +177,17 @@ const HeadDashboard: React.FC = () => {
               </Link>
               
               <Link
+                to="/head/events/manage"
+                className="flex items-center p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg hover:from-orange-100 hover:to-orange-200 transition-all duration-200 group"
+              >
+                <Plus className="h-5 w-5 text-orange-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <p className="font-medium text-orange-900">Manage Events</p>
+                  <p className="text-sm text-orange-700">Edit or delete existing events</p>
+                </div>
+              </Link>
+              
+              <Link
                 to="/head/chapters" // FIX: Changed from /admin
                 className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group"
               >
@@ -185,10 +211,9 @@ const HeadDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {recentActivities.map((activity, index) => (
                 <motion.div 
                   key={activity.id}
@@ -269,6 +294,11 @@ const HeadDashboard: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Conversations List */}
+        <div className="mt-8">
+          <ConversationsList />
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useChat } from '../../contexts/ChatContext';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import { Filter, Search, Calendar, Mail, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, MessageSquare, Download, User, Hash, UserMinus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -16,6 +17,7 @@ const Registrations: React.FC = () => {
     error, 
     refreshData 
   } = useChapterHead();
+  const { setActiveConversation, setIsWidgetOpen, refreshConversations } = useChat();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'kicked' | 'left'>('all');
@@ -92,6 +94,19 @@ const Registrations: React.FC = () => {
     setSelectedRegistration(registrationId);
     setActionType(action);
     setShowActionModal(true);
+  };
+
+  const startChatWithStudent = async (registration: any) => {
+    const recipientId = registration.userId || registration.studentEmail;
+    if (!recipientId || !registration.chapterId) return;
+
+    setActiveConversation({
+      chapterId: registration.chapterId,
+      recipientId,
+      recipientName: registration.studentName || 'Student'
+    });
+    setIsWidgetOpen(true);
+    await refreshConversations(registration.chapterId);
   };
 
   const filteredRegistrations = registrations.filter(reg => {
@@ -384,6 +399,16 @@ const Registrations: React.FC = () => {
                     
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
+                        {(registration.userId || registration.studentEmail) && (
+                          <button
+                            onClick={() => startChatWithStudent(registration)}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 flex items-center"
+                            title="Start or continue chat with this student"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Chat
+                          </button>
+                        )}
                         {registration.status === 'pending' && (
                           <>
                             <button 

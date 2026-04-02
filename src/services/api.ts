@@ -68,7 +68,7 @@ export const studentAPI = {
     try {
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
       });
       return handleResponse(response);
     } catch (error) {

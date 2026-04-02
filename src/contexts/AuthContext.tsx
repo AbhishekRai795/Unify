@@ -26,6 +26,7 @@ export type Role = 'student' | 'chapter-head' | 'admin';
 
 interface AuthUser {
   email: string;
+  sub: string;
   name: string;
   groups: string[]; // Groups from cognito:groups claim
   activeRole: string; // One of the groups
@@ -139,6 +140,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           setUser({
             email: userEmail,
+            sub: decodedToken.sub,
             name: userName,
             groups: userGroups,
             activeRole,
@@ -194,6 +196,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser({
         email: userEmail,
+        sub: decodedToken.sub,
         name: userName,
         groups: userGroups,
         activeRole,

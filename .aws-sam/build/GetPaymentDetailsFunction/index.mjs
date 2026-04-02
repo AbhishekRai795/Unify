@@ -7,6 +7,7 @@ const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const PAYMENTS_TABLE = "ChapterPayments";
+const EVENT_PAYMENTS_TABLE = "EventPayments";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -97,7 +98,7 @@ export const handler = async (event) => {
 
     // Case 2: Get all transactions for a specific user
     if (queryType === "user") {
-      // Query by userId using GSI (UserIdIndex)
+      // Query chapter payment transactions by userId
       const response = await docClient.send(new QueryCommand({
         TableName: PAYMENTS_TABLE,
         IndexName: "UserIdIndex",
@@ -111,11 +112,13 @@ export const handler = async (event) => {
         Limit: 50
       }));
 
-      const transactions = (response.Items || []).map(tx => ({
+      const chapterTransactions = (response.Items || []).map(tx => ({
         transactionId: tx.transactionId,
         chapterId: tx.chapterId,
         amount: tx.amount,
+        amountInRupees: (tx.amount || 0) / 100,
         displayAmount: `₹${(tx.amount / 100).toFixed(2)}`,
+        transactionType: "CHAPTER",
         paymentStatus: tx.paymentStatus,
         razorpayPaymentId: tx.razorpayPaymentId,
         receiptUrl: tx.receiptUrl,
@@ -123,6 +126,43 @@ export const handler = async (event) => {
         createdAt: tx.createdAt,
         completedAt: tx.completedAt
       }));
+
+      // Query event payment transactions/registrations by userId
+      const eventResponse = await docClient.send(new QueryCommand({
+        TableName: EVENT_PAYMENTS_TABLE,
+        IndexName: "UserIdIndex",
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": userId
+        },
+        ScanIndexForward: false,
+        Limit: 100
+      }));
+
+      const eventTransactions = (eventResponse.Items || [])
+        .filter((tx) => tx.paymentStatus === "COMPLETED" || tx.paymentStatus === "NA")
+        .map((tx, index) => {
+          const amountInRupees = tx.paymentStatus === "NA" ? 0 : Number(tx.amount || 0);
+          return {
+            transactionId: tx.transactionId || `EVT-${tx.eventId}-${index}`,
+            chapterId: tx.chapterId,
+            eventId: tx.eventId,
+            amount: Math.round(amountInRupees * 100),
+            amountInRupees,
+            displayAmount: `₹${amountInRupees.toFixed(2)}`,
+            transactionType: "EVENT",
+            paymentStatus: tx.paymentStatus,
+            razorpayPaymentId: tx.razorpayPaymentId,
+            receiptUrl: tx.receiptUrl || "",
+            receiptId: tx.receiptId || tx.razorpayOrderId || "",
+            createdAt: tx.createdAt || tx.joinedAt,
+            completedAt: tx.completedAt || tx.joinedAt
+          };
+        });
+
+      const transactions = [...chapterTransactions, ...eventTransactions].sort(
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
 
       return {
         statusCode: 200,

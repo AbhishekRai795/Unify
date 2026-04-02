@@ -7,9 +7,12 @@ import { paymentAPI } from '../../services/paymentApi';
 interface PaymentTransaction {
   transactionId: string;
   chapterId: string;
+  eventId?: string;
   amount: number;
+  amountInRupees?: number;
   displayAmount: string;
-  paymentStatus: 'COMPLETED' | 'FAILED' | 'PENDING';
+  paymentStatus: 'COMPLETED' | 'FAILED' | 'PENDING' | 'NA';
+  transactionType?: 'CHAPTER' | 'EVENT';
   razorpayPaymentId: string;
   receiptUrl: string;
   receiptId: string;
@@ -47,14 +50,15 @@ export const PaymentHistory: React.FC = () => {
     const statusConfig = {
       COMPLETED: { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
       FAILED: { bg: 'bg-red-100', text: 'text-red-800', icon: '✗' },
-      PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳' }
+      PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳' },
+      NA: { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✓' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
 
     return (
       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
-        {config.icon} {status}
+        {config.icon} {status === 'NA' ? 'REGISTERED' : status}
       </span>
     );
   };
@@ -97,6 +101,7 @@ export const PaymentHistory: React.FC = () => {
             <thead>
               <tr className="bg-gray-100 border-b-2 border-gray-300">
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Transaction ID</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -109,6 +114,9 @@ export const PaymentHistory: React.FC = () => {
                 <tr key={tx.transactionId} className="border-b border-gray-200 hover:bg-gray-50 transition">
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {formatDate(tx.createdAt)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {tx.transactionType || 'CHAPTER'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 font-mono">
                     {tx.transactionId.substring(0, 20)}...
@@ -170,7 +178,7 @@ export const PaymentHistory: React.FC = () => {
               <p className="text-2xl font-bold text-blue-900">
                 ₹{(transactions
                   .filter(t => t.paymentStatus === 'COMPLETED')
-                  .reduce((sum, t) => sum + t.amount, 0) / 100).toFixed(2)}
+                  .reduce((sum, t) => sum + (t.amountInRupees ?? (t.amount / 100)), 0)).toFixed(2)}
               </p>
             </div>
           </div>
