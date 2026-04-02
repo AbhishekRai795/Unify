@@ -45,7 +45,7 @@ const itemVariants: Variants = {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { dashboardData, myChapters, events, isLoading, fetchDashboard, fetchMyChapters, fetchEvents } = useData();
-  const { setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
+  const { conversations, setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
   const { isDark } = useTheme();
 
   const getChapterId = (chapter: any): string =>
@@ -53,6 +53,28 @@ const Dashboard: React.FC = () => {
 
   const getChapterName = (chapter: any): string =>
     chapter?.name || chapter?.chapterName || 'Chapter';
+
+  const getHeadRecipientId = (chapter: any): string =>
+    chapter?.headId ||
+    chapter?.headID ||
+    chapter?.headUserId ||
+    chapter?.head_user_id ||
+    chapter?.chapterHeadUserId ||
+    chapter?.chapterHeadId ||
+    chapter?.headSub ||
+    chapter?.chapterHeadSub ||
+    '';
+
+  const resolveRecipientIdFromConversations = (chapter: any): string => {
+    const expectedName = (chapter?.headName || chapter?.chapterHead || '').trim().toLowerCase();
+    if (!expectedName) return '';
+
+    const byName = (conversations || []).find((conv: any) => {
+      const name = (conv?.otherParticipantName || conv?.recipientName || '').trim().toLowerCase();
+      return !!name && name === expectedName;
+    });
+    return byName?.otherParticipantId || byName?.recipientId || '';
+  };
 
   const studentChapterIds = Array.from(new Set(
     (myChapters || [])
@@ -85,34 +107,44 @@ const Dashboard: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
   }
 
+  const registeredChaptersCount = Number(dashboardData?.student?.registeredChaptersCount || myChapters.length || 0);
+  const totalChaptersCount = Number(dashboardData?.stats?.totalChapters || 0);
+  const availableChaptersCount = Math.max(totalChaptersCount - registeredChaptersCount, 0);
+  const attendedEventsCount = Number(dashboardData?.stats?.completedEvents || dashboardData?.attendedEvents?.length || 0);
+  const upcomingEventsCount = Number(dashboardData?.stats?.upcomingEvents || 0);
+
   const stats = [
     {
       label: 'Registered Chapters',
-      value: dashboardData?.student?.registeredChaptersCount || myChapters.length || 0,
+      value: registeredChaptersCount,
       icon: Users,
       color: 'blue',
-      change: '+2 this month'
+      change: 'Currently joined',
+      link: '/student/chapters'
     },
     {
       label: 'Available Chapters',
-      value: dashboardData?.stats?.totalChapters || 0,
+      value: availableChaptersCount,
       icon: BookOpen,
       color: 'green',
-      change: 'Total active'
+      change: `${totalChaptersCount} total active`,
+      link: '/student/chapters'
     },
     {
       label: 'Events Attended',
-      value: dashboardData?.stats?.completedEvents || '0',
+      value: attendedEventsCount,
       icon: Calendar,
       color: 'purple',
-      change: 'This semester'
+      change: 'Completed events',
+      link: '/student/events'
     },
     {
-      label: 'Learning Hours',
-      value: dashboardData?.stats?.upcomingEvents || '0',
+      label: 'Upcoming Events',
+      value: upcomingEventsCount,
       icon: Clock,
       color: 'orange',
-      change: 'This month'
+      change: 'Scheduled ahead',
+      link: '/student/events'
     }
   ];
 
@@ -165,28 +197,31 @@ const Dashboard: React.FC = () => {
             return (
               <motion.div
                 key={stat.label}
-                className={`
-                  relative overflow-hidden p-6 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-md
-                  ${isDark 
-                    ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
-                    : 'bg-white/40 border-white/20'
-                  }
-                `}
                 variants={itemVariants}
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">{stat.label}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{stat.value}</p>
-                    <p className="text-xs text-gray-600 dark:text-dark-text-muted mt-1">{stat.change}</p>
+                <Link
+                  to={stat.link}
+                  className={`
+                    block relative overflow-hidden p-6 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-md
+                    ${isDark 
+                      ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
+                      : 'bg-white/40 border-white/20'
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">{stat.label}</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{stat.value}</p>
+                      <p className="text-xs text-gray-600 dark:text-dark-text-muted mt-1">{stat.change}</p>
+                    </div>
+                    <div className={`p-3 rounded-xl ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-white/50'}`}>
+                      <IconComponent className={`h-7 w-7 ${isDark ? 'text-accent-400' : `text-${stat.color}-600`}`} />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-white/50'}`}>
-                    <IconComponent className={`h-7 w-7 ${isDark ? 'text-accent-400' : `text-${stat.color}-600`}`} />
-                  </div>
-                </div>
-                {/* Updated Highlight Bar - Only in Dark Mode */}
-                {isDark && <div className="absolute bottom-0 left-0 h-1 w-full bg-accent"></div>}
+                  {isDark && <div className="absolute bottom-0 left-0 h-1 w-full bg-accent"></div>}
+                </Link>
               </motion.div>
             );
           })}
@@ -393,22 +428,25 @@ const Dashboard: React.FC = () => {
                       
                       <div className="flex flex-col items-end space-y-2">
                         <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
-                        {chapter.headEmail && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setActiveConversation({
-                                chapterId: getChapterId(chapter),
-                                recipientId: chapter.headId || chapter.headEmail,
-                                recipientName: chapter.headName || chapter.chapterHead || 'Chapter Head'
-                              });
-                              setIsWidgetOpen(true);
-                            }}
-                            className="bg-accent/10 hover:bg-accent/20 text-accent font-medium text-xs px-2 py-1 rounded-md transition-colors flex items-center"
-                          >
-                            <MessageSquare className="h-3 w-3 mr-1" /> Chat
-                          </button>
-                        )}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const recipientId = getHeadRecipientId(chapter) || resolveRecipientIdFromConversations(chapter);
+                            if (!recipientId) {
+                              alert('Chat is available, but this chapter head user is not fully linked yet. Please contact admin to map chapter head user ID.');
+                              return;
+                            }
+                            setActiveConversation({
+                              chapterId: getChapterId(chapter),
+                              recipientId,
+                              recipientName: chapter.headName || chapter.chapterHead || 'Chapter Head'
+                            });
+                            setIsWidgetOpen(true);
+                          }}
+                          className="bg-accent/10 hover:bg-accent/20 text-accent font-medium text-xs px-2 py-1 rounded-md transition-colors flex items-center"
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                        </button>
                       </div>
                     </div>
                   </motion.div>

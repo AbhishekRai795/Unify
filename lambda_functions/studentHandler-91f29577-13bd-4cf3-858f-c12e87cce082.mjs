@@ -36,6 +36,31 @@ const getUserByEmail = async (email) => {
   }
 };
 
+// Helper: Build map of email -> userId for quick headId resolution
+const getUserIdMapByEmails = async (emails) => {
+  try {
+    const normalized = Array.from(new Set((emails || []).filter(Boolean).map((e) => String(e).trim().toLowerCase())));
+    if (normalized.length === 0) return new Map();
+
+    const result = await dynamoDB.send(new ScanCommand({
+      TableName: 'Unify-Users',
+      ProjectionExpression: 'userId, email'
+    }));
+
+    const map = new Map();
+    for (const user of result.Items || []) {
+      const email = user?.email ? String(user.email).trim().toLowerCase() : '';
+      if (email && normalized.includes(email) && user?.userId) {
+        map.set(email, user.userId);
+      }
+    }
+    return map;
+  } catch (error) {
+    console.error('Error resolving user IDs by email:', error);
+    return new Map();
+  }
+};
+
 // Helper: Get chapter by name
 const getChapterByName = async (chapterName) => {
   try {
@@ -357,6 +382,11 @@ const getMyChapters = async (userEmail, headers) => {
     const chapters = await Promise.all(chapterPromises);
     const validChapters = chapters.filter(chapter => chapter !== null);
 
+    const headEmails = validChapters
+      .map((chapter) => chapter?.headEmail)
+      .filter(Boolean);
+    const headIdByEmail = await getUserIdMapByEmails(headEmails);
+
     const formattedChapters = validChapters.map(chapter => ({
       id: chapter.chapterId,
       name: chapter.chapterName,
@@ -364,6 +394,7 @@ const getMyChapters = async (userEmail, headers) => {
       memberCount: chapter.memberCount || 0,
       headName: chapter.headName,
       headEmail: chapter.headEmail,
+      headId: chapter.headId || headIdByEmail.get(String(chapter.headEmail || '').trim().toLowerCase()) || null,
       status: chapter.status,
       joinedAt: chapter.joinedAt,
       approvedAt: chapter.approvedAt
@@ -673,5 +704,4 @@ const getPendingRegistrations = async (userEmail, headers) => {
     };
   }
 };
-
 

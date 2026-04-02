@@ -33,7 +33,7 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
   } = useChat();
   const [searchTerm, setSearchTerm] = useState('');
   const [inputText, setInputText] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsWidgetOpen(false);
@@ -46,8 +46,12 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
   }, [chapterIds, setActiveChapterId, refreshConversations]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, activeConversation?.recipientId]);
+    if (!activeConversation) return;
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    // Scroll only inside the chat pane, never the whole page.
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length, activeConversation?.recipientId]);
 
   const filteredConversations = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -208,7 +212,7 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
                 )}
               </div>
 
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 bg-gray-50/70 dark:bg-dark-bg/60">
+              <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 bg-gray-50/70 dark:bg-dark-bg/60">
                 {!activeConversation ? (
                   <div className="h-full flex flex-col items-center justify-center text-center">
                     <MessageSquare className="h-14 w-14 text-gray-300 dark:text-dark-text-muted mb-3" />
@@ -244,7 +248,6 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               <form onSubmit={handleSend} className="p-4 border-t border-gray-200/70 dark:border-dark-border/50 bg-white/80 dark:bg-dark-surface/80 shrink-0">

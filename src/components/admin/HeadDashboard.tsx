@@ -88,7 +88,7 @@ const HeadDashboard: React.FC = () => {
       label: 'Active Events',
       value: dashboardStats?.activeEvents || 0,
       color: 'green',
-      link: '/head/events'
+      link: '/head/events/manage'
     },
     {
       icon: TrendingUp,
