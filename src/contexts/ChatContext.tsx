@@ -138,7 +138,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem('idToken');
     if (activeConversation && token) {
       chatApi.getMessageHistory(activeConversation.chapterId, activeConversation.recipientId, token)
-        .then(setMessages);
+        .then((history) => {
+          setMessages(history);
+          // Ensure unread badges drop immediately after opening a thread.
+          refreshConversationsRef.current(activeConversation.chapterId);
+        });
     } else {
       setMessages([]);
     }

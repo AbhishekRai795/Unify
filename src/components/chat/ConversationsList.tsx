@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 
 const ConversationsList: React.FC = () => {
   const { conversations, refreshConversations, setActiveConversation, setIsWidgetOpen } = useChat();
+  const totalUnread = (conversations || []).reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
 
   useEffect(() => {
     refreshConversations();
@@ -24,9 +25,16 @@ const ConversationsList: React.FC = () => {
     <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Recent Messages</h2>
-        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-          {conversations.length} Active
-        </span>
+        <div className="flex items-center gap-2">
+          {totalUnread > 0 && (
+            <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-semibold">
+              {totalUnread} Unread
+            </span>
+          )}
+          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+            {conversations.length} Active
+          </span>
+        </div>
       </div>
       
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -61,12 +69,19 @@ const ConversationsList: React.FC = () => {
                   <h4 className="font-semibold text-gray-900 text-sm truncate">
                     {recipientLabel}
                   </h4>
-                  <span className="text-[10px] text-gray-400 flex items-center">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString() : 'Recent'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {conv.unreadCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                        {conv.unreadCount}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-gray-400 flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString() : 'Recent'}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600 truncate opacity-80">
+                <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-600 opacity-80'}`}>
                   {preview}
                 </p>
               </div>

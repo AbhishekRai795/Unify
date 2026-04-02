@@ -7,6 +7,7 @@ const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const CHAT_THREADS_TABLE = process.env.CHAT_THREADS_TABLE || "ChatThreads1To1";
+const CHAT_MESSAGES_TABLE = process.env.CHAT_MESSAGES_TABLE || "ChatMessages1To1";
 const CHAPTERS_TABLE = process.env.CHAPTERS_TABLE || "Chapters";
 const USERS_TABLE = process.env.USERS_TABLE || "Unify-Users";
 
@@ -32,6 +33,12 @@ const threadIncludesIdentity = (thread, identities) => {
     const normalizedId = normalize(id);
     return normalizedId && threadId.includes(normalizedId);
   });
+};
+
+const senderMatchesIdentity = (senderId, identities) => {
+  if (!senderId) return false;
+  const normalizedSender = normalize(senderId);
+  return identities.some((id) => normalize(id) === normalizedSender);
 };
 
 const pickOtherParticipant = (thread, identities) => {
@@ -117,6 +124,39 @@ const attachParticipantNames = async (conversations) => {
     ...conv,
     otherParticipantName: nameByUserId.get(conv.otherParticipantId) || conv.otherParticipantName || conv.otherParticipantId
   }));
+};
+
+const getUnreadCountForConversation = async (conversationId, identities) => {
+  if (!conversationId) return 0;
+
+  let unreadCount = 0;
+  let lastEvaluatedKey = undefined;
+
+  do {
+    const response = await docClient.send(new QueryCommand({
+      TableName: CHAT_MESSAGES_TABLE,
+      KeyConditionExpression: "conversationId = :conversationId",
+      ExpressionAttributeValues: {
+        ":conversationId": conversationId
+      },
+      ProjectionExpression: "senderId, isRead",
+      ExclusiveStartKey: lastEvaluatedKey
+    })).catch((err) => {
+      console.warn(`[WARN] Unable to fetch unread count for ${conversationId}:`, err.message);
+      return { Items: [] };
+    });
+
+    const pageUnread = (response.Items || []).filter((msg) => {
+      const isOwnMessage = senderMatchesIdentity(msg.senderId, identities);
+      const isRead = msg.isRead === true;
+      return !isOwnMessage && !isRead;
+    }).length;
+
+    unreadCount += pageUnread;
+    lastEvaluatedKey = response.LastEvaluatedKey;
+  } while (lastEvaluatedKey);
+
+  return unreadCount;
 };
 
 export const handler = async (event) => {
@@ -236,6 +276,16 @@ export const handler = async (event) => {
     }
 
     const conversationsWithNames = await attachParticipantNames(conversations);
+    const conversationsWithUnread = await Promise.all(
+      conversationsWithNames.map(async (conversation) => {
+        const unreadCount = await getUnreadCountForConversation(conversation.conversationId, identities);
+        return {
+          ...conversation,
+          unreadCount,
+          hasUnread: unreadCount > 0
+        };
+      })
+    );
 
     return {
       statusCode: 200,
@@ -244,8 +294,9 @@ export const handler = async (event) => {
         success: true,
         userId,
         chapterId,
-        conversations: conversationsWithNames,
-        totalCount: conversationsWithNames.length
+        conversations: conversationsWithUnread,
+        totalCount: conversationsWithUnread.length,
+        totalUnreadCount: conversationsWithUnread.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
       })
     };
   } catch (error) {
