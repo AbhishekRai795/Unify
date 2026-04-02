@@ -179,7 +179,7 @@ const QuotePanel: React.FC<{ isLoginView: boolean; setIsLoginView: (isLogin: boo
             <h3 className="text-3xl font-bold">
                 "Connecting students, one chapter at a time. Your community awaits."
             </h3>
-            <p className="mt-4 opacity-80">- The Unify Team</p>
+            <p className="mt-4 opacity-80"> Team Unify </p>
             <button onClick={() => setIsLoginView(!isLoginView)} className="mt-8 bg-white/20 border-2 border-white/50 rounded-full font-semibold uppercase px-12 py-3 hover:bg-white/30 transition-colors duration-300">
                 {isLoginView ? 'Sign Up' : 'Sign In'}
             </button>
