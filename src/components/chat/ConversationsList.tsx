@@ -47,7 +47,7 @@ const ConversationsList: React.FC = () => {
                 setActiveConversation({
                   chapterId: conv.chapterId,
                   recipientId,
-                  recipientName: 'Student'
+                  recipientName: recipientLabel
                 });
                 setIsWidgetOpen(true);
               }}

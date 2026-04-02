@@ -15,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
+import ConversationsList from '../chat/ConversationsList';
 import { motion, Variants } from 'framer-motion';
 
 // Animation variants for Framer Motion
@@ -43,13 +44,26 @@ const itemVariants: Variants = {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { dashboardData, myChapters, isLoading, fetchDashboard, fetchMyChapters } = useData();
-  const { setActiveConversation, setIsWidgetOpen } = useChat();
+  const { setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
   const { isDark } = useTheme();
 
   useEffect(() => {
     fetchDashboard();
     fetchMyChapters();
   }, []);
+
+  useEffect(() => {
+    const chapterIds = Array.from(new Set(
+      (myChapters || [])
+        .map((chapter) => chapter?.chapterId || chapter?.id)
+        .filter(Boolean)
+    )) as string[];
+
+    if (chapterIds.length === 0) return;
+
+    setActiveChapterId(chapterIds[0]);
+    refreshConversations(chapterIds);
+  }, [myChapters, setActiveChapterId, refreshConversations]);
 
   if (isLoading && !dashboardData) {
     return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
@@ -249,6 +263,11 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </motion.div>
+        </motion.div>
+
+        {/* Recent Messages */}
+        <motion.div variants={itemVariants}>
+          <ConversationsList />
         </motion.div>
 
         {/* My Chapters */}
