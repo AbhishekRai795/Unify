@@ -2,17 +2,78 @@
 // Lambda function to fetch payment history and transaction details
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const s3Client = new S3Client({ region: "ap-south-1" });
 
 const PAYMENTS_TABLE = "ChapterPayments";
 const EVENT_PAYMENTS_TABLE = "EventPayments";
+const RECEIPTS_BUCKET = process.env.RECEIPTS_BUCKET;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
   "Access-Control-Allow-Methods": "GET,OPTIONS"
+};
+
+const getS3KeyFromReceiptUrl = (receiptUrl = "") => {
+  if (!receiptUrl) return "";
+
+  if (!receiptUrl.startsWith("http")) {
+    return receiptUrl.replace(/^\/+/, "");
+  }
+
+  try {
+    const parsed = new URL(receiptUrl);
+    // If old URLs were stored with raw '#' in eventId, URL hash contains part of key.
+    const rawPath = parsed.pathname.replace(/^\/+/, "");
+    const hashPart = parsed.hash ? parsed.hash.substring(1) : "";
+    const fullKey = hashPart ? `${rawPath}#${hashPart}` : rawPath;
+    return decodeURIComponent(fullKey);
+  } catch {
+    return "";
+  }
+};
+
+const getReceiptKeyFromRecord = (record = {}) => {
+  if (record.receiptKey) return record.receiptKey;
+
+  const fromUrl = getS3KeyFromReceiptUrl(record.receiptUrl || "");
+  if (fromUrl) return fromUrl;
+
+  // Fallback reconstruction for older event records without receiptKey
+  if (record.eventId && record.userId && record.receiptId) {
+    return `receipts/events/${record.eventId}/${record.userId}/${record.receiptId}.html`;
+  }
+  // Fallback reconstruction for chapter records without receiptKey
+  if (record.chapterId && record.userId && record.receiptId) {
+    return `receipts/${record.chapterId}/${record.userId}/${record.receiptId}.html`;
+  }
+
+  return "";
+};
+
+const toSignedReceiptUrl = async (record = {}) => {
+  if (!RECEIPTS_BUCKET) return record.receiptUrl || "";
+  const key = getReceiptKeyFromRecord(record);
+  if (!key) return record.receiptUrl || "";
+
+  try {
+    return await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({
+        Bucket: RECEIPTS_BUCKET,
+        Key: key
+      }),
+      { expiresIn: 3600 }
+    );
+  } catch (err) {
+    console.warn("⚠️ Failed to sign receipt URL:", err?.message || err);
+    return record.receiptUrl || "";
+  }
 };
 
 export const handler = async (event) => {
@@ -70,6 +131,7 @@ export const handler = async (event) => {
       }
 
       const transaction = response.Item;
+      const signedReceiptUrl = await toSignedReceiptUrl(transaction);
       return {
         statusCode: 200,
         headers: corsHeaders,
@@ -84,7 +146,7 @@ export const handler = async (event) => {
             paymentStatus: transaction.paymentStatus,
             razorpayOrderId: transaction.razorpayOrderId,
             razorpayPaymentId: transaction.razorpayPaymentId,
-            receiptUrl: transaction.receiptUrl,
+            receiptUrl: signedReceiptUrl,
             receiptId: transaction.receiptId,
             studentName: transaction.studentName,
             studentEmail: transaction.studentEmail,
@@ -112,7 +174,7 @@ export const handler = async (event) => {
         Limit: 50
       }));
 
-      const chapterTransactions = (response.Items || []).map(tx => ({
+      const chapterTransactions = await Promise.all((response.Items || []).map(async (tx) => ({
         transactionId: tx.transactionId,
         chapterId: tx.chapterId,
         amount: tx.amount,
@@ -121,11 +183,11 @@ export const handler = async (event) => {
         transactionType: "CHAPTER",
         paymentStatus: tx.paymentStatus,
         razorpayPaymentId: tx.razorpayPaymentId,
-        receiptUrl: tx.receiptUrl,
+        receiptUrl: await toSignedReceiptUrl(tx),
         receiptId: tx.receiptId,
         createdAt: tx.createdAt,
         completedAt: tx.completedAt
-      }));
+      })));
 
       // Query event payment transactions/registrations by userId
       const eventResponse = await docClient.send(new QueryCommand({
@@ -139,9 +201,9 @@ export const handler = async (event) => {
         Limit: 100
       }));
 
-      const eventTransactions = (eventResponse.Items || [])
+      const eventTransactions = await Promise.all((eventResponse.Items || [])
         .filter((tx) => tx.paymentStatus === "COMPLETED" || tx.paymentStatus === "NA")
-        .map((tx, index) => {
+        .map(async (tx, index) => {
           const amountInRupees = tx.paymentStatus === "NA" ? 0 : Number(tx.amount || 0);
           return {
             transactionId: tx.transactionId || `EVT-${tx.eventId}-${index}`,
@@ -153,12 +215,12 @@ export const handler = async (event) => {
             transactionType: "EVENT",
             paymentStatus: tx.paymentStatus,
             razorpayPaymentId: tx.razorpayPaymentId,
-            receiptUrl: tx.receiptUrl || "",
+            receiptUrl: await toSignedReceiptUrl(tx),
             receiptId: tx.receiptId || tx.razorpayOrderId || "",
             createdAt: tx.createdAt || tx.joinedAt,
             completedAt: tx.completedAt || tx.joinedAt
           };
-        });
+        }));
 
       const transactions = [...chapterTransactions, ...eventTransactions].sort(
         (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()

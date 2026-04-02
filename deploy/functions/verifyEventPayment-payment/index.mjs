@@ -232,8 +232,13 @@ export const handler = async (event) => {
           ContentType: "text/html"
         }));
 
-        receiptUrl = `https://${RECEIPTS_BUCKET}.s3.ap-south-1.amazonaws.com/${receiptKey}`;
+        const encodedKey = receiptKey
+          .split("/")
+          .map((segment) => encodeURIComponent(segment))
+          .join("/");
+        receiptUrl = `https://${RECEIPTS_BUCKET}.s3.ap-south-1.amazonaws.com/${encodedKey}`;
         console.log("✅ Event receipt uploaded:", receiptKey);
+        registrationItem.receiptKey = receiptKey;
       } catch (receiptError) {
         console.warn("⚠️ Event receipt generation/upload failed:", receiptError.message);
       }
@@ -243,7 +248,7 @@ export const handler = async (event) => {
     await docClient.send(new UpdateCommand({
       TableName: EVENT_PAYMENTS_TABLE,
       Key: { eventId, userId: effectiveUserId },
-      UpdateExpression: "SET paymentStatus = :completed, razorpayPaymentId = :pid, razorpaySignature = :sig, joinedAt = :joinedAt, completedAt = :completedAt, updatedAt = :now, receiptId = :receiptId, receiptUrl = :receiptUrl",
+      UpdateExpression: "SET paymentStatus = :completed, razorpayPaymentId = :pid, razorpaySignature = :sig, joinedAt = :joinedAt, completedAt = :completedAt, updatedAt = :now, receiptId = :receiptId, receiptUrl = :receiptUrl, receiptKey = :receiptKey",
       ExpressionAttributeValues: {
         ":completed": "COMPLETED",
         ":pid": razorpayPaymentId,
@@ -252,7 +257,8 @@ export const handler = async (event) => {
         ":completedAt": nowIso,
         ":now": nowIso,
         ":receiptId": receiptId,
-        ":receiptUrl": receiptUrl
+        ":receiptUrl": receiptUrl,
+        ":receiptKey": registrationItem.receiptKey || ""
       }
     }));
 

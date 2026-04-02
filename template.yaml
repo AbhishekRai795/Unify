@@ -671,6 +671,8 @@ Resources:
             TableName: !Ref ChapterPaymentsTable
         - DynamoDBReadPolicy:
             TableName: !Ref EventPaymentsTable
+        - S3ReadPolicy:
+            BucketName: !Ref UnifyPaymentReceiptsBucket
       Events:
         GetPaymentDetailsApi:
           Type: HttpApi
