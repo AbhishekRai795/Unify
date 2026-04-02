@@ -320,7 +320,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("Error in admin payment transparency:", error);
+    console.error("Error in admin payment Statistics:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

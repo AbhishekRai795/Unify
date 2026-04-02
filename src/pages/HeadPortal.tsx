@@ -6,6 +6,7 @@ import EditChapter from '../components/admin/EditChapter';
 import Registrations from '../components/admin/Registrations';
 import CreateEvent from '../components/admin/CreateEvent';
 import { ChapterHeadProvider } from '../contexts/ChapterHeadContext';
+import HeadMessaging from './HeadMessaging';
 
 import ManageEvents from '../components/admin/ManageEvents';
 
@@ -20,6 +21,7 @@ const HeadPortal: React.FC = () => {
         <Route path="/registrations" element={<Registrations />} />
         <Route path="/events/create" element={<CreateEvent />} />
         <Route path="/events/manage" element={<ManageEvents />} />
+        <Route path="/messages" element={<HeadMessaging />} />
         <Route path="*" element={<Navigate to="/head/dashboard" replace />} />
       </Routes>
     </ChapterHeadProvider>

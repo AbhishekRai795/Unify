@@ -1,14 +1,13 @@
 // getChatMessages-payment.mjs
 // Lambda function to retrieve chat message history between Chapter Head and Students
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const CHAT_MESSAGES_TABLE = process.env.CHAT_MESSAGES_TABLE || "ChatMessages1To1";
 const CHAT_THREADS_TABLE = process.env.CHAT_THREADS_TABLE || "ChatThreads1To1";
-const CHAPTERS_TABLE = process.env.CHAPTERS_TABLE || "Chapters";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN || "*",
@@ -17,6 +16,7 @@ const corsHeaders = {
 };
 
 const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+const canonicalPairId = (a, b) => [a, b].filter(Boolean).sort().join("#");
 
 export const handler = async (event) => {
   console.log("Get chat messages received:", JSON.stringify(event, null, 2));
@@ -52,15 +52,14 @@ export const handler = async (event) => {
     const chapterId = queryParams.chapterId;
     const otherUserId = queryParams.otherUserId; // Can be sub, email, or legacy username
     const limit = parseInt(queryParams.limit || "50", 10);
-    const startKey = queryParams.startKey ? JSON.parse(decodeURIComponent(queryParams.startKey)) : null;
 
     console.log(`[DEBUG] chapterId: ${chapterId}, otherUserId: ${otherUserId}`);
-    if (!chapterId || !otherUserId) {
+    if (!otherUserId) {
       console.warn("[WARN] Missing required parameters");
       return {
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ error: "chapterId and otherUserId are required" })
+        body: JSON.stringify({ error: "otherUserId is required" })
       };
     }
 
@@ -71,10 +70,21 @@ export const handler = async (event) => {
       formats.push(otherUserId);
     }
 
+    // Preferred canonical pair IDs (chapter-agnostic)
+    for (const mine of userIdentities) {
+      for (const other of otherVariants) {
+        const pair = canonicalPairId(mine, other);
+        if (pair) formats.push(pair);
+      }
+    }
+
+    // Legacy IDs (chapter-scoped) kept for backward compatibility
     for (const mine of userIdentities) {
       for (const other of otherVariants) {
         const participants = [mine, other].sort();
-        formats.push(`${chapterId}#${participants[0]}#${participants[1]}`);
+        if (chapterId) {
+          formats.push(`${chapterId}#${participants[0]}#${participants[1]}`);
+        }
         formats.push(`${participants[0]}#${participants[1]}`);
       }
     }
@@ -113,28 +123,29 @@ export const handler = async (event) => {
       }
     }
 
-    // Fallback: if lookup by synthetic IDs fails, try finding a thread by chapter and participants.
-    if (!threadResponse.Item && (!messagesResponse.Items || messagesResponse.Items.length === 0)) {
-      const scanRes = await docClient.send(new QueryCommand({
-        TableName: CHAT_THREADS_TABLE,
-        IndexName: "ChapterThreadsIndex",
-        KeyConditionExpression: "chapterId = :chapterId",
-        ExpressionAttributeValues: {
-          ":chapterId": chapterId
-        },
-        ScanIndexForward: false,
-        Limit: 100
-      })).catch(() => ({ Items: [] }));
+    // Compatibility mode: find all participant-matching threads globally
+    // and merge their messages into a single timeline.
+    const scanAllRes = await docClient.send(new ScanCommand({
+      TableName: CHAT_THREADS_TABLE,
+      FilterExpression: "participantA = :u OR participantB = :u OR participantA = :o OR participantB = :o OR contains(conversationId, :u) OR contains(conversationId, :o)",
+      ExpressionAttributeValues: {
+        ":u": userId,
+        ":o": otherUserId
+      },
+      Limit: 200
+    })).catch(() => ({ Items: [] }));
 
-      const matchedThread = (scanRes.Items || []).find((thread) => {
-        const pA = thread.participantA;
-        const pB = thread.participantB;
-        const cid = thread.conversationId || "";
-        const mineMatch = userIdentities.some((id) => id && (pA === id || pB === id || cid.includes(id)));
-        const otherMatch = otherVariants.some((id) => id && (pA === id || pB === id || cid.includes(id)));
-        return mineMatch && otherMatch;
-      });
+    const matchedThreads = (scanAllRes.Items || []).filter((thread) => {
+      const pA = thread.participantA;
+      const pB = thread.participantB;
+      const cid = thread.conversationId || "";
+      const mineMatch = userIdentities.some((id) => id && (pA === id || pB === id || cid.includes(id)));
+      const otherMatch = otherVariants.some((id) => id && (pA === id || pB === id || cid.includes(id)));
+      return mineMatch && otherMatch;
+    });
 
+    if ((!threadResponse.Item && (!messagesResponse.Items || messagesResponse.Items.length === 0)) && matchedThreads.length > 0) {
+      const matchedThread = matchedThreads.sort((a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime())[0];
       if (matchedThread?.conversationId) {
         conversationId = matchedThread.conversationId;
         threadResponse = { Item: matchedThread };
@@ -146,6 +157,38 @@ export const handler = async (event) => {
           Limit: limit
         })).catch(() => ({ Items: [] }));
       }
+    }
+
+    if (matchedThreads.length > 1) {
+      const mergedMessagePages = await Promise.all(
+        matchedThreads
+          .map((t) => t?.conversationId)
+          .filter(Boolean)
+          .map((cid) =>
+            docClient.send(new QueryCommand({
+              TableName: CHAT_MESSAGES_TABLE,
+              KeyConditionExpression: "conversationId = :cid",
+              ExpressionAttributeValues: { ":cid": cid },
+              ScanIndexForward: false,
+              Limit: limit
+            })).catch(() => ({ Items: [] }))
+          )
+      );
+
+      const mergedMessages = mergedMessagePages.flatMap((page) => page.Items || []);
+      const uniqueMerged = Array.from(
+        new Map(
+          mergedMessages.map((msg) => [
+            `${msg.messageId || ""}#${msg.timestamp || ""}#${msg.senderId || ""}#${msg.message || ""}`,
+            msg
+          ])
+        ).values()
+      ).sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+
+      messagesResponse = {
+        ...messagesResponse,
+        Items: uniqueMerged.slice(0, limit)
+      };
     }
 
     // Mark messages as read (only unread messages from other user)

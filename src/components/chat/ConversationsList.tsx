@@ -3,13 +3,22 @@ import { MessageSquare, Clock, User } from 'lucide-react';
 import { useChat } from '../../contexts/ChatContext';
 import { motion } from 'framer-motion';
 
-const ConversationsList: React.FC = () => {
+interface ConversationsListProps {
+  chapterIds?: string[];
+}
+
+const ConversationsList: React.FC<ConversationsListProps> = ({ chapterIds = [] }) => {
   const { conversations, refreshConversations, setActiveConversation, setIsWidgetOpen } = useChat();
   const totalUnread = (conversations || []).reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
 
   useEffect(() => {
+    const scopedChapterIds = Array.from(new Set((chapterIds || []).filter(Boolean)));
+    if (scopedChapterIds.length > 0) {
+      refreshConversations(scopedChapterIds);
+      return;
+    }
     refreshConversations();
-  }, [refreshConversations]);
+  }, [refreshConversations, chapterIds]);
 
   if (!conversations || conversations.length === 0) {
     return (
@@ -52,8 +61,9 @@ const ConversationsList: React.FC = () => {
               transition={{ delay: index * 0.05 }}
               onClick={() => {
                 if (!recipientId) return;
+                const fallbackChapterId = (chapterIds || []).find(Boolean) || '';
                 setActiveConversation({
-                  chapterId: conv.chapterId,
+                  chapterId: conv.chapterId || fallbackChapterId,
                   recipientId,
                   recipientName: recipientLabel
                 });

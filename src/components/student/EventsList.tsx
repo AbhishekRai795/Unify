@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -157,16 +157,6 @@ const EventsList: React.FC = () => {
                     : 'bg-white/80 border-white/20'
                   }
                 `}>
-                  {/* Announcements Banner */}
-                  {event.announcements && event.announcements.length > 0 && (
-                    <div className={`p-3 flex items-center gap-3 border-b ${isDark ? 'bg-accent-950/40 border-accent-500/20 text-accent-200' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
-                      <AlertCircle className="h-5 w-5 flex-shrink-0 animate-bounce" />
-                      <div className="text-sm font-medium">
-                        <span className="font-bold uppercase text-[10px] mr-2 px-1.5 py-0.5 rounded bg-current bg-opacity-10">New Update</span>
-                        {event.announcements[event.announcements.length - 1].message}
-                      </div>
-                    </div>
-                  )}
                   <div className="md:flex">
                     {event.imageUrl && (
                       <div className="md:w-80 h-48 md:h-auto">

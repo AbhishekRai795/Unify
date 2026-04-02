@@ -18,6 +18,7 @@ const corsHeaders = {
 };
 
 const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+const canonicalPairId = (a, b) => [a, b].filter(Boolean).sort().join("#");
 
 export const handler = async (event) => {
   console.log("Send chat message received:", JSON.stringify(event, null, 2));
@@ -90,14 +91,22 @@ export const handler = async (event) => {
       };
     }
 
-    // Create normalized conversation IDs (current + legacy candidates)
+    // Create normalized conversation IDs.
+    // Canonical ID is participant-pair only (chapter-agnostic) so role/chapter context
+    // does not create duplicate threads between the same two users.
     const senderIdentities = uniq([senderId, senderEmail]);
     const recipientIdentities = uniq([recipientId]);
     const conversationCandidates = [];
+    const pairCanonical = canonicalPairId(senderId, recipientId);
+    if (pairCanonical) conversationCandidates.push(pairCanonical);
+
+    // Legacy candidates (chapter-prefixed and email-mixed) for backward compatibility.
     for (const s of senderIdentities) {
       for (const r of recipientIdentities) {
-        const participants = [s, r].sort();
-        conversationCandidates.push(`${chapterId}#${participants[0]}#${participants[1]}`);
+        const pair = canonicalPairId(s, r);
+        if (!pair) continue;
+        conversationCandidates.push(`${chapterId}#${pair}`);
+        conversationCandidates.push(pair);
       }
     }
     const conversationId = uniq(conversationCandidates)[0];

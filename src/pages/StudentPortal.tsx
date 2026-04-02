@@ -6,6 +6,7 @@ import ChapterRegistration from '../components/student/ChapterRegistration';
 import EventsList from '../components/student/EventsList';
 import Profile from '../components/student/Profile';
 import PaymentHistory from '../components/student/PaymentHistory';
+import StudentMessaging from './StudentMessaging';
 
 const StudentPortal: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const StudentPortal: React.FC = () => {
       <Route path="/events" element={<EventsList />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/payments/history" element={<PaymentHistory />} />
+      <Route path="/messages" element={<StudentMessaging />} />
       <Route path="*" element={<Navigate to="/student" replace />} />
     </Routes>
   );

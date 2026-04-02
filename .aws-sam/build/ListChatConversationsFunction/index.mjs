@@ -68,7 +68,6 @@ const collectConversations = (threads, identities, limit) => {
 
   const conversations = filteredThreads
     .sort((a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime())
-    .slice(0, limit)
     .map((thread) => {
       const threadId = getThreadId(thread);
       const otherParticipantId = pickOtherParticipant(thread, identities);
@@ -87,7 +86,20 @@ const collectConversations = (threads, identities, limit) => {
       };
     });
 
-  return { conversations, filteredCount: filteredThreads.length };
+  // Deduplicate by other participant so one user pair appears as one conversation
+  // even when legacy duplicate thread records exist.
+  const dedupeMap = new Map();
+  for (const conv of conversations) {
+    const key = `${conv.otherParticipantId || "unknown-user"}`;
+    if (!dedupeMap.has(key)) {
+      dedupeMap.set(key, conv);
+    }
+  }
+  const deduped = Array.from(dedupeMap.values())
+    .sort((a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime())
+    .slice(0, limit);
+
+  return { conversations: deduped, filteredCount: filteredThreads.length };
 };
 
 const attachParticipantNames = async (conversations) => {
@@ -193,86 +205,47 @@ export const handler = async (event) => {
     const chapterId = queryParams.chapterId;
     const limit = parseInt(queryParams.limit || "20", 10);
 
-    if (!chapterId) {
-      return {
-        statusCode: 400,
-        headers: corsHeaders,
-        body: JSON.stringify({ error: "chapterId is required" })
-      };
+    // Optional validation only when chapterId is passed.
+    if (chapterId) {
+      const chapterResponse = await docClient.send(new GetCommand({
+        TableName: CHAPTERS_TABLE,
+        Key: { chapterId }
+      })).catch(() => ({ Item: null }));
+      if (!chapterResponse.Item) {
+        return {
+          statusCode: 404,
+          headers: corsHeaders,
+          body: JSON.stringify({ error: "Chapter not found" })
+        };
+      }
     }
 
-    // Validate chapter exists
-    const chapterResponse = await docClient.send(new GetCommand({
-      TableName: CHAPTERS_TABLE,
-      Key: { chapterId }
-    }));
-
-    if (!chapterResponse.Item) {
-      return {
-        statusCode: 404,
-        headers: corsHeaders,
-        body: JSON.stringify({ error: "Chapter not found" })
-      };
-    }
-
-    const threadsResponse = await docClient.send(new QueryCommand({
+    // Global participant scan: returns all user conversations regardless of chapter,
+    // enabling one shared thread across role/chapter contexts.
+    const scanResponse = await docClient.send(new ScanCommand({
       TableName: CHAT_THREADS_TABLE,
-      IndexName: "ChapterThreadsIndex",
-      KeyConditionExpression: "chapterId = :chapterId",
+      FilterExpression: "participantA = :userId OR participantB = :userId OR participantA = :userEmail OR participantB = :userEmail OR participantA = :userUsername OR participantB = :userUsername OR contains(conversationId, :userId) OR (attribute_exists(conversationId) AND contains(conversationId, :userEmail)) OR (attribute_exists(conversationId) AND contains(conversationId, :userUsername))",
       ExpressionAttributeValues: {
-        ":chapterId": chapterId
-      },
-      ScanIndexForward: false, // Newest first
-      Limit: limit * 5 // Request more since we'll filter significantly
-    }));
+        ":userId": userId,
+        ":userEmail": userEmail || "___NO_EMAIL___",
+        ":userUsername": userUsername || "___NO_USERNAME___"
+      }
+    })).catch(err => {
+      console.warn("[WARN] Participant scan failed:", err.message);
+      return { Items: [] };
+    });
 
-    let threads = threadsResponse.Items || [];
-    
-    // FALLBACK: If no threads found in GSI, try a smarter scan (bridge for legacy data)
-    if (threads.length === 0) {
-      console.log("[DEBUG] No threads found in GSI, trying smart fallback scan with email support...");
-      const scanResponse = await docClient.send(new ScanCommand({
-        TableName: CHAT_THREADS_TABLE,
-        FilterExpression: "participantA = :userId OR participantB = :userId OR participantA = :userEmail OR participantB = :userEmail OR participantA = :userUsername OR participantB = :userUsername OR contains(conversationId, :userId) OR (attribute_exists(conversationId) AND contains(conversationId, :userEmail)) OR (attribute_exists(conversationId) AND contains(conversationId, :userUsername))",
-        ExpressionAttributeValues: {
-          ":userId": userId,
-          ":userEmail": userEmail || "___NO_EMAIL___",
-          ":userUsername": userUsername || "___NO_USERNAME___"
-        }
-      })).catch(err => {
-        console.warn("[WARN] Smart fallback scan failed:", err.message);
-        return { Items: [] };
-      });
-      
-      // Filter the scanned items: keep those that match the chapterId OR have NO chapterId (legacy)
-      threads = (scanResponse.Items || []).filter(thread =>
-        !thread.chapterId || thread.chapterId === chapterId
-      );
-      console.log(`[DEBUG] Smart scan found ${threads.length} potential legacy/matching threads`);
+    let threads = scanResponse.Items || [];
+
+    // If chapterId is provided, include matching rows and legacy rows without chapterId.
+    if (chapterId) {
+      threads = threads.filter((thread) => !thread.chapterId || thread.chapterId === chapterId);
     }
 
     let { conversations, filteredCount } = collectConversations(threads, identities, limit);
 
-    // Additional fallback: GSI had rows but none matched identities (legacy/mixed identity data).
     if (filteredCount === 0) {
-      console.log("[DEBUG] No user-matching rows after GSI query, running fallback scan...");
-      const scanResponse = await docClient.send(new ScanCommand({
-        TableName: CHAT_THREADS_TABLE,
-        FilterExpression: "participantA = :userId OR participantB = :userId OR participantA = :userEmail OR participantB = :userEmail OR participantA = :userUsername OR participantB = :userUsername OR contains(conversationId, :userId) OR (attribute_exists(conversationId) AND contains(conversationId, :userEmail)) OR (attribute_exists(conversationId) AND contains(conversationId, :userUsername))",
-        ExpressionAttributeValues: {
-          ":userId": userId,
-          ":userEmail": userEmail || "___NO_EMAIL___",
-          ":userUsername": userUsername || "___NO_USERNAME___"
-        }
-      })).catch(err => {
-        console.warn("[WARN] Fallback scan failed:", err.message);
-        return { Items: [] };
-      });
-
-      const fallbackThreads = (scanResponse.Items || []).filter(
-        (thread) => !thread.chapterId || thread.chapterId === chapterId
-      );
-      ({ conversations } = collectConversations(fallbackThreads, identities, limit));
+      ({ conversations } = collectConversations(threads, identities, limit));
     }
 
     const conversationsWithNames = await attachParticipantNames(conversations);

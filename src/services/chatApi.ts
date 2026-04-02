@@ -23,12 +23,14 @@ export const chatApi = {
     return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
   },
 
-  // Fetch message history between two users for a specific chapter
-  async getMessageHistory(chapterId: string, otherUserId: string, token: string): Promise<ChatMessage[]> {
+  // Fetch message history between two users. chapterId is optional for backward compatibility.
+  async getMessageHistory(chapterId: string | undefined, otherUserId: string, token: string): Promise<ChatMessage[]> {
     try {
       if (!token) return [];
+      const params: any = { otherUserId };
+      if (chapterId) params.chapterId = chapterId;
       const response = await axios.get(`${API_BASE_URL}/api/chat/messages`, {
-        params: { chapterId, otherUserId },
+        params,
         headers: {
           Authorization: this.buildAuthHeader(token)
         }
@@ -40,12 +42,15 @@ export const chatApi = {
     }
   },
 
-  // Get active chat threads/conversations for the current user in a specific chapter
-  async getConversations(chapterId: string, token: string): Promise<any[]> {
+  // Get active chat threads/conversations for the current user.
+  // chapterId is optional; when omitted backend returns all participant threads.
+  async getConversations(chapterId: string | undefined, token: string): Promise<any[]> {
     try {
-      if (!token || !chapterId) return [];
+      if (!token) return [];
+      const params: any = {};
+      if (chapterId) params.chapterId = chapterId;
       const response = await axios.get(`${API_BASE_URL}/api/chat/conversations`, {
-        params: { chapterId },
+        params,
         headers: {
           Authorization: this.buildAuthHeader(token)
         }

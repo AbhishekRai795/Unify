@@ -11,6 +11,7 @@ const WS_CONNECTIONS_TABLE = process.env.WebSocketConnectionsTable || "WebSocket
 const CHAT_MESSAGES_TABLE = process.env.CHAT_MESSAGES_TABLE || "ChatMessages1To1";
 const CHAT_THREADS_TABLE = process.env.CHAT_THREADS_TABLE || "ChatThreads1To1";
 const CHAPTERS_TABLE = process.env.CHAPTERS_TABLE || "Chapters";
+const canonicalPairId = (a, b) => [a, b].filter(Boolean).sort().join("#");
 
 export const handler = async (event) => {
   console.log("Send message event:", JSON.stringify(event, null, 2));
@@ -35,10 +36,9 @@ export const handler = async (event) => {
     const timestamp = new Date().toISOString();
     const messageId = randomUUID();
 
-    // Determine conversation ID
-    // We prefer chapterId#sub#sub but must support legacy formats
+    // Determine conversation ID (chapter-agnostic canonical pair ID)
     const subParticipants = [senderId, recipientId].sort();
-    const primaryConversationId = `${chapterId}#${subParticipants[0]}#${subParticipants[1]}`;
+    const primaryConversationId = canonicalPairId(subParticipants[0], subParticipants[1]);
     
     let activeConversationId = primaryConversationId;
     let existingThread = null;
@@ -54,11 +54,13 @@ export const handler = async (event) => {
         existingThread = resPrimary.Item;
       } else if (senderEmail) {
         // Look for legacy formats if primary fails
-        const legacyParticipants = [senderEmail, recipientId].sort();
-        const legacyId = `${chapterId}#${legacyParticipants[0]}#${legacyParticipants[1]}`;
-        const secondLegacyId = `${legacyParticipants[0]}#${legacyParticipants[1]}`;
+        const legacyCandidates = [
+          `${chapterId}#${primaryConversationId}`,
+          canonicalPairId(senderEmail, recipientId),
+          `${chapterId}#${canonicalPairId(senderEmail, recipientId)}`
+        ].filter(Boolean);
 
-        for (const lid of [legacyId, secondLegacyId]) {
+        for (const lid of legacyCandidates) {
           const resLegacy = await docClient.send(new GetCommand({
             TableName: CHAT_THREADS_TABLE,
             Key: { conversationId: lid }

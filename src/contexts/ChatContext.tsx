@@ -35,6 +35,92 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshConversationsRef = useRef<(chapterId?: string | string[]) => Promise<void>>(async () => {});
   const lastChapterIdsRef = useRef<string[]>([]);
 
+  const getOtherParticipantId = (conv: any): string => {
+    const me = user?.sub;
+    const a = conv?.participantA;
+    const b = conv?.participantB;
+    const senderId = conv?.senderId;
+    const recipientId = conv?.recipientId;
+
+    if (conv?.otherParticipantId) return conv.otherParticipantId;
+    if (conv?.otherUserId) return conv.otherUserId;
+
+    if (me) {
+      if (a && b) {
+        if (a === me && b !== me) return b;
+        if (b === me && a !== me) return a;
+      }
+      if (senderId && recipientId) {
+        if (senderId === me && recipientId !== me) return recipientId;
+        if (recipientId === me && senderId !== me) return senderId;
+      }
+      if (recipientId && recipientId !== me) return recipientId;
+    }
+
+    return recipientId || a || b || senderId || '';
+  };
+
+  const normalizeConversation = (conv: any, fallbackChapterId?: string) => {
+    const chapterId = conv?.chapterId || conv?.chapterID || fallbackChapterId || '';
+    const otherParticipantId = getOtherParticipantId(conv);
+
+    return {
+      ...conv,
+      chapterId,
+      otherParticipantId,
+      otherParticipantName: conv?.otherParticipantName || conv?.recipientName || conv?.senderName || ''
+    };
+  };
+
+  const getConversationKey = (conv: any): string => {
+    const other =
+      conv?.otherParticipantId ||
+      conv?.otherUserId ||
+      conv?.recipientId ||
+      conv?.participantA ||
+      conv?.participantB;
+
+    // Prefer deterministic participant-based key (chapter-agnostic) so the same pair
+    // stays one thread across role/chapter contexts.
+    if (other) return `${other}`;
+
+    const idA = conv?.threadId || conv?.conversationId;
+    if (idA) return `id:${String(idA)}`;
+
+    return `unknown-user`;
+  };
+
+  const conversationTimestamp = (conv: any): number => {
+    const val = conv?.lastMessageAt || conv?.timestamp || conv?.updatedAt || conv?.createdAt;
+    return val ? new Date(val).getTime() : 0;
+  };
+
+  const mergeByConversationKey = (list: any[]): any[] => {
+    const map = new Map<string, any>();
+
+    for (const raw of list || []) {
+      const conv = normalizeConversation(raw);
+      const key = getConversationKey(conv);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, conv);
+        continue;
+      }
+
+      const prevTs = conversationTimestamp(existing);
+      const nextTs = conversationTimestamp(conv);
+      const preferred = nextTs >= prevTs ? { ...existing, ...conv } : { ...conv, ...existing };
+
+      // Keep the freshest timestamp and strongest preview data.
+      preferred.lastMessageAt = nextTs >= prevTs ? conv.lastMessageAt || conv.timestamp || conv.updatedAt : existing.lastMessageAt || existing.timestamp || existing.updatedAt;
+      preferred.lastMessagePreview = (nextTs >= prevTs ? conv.lastMessagePreview : existing.lastMessagePreview) || conv.lastMessagePreview || existing.lastMessagePreview || conv.lastMessage || existing.lastMessage;
+
+      map.set(key, preferred);
+    }
+
+    return Array.from(map.values()).sort((a, b) => conversationTimestamp(b) - conversationTimestamp(a));
+  };
+
   const refreshConversations = useCallback(async (chapterId?: string | string[]) => {
     const token = localStorage.getItem('idToken');
     const explicitChapterIds = Array.isArray(chapterId)
@@ -50,13 +136,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastChapterIdsRef.current = chapterIds;
     }
 
-    if (token && chapterIds.length > 0) {
-      const results = await Promise.all(
-        chapterIds.map((cid) => chatApi.getConversations(cid, token))
-      );
-
-      const merged = results
-        .flat()
+    if (token) {
+      const convs = await chatApi.getConversations(undefined, token);
+      const merged = (convs || [])
+        .map((conv) => normalizeConversation(conv, chapterIds[0]))
         .filter(Boolean)
         .sort((a, b) => {
           const at = a?.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
@@ -64,11 +147,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return bt - at;
         });
 
-      const uniqueConversations = Array.from(
-        new Map(merged.map((conv) => [conv.threadId || conv.conversationId, conv])).values()
-      );
+      const uniqueConversations = mergeByConversationKey(merged);
 
-      setConversations(uniqueConversations);
+      setConversations((prev) => {
+        const prevScoped = (prev || []).map((conv) => normalizeConversation(conv));
+        const carryForward = prevScoped.filter((conv) =>
+          !uniqueConversations.some((fresh) => getConversationKey(fresh) === getConversationKey(conv))
+        );
+
+        return mergeByConversationKey([...uniqueConversations, ...carryForward]);
+      });
     } else {
       setConversations([]);
     }
@@ -137,11 +225,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem('idToken');
     if (activeConversation && token) {
-      chatApi.getMessageHistory(activeConversation.chapterId, activeConversation.recipientId, token)
+      chatApi.getMessageHistory(activeConversation.chapterId || undefined, activeConversation.recipientId, token)
         .then((history) => {
           setMessages(history);
           // Ensure unread badges drop immediately after opening a thread.
-          refreshConversationsRef.current(activeConversation.chapterId);
+          refreshConversationsRef.current();
         });
     } else {
       setMessages([]);
@@ -150,9 +238,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendMessage = useCallback((text: string) => {
     if (socketRef.current && isConnected && activeConversation && user) {
+      const effectiveChapterId = activeConversation.chapterId || activeChapterId || lastChapterIdsRef.current[0];
+      if (!effectiveChapterId) return;
       const messagePayload = {
         action: 'sendMessage',
-        chapterId: activeConversation.chapterId,
+        chapterId: effectiveChapterId,
         recipientId: activeConversation.recipientId,
         userId: user.sub,
         senderName: user.name || user.email,
@@ -162,7 +252,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       socketRef.current.send(JSON.stringify(messagePayload));
     }
-  }, [isConnected, activeConversation, user]);
+  }, [isConnected, activeConversation, user, activeChapterId]);
 
   return (
     <ChatContext.Provider value={{ 
