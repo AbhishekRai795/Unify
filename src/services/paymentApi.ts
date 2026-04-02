@@ -204,13 +204,25 @@ export const paymentAPI = {
   }
     ,
     // For chapter heads: get all registrations for a given event
-    getEventRegistrationsForEvent: async (eventId: string) => {
+  getEventRegistrationsForEvent: async (eventId: string) => {
       const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events/registrations?eventId=${encodeURIComponent(eventId)}`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
       return handleResponse(response);
-    }
+    },
+
+  // Admin: chapter-level event payment transparency
+  getAdminPaymentTransparency: async (chapterId: string, includeRazorpay: boolean = true) => {
+    const response = await fetch(
+      `${PAYMENT_API_BASE_URL}/api/admin/payments/transparency?chapterId=${encodeURIComponent(chapterId)}&includeRazorpay=${includeRazorpay ? 'true' : 'false'}`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders()
+      }
+    );
+    return handleResponse(response);
+  }
 };
 
 export default paymentAPI;

@@ -1068,6 +1068,54 @@ Resources:
         Component: Chat
     Metadata:
       SamResourceId: ListChatConversationsFunction
+  AdminPaymentTransparencyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: unify-admin-payment-transparency-${Environment}
+      Handler: index.handler
+      CodeUri: AdminPaymentTransparencyFunction
+      Description: Returns chapter event payment transparency details for admin
+      Timeout: 60
+      Environment:
+        Variables:
+          CHAPTERS_TABLE: Chapters
+          EVENTS_TABLE:
+            Ref: ChapterEventsTable
+          EVENT_PAYMENTS_TABLE:
+            Ref: EventPaymentsTable
+          USERS_TABLE: Unify-Users
+          REGISTRATION_TABLE: RegistrationRequests
+          RAZORPAY_SECRET_NAME: unify/razorpay/credentials
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: Chapters
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: ChapterEventsTable
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: EventPaymentsTable
+      - DynamoDBReadPolicy:
+          TableName: Unify-Users
+      - DynamoDBReadPolicy:
+          TableName: RegistrationRequests
+      - Ref: SecretsManagerPolicy
+      Events:
+        AdminPaymentTransparencyApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/admin/payments/transparency
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Payment
+    Metadata:
+      SamResourceId: AdminPaymentTransparencyFunction
   WebSocketConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:

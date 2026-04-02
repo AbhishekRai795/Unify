@@ -207,4 +207,13 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["ListEventRegistrationsForEventFunction"]
 
+[function_build_definitions.c115bbbd-31f1-41d7-a970-138807f7ac4b]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/adminPaymentTransparency-payment"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["AdminPaymentTransparencyFunction"]
+
 [layer_build_definitions]

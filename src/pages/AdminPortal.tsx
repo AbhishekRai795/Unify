@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/adminApi';
+import { paymentAPI } from '../services/paymentApi';
 import { useAuth } from '../contexts/AuthContext';
 import EditChapter from '../components/admin/EditChapter';
 import CreateChapterWithPayment from '../components/admin/CreateChapterWithPayment';
@@ -18,6 +19,69 @@ interface Chapter {
   status: string;
 }
 
+interface TransparencyData {
+  chapter: {
+    chapterId: string;
+    chapterName: string;
+    headName?: string;
+    headEmail?: string;
+  };
+  overallStats: {
+    chapterMembersCountFromChapterTable: number;
+    chapterEnrolledMembersCountFromRegistrations: number;
+    uniqueStudentsWithEventRegistrations: number;
+    totalEvents: number;
+    totalPaidEvents: number;
+    totalEventRegistrationRows: number;
+    totalCompletedPayments: number;
+    totalPendingPayments: number;
+    totalFailedPayments: number;
+    totalRevenueInRupees: number;
+  };
+  eventStats: Array<{
+    eventId: string;
+    title: string;
+    isPaid: boolean;
+    registrationFee: number;
+    enrolledCount: number;
+    completedPaidCount: number;
+    pendingCount: number;
+    failedCount: number;
+    revenueInRupees: number;
+  }>;
+  enrolledMembers: Array<{
+    userId: string;
+    studentName: string;
+    studentEmail: string;
+    sapId?: number;
+    year?: number;
+    approvedAt?: string;
+  }>;
+  paymentRecords: Array<{
+    eventId: string;
+    eventTitle: string;
+    userId: string;
+    studentName: string;
+    studentEmail: string;
+    sapId?: number;
+    year?: number;
+    paymentStatus: string;
+    amountInRupees: number;
+    transactionId?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    createdAt?: string;
+    completedAt?: string;
+  }>;
+  razorpayInsights?: {
+    available: boolean;
+    sampledPayments: number;
+    methodBreakdown?: Record<string, number>;
+    statusBreakdown?: Record<string, number>;
+    notes?: string;
+  };
+}
+
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +89,12 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showTransparencyModal, setShowTransparencyModal] = useState(false);
+  const [selectedChapterForTransparency, setSelectedChapterForTransparency] = useState<Chapter | null>(null);
+  const [transparencyLoading, setTransparencyLoading] = useState(false);
+  const [transparencyError, setTransparencyError] = useState('');
+  const [transparencyData, setTransparencyData] = useState<TransparencyData | null>(null);
+  const [eventFilter, setEventFilter] = useState<string>('all');
 
   // Check if user has admin access
   useEffect(() => {
@@ -82,6 +152,53 @@ const AdminDashboard: React.FC = () => {
     navigate(`/admin/chapters/edit/${chapter.chapterId}`);
   };
 
+  const handleOpenPaymentTransparency = async (chapter: Chapter) => {
+    setSelectedChapterForTransparency(chapter);
+    setShowTransparencyModal(true);
+    setTransparencyLoading(true);
+    setTransparencyError('');
+    setTransparencyData(null);
+    setEventFilter('all');
+
+    try {
+      const data = await paymentAPI.getAdminPaymentTransparency(chapter.chapterId, true);
+      setTransparencyData(data);
+    } catch (e: any) {
+      setTransparencyError(e?.error || e?.message || 'Failed to load payment transparency data');
+    } finally {
+      setTransparencyLoading(false);
+    }
+  };
+
+  const closeTransparencyModal = () => {
+    setShowTransparencyModal(false);
+    setSelectedChapterForTransparency(null);
+    setTransparencyData(null);
+    setTransparencyError('');
+    setEventFilter('all');
+  };
+
+  const escapeCsv = (value: unknown) => {
+    const str = String(value ?? '');
+    if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const downloadCsv = (filename: string, rows: Array<Array<unknown>>) => {
+    const csv = rows.map((row) => row.map((cell) => escapeCsv(cell)).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (!user?.groups.includes('admin')) {
     return (
       <div className="p-6">
@@ -89,6 +206,10 @@ const AdminDashboard: React.FC = () => {
       </div>
     );
   }
+
+  const filteredPayments = transparencyData?.paymentRecords.filter((row) =>
+    eventFilter === 'all' ? true : row.eventId === eventFilter
+  ) || [];
 
   return (
     <div className="p-6">
@@ -166,6 +287,12 @@ const AdminDashboard: React.FC = () => {
                         Edit
                       </button>
                       <button 
+                        className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                        onClick={() => handleOpenPaymentTransparency(chapter)}
+                      >
+                        Payment Stats
+                      </button>
+                      <button 
                         className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
                         onClick={() => handleDeleteChapter(chapter.chapterId)}
                       >
@@ -184,6 +311,254 @@ const AdminDashboard: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showTransparencyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closeTransparencyModal} />
+          <div className="relative bg-white w-full max-w-7xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">
+            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Payment Statistics</h2>
+                <p className="text-sm text-gray-600">
+                  {selectedChapterForTransparency?.chapterName} ({selectedChapterForTransparency?.chapterId})
+                </p>
+              </div>
+              <button
+                onClick={closeTransparencyModal}
+                className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-4 space-y-5">
+              {transparencyLoading && (
+                <div className="text-center py-12 text-gray-600">Loading Payment Statistics </div>
+              )}
+
+              {transparencyError && (
+                <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700">{transparencyError}</div>
+              )}
+
+              {!transparencyLoading && transparencyData && (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="bg-blue-50 border border-blue-100 rounded p-3">
+                      <p className="text-xs text-blue-700">Chapter Members</p>
+                      <p className="text-xl font-bold text-blue-900">{transparencyData.overallStats.chapterMembersCountFromChapterTable}</p>
+                    </div>
+                    <div className="bg-purple-50 border border-purple-100 rounded p-3">
+                      <p className="text-xs text-purple-700">Enrolled Members</p>
+                      <p className="text-xl font-bold text-purple-900">{transparencyData.overallStats.chapterEnrolledMembersCountFromRegistrations}</p>
+                    </div>
+                    <div className="bg-green-50 border border-green-100 rounded p-3">
+                      <p className="text-xs text-green-700">Completed Payments</p>
+                      <p className="text-xl font-bold text-green-900">{transparencyData.overallStats.totalCompletedPayments}</p>
+                    </div>
+                    <div className="bg-yellow-50 border border-yellow-100 rounded p-3">
+                      <p className="text-xs text-yellow-700">Pending Payments</p>
+                      <p className="text-xl font-bold text-yellow-900">{transparencyData.overallStats.totalPendingPayments}</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded p-3">
+                      <p className="text-xs text-emerald-700">Revenue</p>
+                      <p className="text-xl font-bold text-emerald-900">₹{transparencyData.overallStats.totalRevenueInRupees.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border rounded p-3">
+                    <h3 className="font-semibold text-gray-900 mb-2">Razorpay Insights</h3>
+                    <p className="text-sm text-gray-700 mb-2">{transparencyData.razorpayInsights?.notes || 'No Razorpay insights available.'}</p>
+                    {transparencyData.razorpayInsights?.available && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="font-medium text-gray-900 mb-1">Method Breakdown</p>
+                          <ul className="space-y-1">
+                            {Object.entries(transparencyData.razorpayInsights.methodBreakdown || {}).map(([method, count]) => (
+                              <li key={method} className="text-gray-700">{method}: {count}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 mb-1">Status Breakdown</p>
+                          <ul className="space-y-1">
+                            {Object.entries(transparencyData.razorpayInsights.statusBreakdown || {}).map(([status, count]) => (
+                              <li key={status} className="text-gray-700">{status}: {count}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-white border rounded p-3">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
+                      <h3 className="font-semibold text-gray-900">Event-wise Stats</h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => downloadCsv(
+                            `event-payment-stats-${transparencyData.chapter.chapterId}-${new Date().toISOString().split('T')[0]}.csv`,
+                            [
+                              ['Event ID', 'Event Title', 'Is Paid', 'Fee', 'Enrolled', 'Completed', 'Pending', 'Failed', 'Revenue'],
+                              ...transparencyData.eventStats.map((e) => [
+                                e.eventId, e.title, e.isPaid ? 'YES' : 'NO', e.registrationFee,
+                                e.enrolledCount, e.completedPaidCount, e.pendingCount, e.failedCount, e.revenueInRupees
+                              ])
+                            ]
+                          )}
+                          className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                        >
+                          Export Event CSV
+                        </button>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Event</th>
+                            <th className="px-3 py-2 text-left">Type</th>
+                            <th className="px-3 py-2 text-left">Enrolled</th>
+                            <th className="px-3 py-2 text-left">Completed</th>
+                            <th className="px-3 py-2 text-left">Pending</th>
+                            <th className="px-3 py-2 text-left">Failed</th>
+                            <th className="px-3 py-2 text-left">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transparencyData.eventStats.map((evt) => (
+                            <tr key={evt.eventId} className="border-t">
+                              <td className="px-3 py-2">{evt.title}</td>
+                              <td className="px-3 py-2">{evt.isPaid ? 'Paid' : 'Free'}</td>
+                              <td className="px-3 py-2">{evt.enrolledCount}</td>
+                              <td className="px-3 py-2">{evt.completedPaidCount}</td>
+                              <td className="px-3 py-2">{evt.pendingCount}</td>
+                              <td className="px-3 py-2">{evt.failedCount}</td>
+                              <td className="px-3 py-2">₹{evt.revenueInRupees.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border rounded p-3">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
+                      <h3 className="font-semibold text-gray-900">Student Payment Details</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <select
+                          className="border rounded px-2 py-1 text-sm"
+                          value={eventFilter}
+                          onChange={(e) => setEventFilter(e.target.value)}
+                        >
+                          <option value="all">All Events</option>
+                          {transparencyData.eventStats.map((evt) => (
+                            <option key={evt.eventId} value={evt.eventId}>{evt.title}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => downloadCsv(
+                            `student-payment-details-${transparencyData.chapter.chapterId}-${new Date().toISOString().split('T')[0]}.csv`,
+                            [
+                              ['Event ID', 'Event Title', 'User ID', 'Student Name', 'Email', 'SAP', 'Year', 'Payment Status', 'Amount (INR)', 'Transaction ID', 'Razorpay Order ID', 'Razorpay Payment ID', 'Created At', 'Completed At'],
+                              ...filteredPayments.map((p) => [
+                                p.eventId, p.eventTitle, p.userId, p.studentName, p.studentEmail, p.sapId ?? '', p.year ?? '',
+                                p.paymentStatus, p.amountInRupees, p.transactionId ?? '', p.razorpayOrderId ?? '', p.razorpayPaymentId ?? '',
+                                p.createdAt ?? '', p.completedAt ?? ''
+                              ])
+                            ]
+                          )}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                        >
+                          Export Payment CSV
+                        </button>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto max-h-[300px]">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Student</th>
+                            <th className="px-3 py-2 text-left">Event</th>
+                            <th className="px-3 py-2 text-left">Status</th>
+                            <th className="px-3 py-2 text-left">Amount</th>
+                            <th className="px-3 py-2 text-left">Razorpay Payment ID</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredPayments.map((row, idx) => (
+                            <tr key={`${row.eventId}-${row.userId}-${idx}`} className="border-t">
+                              <td className="px-3 py-2">
+                                <div className="font-medium">{row.studentName}</div>
+                                <div className="text-xs text-gray-500">{row.studentEmail}</div>
+                              </td>
+                              <td className="px-3 py-2">{row.eventTitle}</td>
+                              <td className="px-3 py-2">{row.paymentStatus}</td>
+                              <td className="px-3 py-2">₹{Number(row.amountInRupees || 0).toFixed(2)}</td>
+                              <td className="px-3 py-2 text-xs font-mono">{row.razorpayPaymentId || '-'}</td>
+                            </tr>
+                          ))}
+                          {filteredPayments.length === 0 && (
+                            <tr>
+                              <td className="px-3 py-4 text-center text-gray-500" colSpan={5}>No payment rows for selected filter.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border rounded p-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Currently Enrolled Chapter Members</h3>
+                      <button
+                        onClick={() => downloadCsv(
+                          `chapter-enrolled-members-${transparencyData.chapter.chapterId}-${new Date().toISOString().split('T')[0]}.csv`,
+                          [
+                            ['User ID', 'Student Name', 'Email', 'SAP', 'Year', 'Approved At'],
+                            ...transparencyData.enrolledMembers.map((m) => [m.userId, m.studentName, m.studentEmail, m.sapId ?? '', m.year ?? '', m.approvedAt ?? ''])
+                          ]
+                        )}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      >
+                        Export Members CSV
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto max-h-[240px]">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Name</th>
+                            <th className="px-3 py-2 text-left">Email</th>
+                            <th className="px-3 py-2 text-left">SAP</th>
+                            <th className="px-3 py-2 text-left">Year</th>
+                            <th className="px-3 py-2 text-left">Approved</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transparencyData.enrolledMembers.map((member) => (
+                            <tr key={member.userId} className="border-t">
+                              <td className="px-3 py-2">{member.studentName}</td>
+                              <td className="px-3 py-2">{member.studentEmail}</td>
+                              <td className="px-3 py-2">{member.sapId ?? '-'}</td>
+                              <td className="px-3 py-2">{member.year ?? '-'}</td>
+                              <td className="px-3 py-2">{member.approvedAt ? new Date(member.approvedAt).toLocaleString() : '-'}</td>
+                            </tr>
+                          ))}
+                          {transparencyData.enrolledMembers.length === 0 && (
+                            <tr>
+                              <td className="px-3 py-4 text-center text-gray-500" colSpan={5}>No approved chapter members found.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
