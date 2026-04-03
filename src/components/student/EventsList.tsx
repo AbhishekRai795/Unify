@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
 import { EventPaymentModal } from './EventPaymentModal';
+import { encodeS3Url } from '../../utils/s3Utils';
 
 
 const EventsList: React.FC = () => {
@@ -86,7 +87,7 @@ const EventsList: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className={`
@@ -148,6 +149,7 @@ const EventsList: React.FC = () => {
               const isRegistered = 
                 eventRegistrations.some((reg: any) => reg.eventId === eventId) ||
                 (Array.isArray(attendedList) && attendedList.includes(eventId));
+              const isRegistrationClosed = !!(event.registrationDeadline && new Date() > new Date(event.registrationDeadline));
                 
               return (
                 <div key={event.id} className={`
@@ -160,10 +162,10 @@ const EventsList: React.FC = () => {
                   <div className="md:flex">
                     {event.imageUrl && (
                       <div className="md:w-80 h-48 md:h-auto">
-                        <img
-                          src={event.imageUrl}
+                        <img 
+                          src={encodeS3Url(event.imageUrl)} 
                           alt={event.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       </div>
                     )}
@@ -265,7 +267,7 @@ const EventsList: React.FC = () => {
                           {event.registrationRequired && (
                             <button
                               onClick={() => handleRegister(event)}
-                              disabled={registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees)}
+                              disabled={registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
                               className={`
                                 px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm
                                 ${isDark 
@@ -278,9 +280,11 @@ const EventsList: React.FC = () => {
                                 ? 'Registered'
                                 : registering === eventId 
                                   ? 'Registering...' 
-                                  : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
-                                    ? 'Full'
-                                    : 'Register'
+                                  : isRegistrationClosed
+                                    ? 'Registration Closed'
+                                    : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
+                                      ? 'Full'
+                                      : 'Register'
                               }
                             </button>
                           )}
@@ -296,6 +300,21 @@ const EventsList: React.FC = () => {
                               <span>Join Meeting</span>
                             </a>
                           )}
+
+                          {/* Know More About It Button */}
+                          <button
+                            onClick={() => window.open(`/student/events/${encodeURIComponent(eventId)}/about`, '_blank')}
+                            className={`
+                              px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 shadow-sm
+                              ${isDark
+                                ? 'border border-accent-500/30 text-accent-300 bg-accent-500/10 hover:bg-accent-500/20'
+                                : 'border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100'
+                              }
+                            `}
+                          >
+                            <Sparkles className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
+                            Explore
+                          </button>
                         </div>
                         
                         {event.registrationDeadline && (

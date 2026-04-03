@@ -7,14 +7,18 @@ import EventsList from '../components/student/EventsList';
 import Profile from '../components/student/Profile';
 import PaymentHistory from '../components/student/PaymentHistory';
 import StudentMessaging from './StudentMessaging';
+import ChapterPublicProfile from './ChapterPublicProfile';
+import EventPublicProfile from './EventPublicProfile';
 
 const StudentPortal: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/chapters" element={<ChaptersList />} />
+      <Route path="/chapters/:chapterId/about" element={<ChapterPublicProfile />} />
       <Route path="/chapters/:chapterId/register" element={<ChapterRegistration />} />
       <Route path="/events" element={<EventsList />} />
+      <Route path="/events/:eventId/about" element={<EventPublicProfile />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/payments/history" element={<PaymentHistory />} />
       <Route path="/messages" element={<StudentMessaging />} />

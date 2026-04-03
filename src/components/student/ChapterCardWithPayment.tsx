@@ -1,6 +1,5 @@
-// ChapterCardWithPayment.tsx
-// Enhanced chapter card component that displays fee information
 import React, { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 interface ChapterCardWithPaymentProps {
   chapterId: string;
@@ -23,7 +22,6 @@ export const ChapterCardWithPayment: React.FC<ChapterCardWithPaymentProps> = ({
 }) => {
   const [feeInfo, setFeeInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     fetchChapterFees();
@@ -39,7 +37,6 @@ export const ChapterCardWithPayment: React.FC<ChapterCardWithPaymentProps> = ({
         setFeeInfo(data.feeInfo);
       } else {
         console.warn('Failed to fetch fees:', data.error);
-        // Default to free if can't fetch
         setFeeInfo({ isPaid: false, displayFee: 'Free' });
       }
     } catch (err) {
@@ -48,6 +45,10 @@ export const ChapterCardWithPayment: React.FC<ChapterCardWithPaymentProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const openProfile = () => {
+    window.open(`/student/chapters/${chapterId}/about`, '_blank');
   };
 
   const getStatusColor = () => {
@@ -112,6 +113,14 @@ export const ChapterCardWithPayment: React.FC<ChapterCardWithPaymentProps> = ({
           ✓ Registered
         </div>
       )}
+
+      <button
+        onClick={openProfile}
+        className="mt-3 w-full py-2.5 px-4 rounded-xl border border-blue-200 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-sm"
+      >
+        <Sparkles className="h-4 w-4 text-blue-600" />
+        Explore
+      </button>
     </div>
   );
 };

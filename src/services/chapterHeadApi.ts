@@ -141,6 +141,64 @@ export const chapterHeadAPI = {
     return handleResponse(response);
   },
 
+  // Fetch chapter profile for display (students and heads)
+  getChapterProfile: async (chapterId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapters/${encodeURIComponent(chapterId)}/profile`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Update chapter profile (chapter head only)
+  updateChapterProfile: async (chapterId: string, profileData: any) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/chapters/${encodeURIComponent(chapterId)}/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    return handleResponse(response);
+  },
+
+  // Get signed URL for profile image upload
+  getProfileUploadUrl: async (chapterId: string, fileName: string, contentType: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/chapters/${encodeURIComponent(chapterId)}/profile/upload-url`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ fileName, contentType }),
+    });
+    return handleResponse(response);
+  },
+
+  // Fetch event profile for display (students and heads)
+  getEventProfile: async (eventId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/events/${encodeURIComponent(eventId)}/profile`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Update event profile (chapter head only)
+  updateEventProfile: async (eventId: string, profileData: any) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/events/${encodeURIComponent(eventId)}/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    return handleResponse(response);
+  },
+
+  // Get signed URL for event profile image upload
+  getEventProfileUploadUrl: async (eventId: string, fileName: string, contentType: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/events/${encodeURIComponent(eventId)}/profile/upload-url`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ fileName, contentType }),
+    });
+    return handleResponse(response);
+  },
+
   // Update existing event
   updateEvent: async (chapterId: string, eventId: string, eventData: Partial<{
     title: string;

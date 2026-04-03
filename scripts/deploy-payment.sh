@@ -28,18 +28,26 @@ echo ""
 
 # ── Step 3: SAM Build ──────────────────────────────────────────────────────────
 echo "Step 3/5 — Building Lambda functions..."
-sam build --use-container 2>/dev/null || sam build
+if ! sam build --use-container 2>/dev/null; then
+  if ! sam build; then
+    ALT_BUILD_DIR="/tmp/unify-sam-build-$$"
+    echo "⚠️  Standard build failed. Retrying with isolated build dir: $ALT_BUILD_DIR"
+    sam build --build-dir "$ALT_BUILD_DIR"
+  fi
+fi
 echo "✅ SAM build complete"
 echo ""
 
 # ── Step 4: SAM Deploy ────────────────────────────────────────────────────────
 echo "Step 4/5 — Deploying to AWS ($REGION)..."
 sam deploy \
+  --template-file template.yaml \
   --stack-name "$STACK_NAME" \
   --region "$REGION" \
   --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
   --resolve-s3 \
   --no-fail-on-empty-changeset \
+  --no-confirm-changeset \
   --parameter-overrides \
     "Environment=dev" \
     "FrontendOrigin=*" \

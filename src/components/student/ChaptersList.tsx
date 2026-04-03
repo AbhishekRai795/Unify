@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail, Sparkles } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -38,6 +38,10 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
   const isLeft = chapter.registrationStatus === 'left';
   const isKicked = chapter.registrationStatus === 'kicked';
   const canRegister = !isApproved && !isPending && isRegistrationOpen;
+
+  const openProfile = () => {
+    window.open(`/student/chapters/${chapter.id}/about`, '_blank');
+  };
   
   return (
     <div className={`
@@ -309,8 +313,24 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               }
             </div>
           )}
+
+          {/* Explore Button */}
+          <button
+            onClick={openProfile}
+            className={`
+              mt-3 w-full py-2.5 px-4 rounded-xl border font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm backdrop-blur-sm
+              ${isDark 
+                ? 'border-accent-500/30 text-accent-300 bg-accent-500/10 hover:bg-accent-500/20 shadow-accent-500/10' 
+                : 'border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100'
+              }
+            `}
+          >
+            <Sparkles className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
+            Explore
+          </button>
         </div>
       </div>
+
     </div>
   );
 };
@@ -498,7 +518,7 @@ const ChaptersList: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gray-50'}`}>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className={`

@@ -15,8 +15,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Tag,
-  Download
+  Download,
+  Megaphone,
+  BookOpen
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { paymentAPI } from '../../services/paymentApi';
@@ -179,7 +180,7 @@ const ManageEvents: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
@@ -278,6 +279,13 @@ const ManageEvents: React.FC = () => {
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
+                    <Link
+                      to={`/head/events/profile/${encodeURIComponent(event.eventId)}`}
+                      className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors"
+                      title="Edit Event Profile"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </Link>
                     <button 
                       onClick={() => handleDelete(event.chapterId, event.eventId)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
@@ -297,7 +305,7 @@ const ManageEvents: React.FC = () => {
                       className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors"
                       title="Post Announcement"
                     >
-                      <Tag className="h-4 w-4" />
+                      <Megaphone className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 // src/services/api.ts
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const PAYMENT_API_BASE_URL = import.meta.env.VITE_PAYMENT_API_BASE_URL || API_BASE_URL;
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -106,7 +107,13 @@ export const studentAPI = {
     });
     return handleResponse(response);
   },
-
+  getChapterProfile: async (chapterId: string) => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/${encodeURIComponent(chapterId)}/profile`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
   // Chapter Registration - consistent with backend expectations
   registerForChapter: async (chapterName: string, studentData: { name: string; email: string; sapId?: string; year?: string }) => {
     const response = await fetch(`${API_BASE_URL}/register-student`, {

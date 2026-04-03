@@ -1,7 +1,6 @@
 // PaymentHistory.tsx
 // Component to display student payment history and transaction details
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { paymentAPI } from '../../services/paymentApi';
 
 interface PaymentTransaction {
@@ -21,7 +20,6 @@ interface PaymentTransaction {
 }
 
 export const PaymentHistory: React.FC = () => {
-  const { user } = useAuth();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');

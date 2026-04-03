@@ -5,6 +5,8 @@ import { useAuth } from './AuthContext';
 interface ChapterHeadProfile {
   email: string;
   chapterId: string;
+  chapterID?: string; // legacy alias from some API payloads
+  chapterld?: string; // typo/legacy alias compatibility
   chapterName: string;
   headName: string;
   linkedAt: string;
@@ -12,7 +14,11 @@ interface ChapterHeadProfile {
 
 interface ChapterDetails {
   chapterId: string;
+  chapterID?: string; // legacy alias from some API payloads
+  chapterld?: string; // typo/legacy alias compatibility
+  id?: string; // UI fallback compatibility
   chapterName: string;
+  name?: string; // UI fallback compatibility
   createdAt: string;
   headEmail: string;
   headName: string;

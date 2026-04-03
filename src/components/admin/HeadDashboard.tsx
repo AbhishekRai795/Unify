@@ -29,13 +29,20 @@ const HeadDashboard: React.FC = () => {
 
   const getChapterId = (chapter: any): string =>
     chapter?.chapterId || chapter?.chapterID || chapter?.id || '';
+  const isNonEmptyString = (value: unknown): value is string =>
+    typeof value === 'string' && value.trim().length > 0;
 
   const chapterList = useMemo(() => (Array.isArray(chapters) ? chapters : []), [chapters]);
   const activityList = useMemo(() => (Array.isArray(recentActivities) ? recentActivities : []), [recentActivities]);
-  const headChapterIds = useMemo(() => Array.from(new Set([
-    ...((profile?.chapterId || profile?.chapterID) ? [profile?.chapterId || profile?.chapterID] : []),
-    ...chapterList.map(ch => getChapterId(ch)).filter(Boolean)
-  ])), [profile?.chapterId, profile?.chapterID, chapterList]);
+  const headChapterIds = useMemo<string[]>(
+    () =>
+      Array.from(
+        new Set(
+          [profile?.chapterId, profile?.chapterID, ...chapterList.map((ch) => getChapterId(ch))].filter(isNonEmptyString)
+        )
+      ),
+    [profile?.chapterId, profile?.chapterID, chapterList]
+  );
 
   useEffect(() => {
     if (user?.activeRole === 'chapter-head') {
@@ -55,7 +62,7 @@ const HeadDashboard: React.FC = () => {
   useEffect(() => {
     const loadManagedEvents = async () => {
       try {
-        const chapterIds = Array.from(new Set(chapterList.map((ch) => getChapterId(ch)).filter(Boolean)));
+        const chapterIds: string[] = Array.from(new Set(chapterList.map((ch) => getChapterId(ch)).filter(isNonEmptyString)));
         if (chapterIds.length === 0) {
           setManagedEvents([]);
           return;

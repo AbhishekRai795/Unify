@@ -202,6 +202,25 @@ Resources:
         Value: Unify
       - Key: Component
         Value: Events
+  ChapterProfilesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: ChapterProfiles
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: chapterId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: chapterId
+        KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+      - Key: Application
+        Value: Unify
+      - Key: Component
+        Value: ChapterProfiles
   EventPaymentsTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
@@ -354,6 +373,49 @@ Resources:
           Effect: Allow
           Resource:
             Fn::Sub: arn:aws:s3:::${UnifyPaymentReceiptsBucket}/receipts/*
+          Principal: '*'
+  UnifyChapterImagesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName:
+        Fn::Sub: unify-chapter-profile-images-${Environment}-${AWS::AccountId}
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+          - '*'
+          AllowedMethods:
+          - GET
+          - PUT
+          - POST
+          - DELETE
+          - HEAD
+          AllowedOrigins:
+          - '*'
+          MaxAge: 3600
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+      - Key: Application
+        Value: Unify
+      - Key: Component
+        Value: ChapterProfile
+  ChapterImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: UnifyChapterImagesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - s3:GetObject
+          Effect: Allow
+          Resource:
+            Fn::Sub: arn:aws:s3:::${UnifyChapterImagesBucket}/*
           Principal: '*'
   RazorpayCredentialsSecret:
     Type: AWS::SecretsManager::Secret
@@ -569,6 +631,13 @@ Resources:
               Ref: PaymentHttpApi
             Path: /api/chapters/{chapterId}/fees
             Method: GET
+        GetChapterFeesOptions:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapters/{chapterId}/fees
+            Method: OPTIONS
       Tags:
         Application: Unify
         Component: Payment
@@ -609,6 +678,86 @@ Resources:
         Component: Payment
     Metadata:
       SamResourceId: EditChapterPaymentFunction
+  ChapterProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: unify-chapter-profile-${Environment}
+      Handler: index.handler
+      CodeUri: ChapterProfileFunction
+      Description: "Manage read/write chapter profile content for \u201CKnow More\
+        \ About It\u201D"
+      Timeout: 15
+      Environment:
+        Variables:
+          IMAGES_BUCKET:
+            Ref: UnifyChapterImagesBucket
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: ChapterProfilesTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ChapterProfilesTable
+      - DynamoDBReadPolicy:
+          TableName: Chapters
+      - DynamoDBReadPolicy:
+          TableName: ChapterHead
+      - S3CrudPolicy:
+          BucketName:
+            Ref: UnifyChapterImagesBucket
+      Events:
+        GetChapterProfileApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapters/{chapterId}/profile
+            Method: GET
+        GetChapterProfileOptions:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapters/{chapterId}/profile
+            Method: OPTIONS
+        UpdateChapterProfileApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapterhead/chapters/{chapterId}/profile
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuth
+        UpdateChapterProfileOptions:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapterhead/chapters/{chapterId}/profile
+            Method: OPTIONS
+        GetUploadUrlApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapterhead/chapters/{chapterId}/profile/upload-url
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+        GetUploadUrlOptions:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/chapterhead/chapters/{chapterId}/profile/upload-url
+            Method: OPTIONS
+      Tags:
+        Application: Unify
+        Component: ChapterProfile
+    Metadata:
+      SamResourceId: ChapterProfileFunction
   GetPaymentDetailsFunction:
     Type: AWS::Serverless::Function
     Properties:
