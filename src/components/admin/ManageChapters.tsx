@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen } from 'lucide-react';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -116,14 +116,27 @@ const ManageChapters: React.FC = () => {
           </motion.div>
         )}
 
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/head/dashboard')}
+            className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+          >
+            <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Chapters</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Manage Chapters</h1>
+          <p className="text-slate-600 max-w-2xl mx-auto font-medium">
             Control registration status and view chapter details for your assigned chapters.
           </p>
         </motion.div>

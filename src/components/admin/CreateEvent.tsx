@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Users, Video, Tag, Image, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Video, Tag, Image, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { motion } from 'framer-motion';
 
@@ -76,10 +76,23 @@ const CreateEvent: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/head/dashboard')}
+            className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+          >
+            <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Event</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Create New Event</h1>
+          <p className="text-slate-600 max-w-2xl mx-auto font-medium">
             Post a new event to engage with students across chapters.
           </p>
         </div>

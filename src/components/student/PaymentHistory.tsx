@@ -1,7 +1,9 @@
 // PaymentHistory.tsx
 // Component to display student payment history and transaction details
 import React, { useEffect, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { paymentAPI } from '../../services/paymentApi';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PaymentTransaction {
   transactionId: string;
@@ -20,6 +22,7 @@ interface PaymentTransaction {
 }
 
 export const PaymentHistory: React.FC = () => {
+  const { isDark } = useTheme();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -72,8 +75,54 @@ export const PaymentHistory: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Payment History</h1>
+    <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => window.location.href = '/student/dashboard'}
+            className={`
+              group flex items-center text-sm font-medium transition-all duration-200
+              ${isDark ? 'text-dark-text-secondary hover:text-accent-300' : 'text-slate-600 hover:text-slate-900'}
+            `}
+          >
+            <div className={`
+              p-2 mr-2 rounded-lg border transition-all
+              ${isDark 
+                ? 'bg-dark-surface/40 border-accent-500/20 group-hover:border-accent-400 group-hover:bg-accent-500/10' 
+                : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'
+              }
+            `}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className={`
+            text-4xl font-black mb-4 transition-all duration-300 tracking-tight
+            ${isDark 
+              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
+              : 'text-slate-900'
+            }
+          `}>Payment History</h1>
+          <p className={`
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
+          `}>
+            Track your transactions and registration history across Unify chapters.
+          </p>
+        </div>
+
+        <div className={`
+          rounded-xl p-8 backdrop-blur-md border transition-all duration-300
+          ${isDark 
+            ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
+            : 'bg-white/80 border-white/20 shadow-sm'
+          }
+        `}>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -182,8 +231,10 @@ export const PaymentHistory: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default PaymentHistory;

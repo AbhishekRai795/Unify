@@ -90,15 +90,37 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
         <div className="mb-6">
           <Link
             to={backPath}
-            className="inline-flex items-center text-sm font-medium text-gray-600 dark:text-dark-text-secondary hover:text-accent transition-colors"
+            className={`
+              group flex items-center text-sm font-medium transition-all duration-200
+              ${isDark ? 'text-dark-text-secondary hover:text-accent-300' : 'text-slate-600 hover:text-slate-900'}
+            `}
           >
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <div className={`
+              p-2 mr-2 rounded-lg border transition-all
+              ${isDark 
+                ? 'bg-dark-surface/40 border-accent-500/20 group-hover:border-accent-400 group-hover:bg-accent-500/10' 
+                : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'
+              }
+            `}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
             Back to Dashboard
           </Link>
-          <div className="mt-3 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{title}</h1>
-            <p className="text-gray-600 dark:text-dark-text-secondary mt-1 max-w-2xl mx-auto">{subtitle}</p>
-          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className={`
+            text-4xl font-black mb-2 tracking-tight transition-colors duration-300
+            ${isDark ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' : 'text-slate-900'}
+          `}>
+            {title}
+          </h1>
+          <p className={`
+            text-lg font-medium max-w-2xl mx-auto transition-colors duration-300
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
+          `}>
+            {subtitle}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-white/30 dark:border-dark-border/50 shadow-xl overflow-hidden bg-white/70 dark:bg-dark-surface/60 backdrop-blur-md h-[calc(100vh-240px)] min-h-[620px]">

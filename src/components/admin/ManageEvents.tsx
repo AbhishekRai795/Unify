@@ -182,14 +182,22 @@ const ManageEvents: React.FC = () => {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Navigation & Header */}
-      <div className="mb-8">
-        <Link to="/head/dashboard" className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-6 group transition-colors">
-          <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
-        </Link>
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Events</h1>
-          <p className="mt-1 text-gray-500 max-w-2xl mx-auto">View, edit, and manage your chapter's events</p>
+      <div className="mb-0">
+        <div className="mb-6 text-left">
+          <button
+            onClick={() => window.location.href = '/head/dashboard'}
+            className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+          >
+            <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Manage Events</h1>
+          <p className="text-slate-600 max-w-2xl mx-auto font-medium">View, edit, and manage your chapter's events</p>
         </div>
       </div>
 

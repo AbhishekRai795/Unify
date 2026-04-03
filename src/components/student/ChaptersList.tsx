@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail, Sparkles } from 'lucide-react';
+import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail, Sparkles, ArrowLeft } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -519,20 +519,42 @@ const ChaptersList: React.FC = () => {
   return (
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gray-50'}`}>
       <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => window.location.href = '/student/dashboard'}
+            className={`
+              group flex items-center text-sm font-medium transition-all duration-200
+              ${isDark ? 'text-dark-text-secondary hover:text-accent-300' : 'text-slate-600 hover:text-slate-900'}
+            `}
+          >
+            <div className={`
+              p-2 mr-2 rounded-lg border transition-all
+              ${isDark 
+                ? 'bg-dark-surface/40 border-accent-500/20 group-hover:border-accent-400 group-hover:bg-accent-500/10' 
+                : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'
+              }
+            `}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <h1 className={`
-            text-3xl font-bold mb-4 transition-all duration-300
+            text-4xl font-black mb-4 transition-all duration-300 tracking-tight
             ${isDark 
-              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 to-primary-400 bg-clip-text text-transparent' 
-              : 'text-gray-900'
+              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
+              : 'text-slate-900'
             }
           `}>
             Browse Chapters
           </h1>
           <p className={`
-            text-lg max-w-2xl mx-auto transition-colors duration-300
-            ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
           `}>
             Discover and join chapters that match your interests and goals.
           </p>

@@ -148,15 +148,19 @@ const EditEventProfile: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       {/* Header Section */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/head/events/manage')}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
-              title="Back"
+              className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+              title="Back to Dashboard"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+              Back to Dashboard
             </button>
+            <div className="h-8 w-px bg-slate-200 mx-2 invisible sm:visible"></div>
             <div>
               <h1 className="text-lg font-bold text-slate-900 leading-tight">Event About Page</h1>
               <p className="text-xs text-slate-500">Edit the information displayed to students</p>
