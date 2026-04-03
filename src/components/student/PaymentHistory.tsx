@@ -73,7 +73,7 @@ export const PaymentHistory: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Payment History</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Payment History</h1>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">

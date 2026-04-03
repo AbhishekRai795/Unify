@@ -539,7 +539,7 @@ const ChaptersList: React.FC = () => {
         </div>
 
       {/* Search */}
-      <div className="max-w-2xl mx-auto mb-8">
+      <div className="mb-8">
         <div className={`
           relative rounded-xl p-6 backdrop-blur-sm border
           ${isDark 
@@ -695,7 +695,7 @@ const ChaptersList: React.FC = () => {
                   {registeredChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {registeredChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -718,7 +718,7 @@ const ChaptersList: React.FC = () => {
                   {pendingChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {pendingChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -741,7 +741,7 @@ const ChaptersList: React.FC = () => {
                   {openChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {openChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -764,7 +764,7 @@ const ChaptersList: React.FC = () => {
                   {reJoinableChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {reJoinableChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -787,7 +787,7 @@ const ChaptersList: React.FC = () => {
                   {rejectedChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {rejectedChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -810,7 +810,7 @@ const ChaptersList: React.FC = () => {
                   {closedChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {closedChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}

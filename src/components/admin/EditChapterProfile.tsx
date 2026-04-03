@@ -9,7 +9,6 @@ import {
   Target, 
   Eye, 
   Info,
-  Layers,
   Award,
   Globe,
   Mail,
@@ -19,7 +18,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import Loader from '../common/Loader';
-import ImageUploader from '../common/ImageUploader';
+import ImageUploader from './../common/ImageUploader';
 import { encodeS3Url } from '../../utils/s3Utils';
 
 const EditChapterProfile: React.FC = () => {
@@ -141,15 +140,11 @@ const EditChapterProfile: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader /></div>;
   }
 
-  const posterPreview = formState.posterImageUrl 
-    ? encodeS3Url(formState.posterImageUrl) 
-    : 'https://via.placeholder.com/1200x800?text=Poster+Preview';
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       {/* Header Section */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/head/chapters')} 
@@ -185,7 +180,7 @@ const EditChapterProfile: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-8">
         <AnimatePresence mode="wait">
           {notification && (
             <motion.div
@@ -208,70 +203,71 @@ const EditChapterProfile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 xl:grid-cols-4 gap-8"
           >
-            {/* Form Side */}
-            <div className="lg:col-span-2 space-y-6">
-              <form onSubmit={saveProfile} className="space-y-6">
-                
-                {/* Visuals Section (MOST IMPORTANT) */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                      <ImageIcon className="h-4 w-4" />
-                    </div>
-                    <h3 className="font-bold text-slate-800">Visuals & Branding</h3>
+            {/* Visuals Sidebar (1 Column) */}
+            <div className="xl:col-span-1 space-y-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <ImageIcon className="h-4 w-4" />
                   </div>
-                  
-                  <div className="space-y-6">
-                    <ImageUploader 
-                      label="Main Poster Image"
-                      currentImageUrl={formState.posterImageUrl}
-                      onUploadSuccess={(url) => onFieldChange('posterImageUrl', url)}
-                      onUploadUrlRequest={(fileName: string, contentType: string) => 
-                        chapterHeadAPI.getProfileUploadUrl(chapterId!, fileName, contentType)
-                      }
-                      aspectRatio="3/2"
-                      className="mb-8"
-                    />
+                  <h3 className="font-bold text-slate-800">Visuals & Branding</h3>
+                </div>
+                
+                <div className="space-y-6">
+                  <ImageUploader 
+                    label="Main Poster Image"
+                    currentImageUrl={formState.posterImageUrl}
+                    onUploadSuccess={(url: string) => onFieldChange('posterImageUrl', url)}
+                    onUploadUrlRequest={(fileName: string, contentType: string) => 
+                      chapterHeadAPI.getProfileUploadUrl(chapterId!, fileName, contentType)
+                    }
+                    aspectRatio="3/2"
+                    className="mb-8"
+                  />
 
-                    <div className="space-y-4 pt-4 border-t border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-sm font-semibold text-slate-700">Gallery Items</label>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{formState.galleryImageUrls.length} / 6 Images</span>
-                      </div>
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-semibold text-slate-700">Gallery Items</label>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{formState.galleryImageUrls.length} / 6</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {formState.galleryImageUrls.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-100 shadow-sm">
+                          <img src={encodeS3Url(url)} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(idx)}
+                            className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {formState.galleryImageUrls.map((url, idx) => (
-                          <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-100 shadow-sm">
-                            <img src={encodeS3Url(url)} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeGalleryImage(idx)}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                        
-                        {formState.galleryImageUrls.length < 6 && (
-                          <ImageUploader 
-                            onUploadSuccess={(url) => {
-                              if (url) onFieldChange('galleryImageUrls', [...formState.galleryImageUrls, url]);
-                            }}
-                            onUploadUrlRequest={(fileName: string, contentType: string) => 
-                              chapterHeadAPI.getProfileUploadUrl(chapterId!, fileName, contentType)
-                            }
-                            aspectRatio="1/1"
-                          />
-                        )}
-                      </div>
+                      {formState.galleryImageUrls.length < 6 && (
+                        <ImageUploader 
+                          onUploadSuccess={(url: string | null) => {
+                            if (url) onFieldChange('galleryImageUrls', [...formState.galleryImageUrls, url]);
+                          }}
+                          onUploadUrlRequest={(fileName: string, contentType: string) => 
+                            chapterHeadAPI.getProfileUploadUrl(chapterId!, fileName, contentType)
+                          }
+                          aspectRatio="1/1"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                {/* About Section */}
+            {/* Form Content (3 Columns) */}
+            <div className="xl:col-span-3">
+              <form onSubmit={saveProfile} className="space-y-6">
+                {/* Basic Info Grid */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
@@ -279,153 +275,151 @@ const EditChapterProfile: React.FC = () => {
                     </div>
                     <h3 className="font-bold text-slate-800">Basic Information</h3>
                   </div>
-                  <div className="space-y-4">
-                    <div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-slate-700 mb-1">About the Chapter</label>
                       <textarea
                         value={formState.about}
                         onChange={(e) => onFieldChange('about', e.target.value)}
                         className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
-                        rows={6}
-                        placeholder="Welcome students! Describe what makes your chapter special, your community culture, and what kind of projects or events you focus on..."
+                        rows={5}
+                        placeholder="Welcome students! Describe what makes your chapter special..."
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-1">
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Active From (Year)</label>
-                        <input 
-                          value={formState.activeFrom} 
-                          onChange={(e) => onFieldChange('activeFrom', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm"
-                          placeholder="e.g. 2023"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Mission</label>
-                        <textarea 
-                          value={formState.mission} 
-                          onChange={(e) => onFieldChange('mission', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
-                          placeholder="Our immediate goals..."
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Vision</label>
-                        <textarea 
-                          value={formState.vision} 
-                          onChange={(e) => onFieldChange('vision', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
-                          placeholder="Our long-term impact..."
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Achievements Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                      <Award className="h-4 w-4" />
-                    </div>
-                    <h3 className="font-bold text-slate-800">Highlights & Achievements</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Highlights (One per line)</label>
-                      <textarea 
-                        value={formState.highlightsText} 
-                        onChange={(e) => onFieldChange('highlightsText', e.target.value)} 
-                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                        rows={3} 
-                        placeholder="Team of 50+ members&#10;In-person meetups&#10;Industry-grade projects"
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Active From (Year)</label>
+                      <input 
+                        value={formState.activeFrom} 
+                        onChange={(e) => onFieldChange('activeFrom', e.target.value)} 
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm"
+                        placeholder="e.g. 2023"
                       />
                     </div>
+                    
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Achievements (One per line)</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Mission</label>
                       <textarea 
-                        value={formState.achievementsText} 
-                        onChange={(e) => onFieldChange('achievementsText', e.target.value)} 
-                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                        rows={3} 
-                        placeholder="Best Regional Chapter 2024&#10;3 Successful Hackathons&#10;100+ Internships facilitated"
+                        value={formState.mission} 
+                        onChange={(e) => onFieldChange('mission', e.target.value)} 
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                        placeholder="Immediate goals..."
+                        rows={4}
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Vision</label>
+                      <textarea 
+                        value={formState.vision} 
+                        onChange={(e) => onFieldChange('vision', e.target.value)} 
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                        placeholder="Long-term impact..."
+                        rows={4}
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Contact Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
-                      <Globe className="h-4 w-4" />
+                {/* Grid for Highlights, Achievements, Contacts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Achievements */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <Award className="h-4 w-4" />
+                      </div>
+                      <h3 className="font-bold text-slate-800">Highlights & Achievements</h3>
                     </div>
-                    <h3 className="font-bold text-slate-800">Contact & Socials</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Highlights (One per line)</label>
+                        <textarea 
+                          value={formState.highlightsText} 
+                          onChange={(e) => onFieldChange('highlightsText', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
+                          rows={4} 
+                          placeholder="Team of 50+ members..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Achievements (One per line)</label>
+                        <textarea 
+                          value={formState.achievementsText} 
+                          onChange={(e) => onFieldChange('achievementsText', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
+                          rows={4} 
+                          placeholder="Best Regional Chapter..."
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Contact Email/Link</label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                        <input 
-                          value={formState.contact} 
-                          onChange={(e) => onFieldChange('contact', e.target.value)} 
-                          className="w-full pl-10 p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                          placeholder="head@example.org" 
-                        />
+
+                  {/* Contact & Socials */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
+                        <Globe className="h-4 w-4" />
                       </div>
+                      <h3 className="font-bold text-slate-800">Contact & Socials</h3>
                     </div>
-                    <div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Instagram URL</label>
-                        <input 
-                          value={formState.instagram} 
-                          onChange={(e) => onFieldChange('instagram', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                          placeholder="https://instagram.com/yourchapter" 
-                        />
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Contact Email</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                          <input 
+                            value={formState.contact} 
+                            onChange={(e) => onFieldChange('contact', e.target.value)} 
+                            className="w-full pl-10 p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="head@example.org" 
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">LinkedIn URL</label>
-                        <input 
-                          value={formState.linkedin} 
-                          onChange={(e) => onFieldChange('linkedin', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                          placeholder="https://linkedin.com/company/yourchapter" 
-                        />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <input 
+                            value={formState.instagram} 
+                            onChange={(e) => onFieldChange('instagram', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Instagram" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.linkedin} 
+                            onChange={(e) => onFieldChange('linkedin', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="LinkedIn" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.twitter} 
+                            onChange={(e) => onFieldChange('twitter', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Twitter" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.website} 
+                            onChange={(e) => onFieldChange('website', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Website" 
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Twitter/X URL</label>
-                        <input 
-                          value={formState.twitter} 
-                          onChange={(e) => onFieldChange('twitter', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                          placeholder="https://twitter.com/yourchapter" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Website URL</label>
-                        <input 
-                          value={formState.website} 
-                          onChange={(e) => onFieldChange('website', e.target.value)} 
-                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
-                          placeholder="https://yourchapter.org" 
-                        />
-                      </div>
-                    </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 pb-12">
-                  <p className="text-xs text-slate-500 italic flex flex-col gap-1">
-                    <span>* Changes take effect immediately on student dashboard after save.</span>
-                    <span>* Optimal poster size: 3:2 aspect ratio.</span>
+                  <p className="text-[10px] text-slate-400 italic">
+                    Changes take effect immediately on student dashboard after save.
                   </p>
-                  <div className="flex gap-3 px-4">
+                  <div className="flex gap-3">
                     <button 
                       type="button" 
                       onClick={() => navigate('/head/chapters')} 
@@ -435,7 +429,7 @@ const EditChapterProfile: React.FC = () => {
                     </button>
                     <button 
                       type="submit" 
-                      className="px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all flex items-center gap-2 disabled:opacity-70 whitespace-nowrap"
+                      className="px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-70"
                       disabled={saving}
                     >
                       {saving ? (
@@ -449,52 +443,12 @@ const EditChapterProfile: React.FC = () => {
                 </div>
               </form>
             </div>
-
-            {/* Sticky Helper Side */}
-            <div className="hidden lg:block">
-              <div className="sticky top-24 space-y-6">
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl">
-                  <h4 className="font-bold mb-3 flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-blue-400" />
-                    How this helps
-                  </h4>
-                  <ul className="space-y-4">
-                    <li className="flex gap-3 text-xs leading-relaxed text-slate-300">
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
-                      <span>Visual profiles builds trust and identity for your chapter.</span>
-                    </li>
-                    <li className="flex gap-3 text-xs leading-relaxed text-slate-300">
-                      <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
-                      <span>Students check the "About" page before registering.</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm overflow-hidden">
-                  <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-blue-600" />
-                    Visual Snapshot
-                  </h4>
-                  <div className="rounded-xl overflow-hidden border border-slate-100 aspect-[3/2] bg-slate-50 shadow-inner">
-                    <img 
-                      src={posterPreview} 
-                      alt="Chapter Poster Preview" 
-                      className="w-full h-full object-cover transition-all"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x800?text=Upload+Image+URL';
-                      }}
-                    />
-                  </div>
-                  <p className="mt-3 text-[10px] text-slate-500 font-medium">Auto-generated preview of your hero image</p>
-                </div>
-              </div>
-            </div>
           </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-3xl mx-auto"
+            className="w-full"
           >
             <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden min-h-[600px] flex flex-col mb-20">
               <div className="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
@@ -510,7 +464,7 @@ const EditChapterProfile: React.FC = () => {
                 {formState.posterImageUrl && (
                   <div className="relative h-72 w-full overflow-hidden rounded-2xl shadow-xl">
                     <img 
-                      src={formState.posterImageUrl} 
+                      src={encodeS3Url(formState.posterImageUrl)} 
                       alt="Live Preview Poster" 
                       className="w-full h-full object-cover"
                     />

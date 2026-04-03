@@ -181,22 +181,16 @@ const ManageEvents: React.FC = () => {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <Link to="/head/dashboard" className="flex items-center text-indigo-600 hover:text-indigo-700 mb-2 group">
-            <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-            Back to Dashboard
-          </Link>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Events</h1>
-          <p className="mt-1 text-gray-500">View, edit, and manage your chapter's events</p>
-        </div>
-        <Link
-          to="/head/events/create"
-          className="mt-4 md:mt-0 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 transform hover:scale-105 transition-all duration-200"
-        >
-          Create New Event
+      {/* Navigation & Header */}
+      <div className="mb-8">
+        <Link to="/head/dashboard" className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-6 group transition-colors">
+          <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Back to Dashboard
         </Link>
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Events</h1>
+          <p className="mt-1 text-gray-500 max-w-2xl mx-auto">View, edit, and manage your chapter's events</p>
+        </div>
       </div>
 
       {error && (
@@ -207,8 +201,8 @@ const ManageEvents: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-8 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
@@ -234,6 +228,12 @@ const ManageEvents: React.FC = () => {
             </button>
           ))}
         </div>
+        <Link
+          to="/head/events/create"
+          className="md:ml-2 inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-indigo-600 hover:bg-indigo-700 transform hover:scale-[1.02] transition-all shrink-0"
+        >
+          Create New Event
+        </Link>
       </div>
 
       {/* Events List */}
@@ -256,7 +256,7 @@ const ManageEvents: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredEvents.map((event) => (
             <div 
               key={event.eventId}

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, ImageIcon, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ImageUploaderProps {
@@ -8,6 +8,7 @@ interface ImageUploaderProps {
   onUploadUrlRequest: (fileName: string, contentType: string) => Promise<{ uploadUrl: string; publicUrl: string }>;
   label?: string;
   aspectRatio?: string;
+  className?: string;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -15,7 +16,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUploadSuccess,
   onUploadUrlRequest,
   label = "Upload Image",
-  aspectRatio = "video"
+  aspectRatio = "video",
+  className = ""
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className={`w-full space-y-4 ${className}`}>
       <div 
         onDragEnter={onDrag}
         onDragLeave={onDrag}
@@ -185,16 +187,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         )}
       </AnimatePresence>
 
-      {currentImageUrl && !isUploading && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-2 px-3 rounded-full border border-emerald-100 w-fit"
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Image ready</span>
-        </motion.div>
-      )}
     </div>
   );
 };

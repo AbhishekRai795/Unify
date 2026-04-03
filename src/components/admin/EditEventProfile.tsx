@@ -9,7 +9,6 @@ import {
   Target,
   Eye,
   Info,
-  Layers,
   Award,
   Globe,
   Mail,
@@ -19,7 +18,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import Loader from '../common/Loader';
-import ImageUploader from '../common/ImageUploader';
+import ImageUploader from './../common/ImageUploader';
 import { encodeS3Url } from '../../utils/s3Utils';
 
 const EditEventProfile: React.FC = () => {
@@ -149,7 +148,7 @@ const EditEventProfile: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       {/* Header Section */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/head/events/manage')}
@@ -185,7 +184,7 @@ const EditEventProfile: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-8">
         <AnimatePresence mode="wait">
           {notification && (
             <motion.div
@@ -210,221 +209,245 @@ const EditEventProfile: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               onSubmit={saveProfile}
-              className="space-y-8"
+              className="grid grid-cols-1 xl:grid-cols-4 gap-8"
             >
-              {/* Poster Image */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <ImageIcon className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-lg font-semibold text-slate-900">Event Poster</h2>
-                </div>
-                <ImageUploader
-                  currentImageUrl={formState.posterImageUrl}
-                  onUploadSuccess={(url) => onFieldChange('posterImageUrl', url)}
-                  onUploadUrlRequest={(fileName: string, contentType: string) =>
-                    chapterHeadAPI.getEventProfileUploadUrl(eventId!, fileName, contentType)
-                  }
-                />
-              </div>
-
-              {/* Basic Information */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <Info className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-lg font-semibold text-slate-900">Basic Information</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">About the Event</label>
-                    <textarea
-                      value={formState.about}
-                      onChange={(e) => onFieldChange('about', e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Describe what makes this event special..."
-                    />
+            {/* Left Column: Media (Visuals & Branding) */}
+            <div className="xl:col-span-1 space-y-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <ImageIcon className="h-4 w-4" />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Event Details</label>
-                    <textarea
-                      value={formState.eventDetails}
-                      onChange={(e) => onFieldChange('eventDetails', e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Additional details about the event..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Mission</label>
-                    <textarea
-                      value={formState.mission}
-                      onChange={(e) => onFieldChange('mission', e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="What is the mission of this event?"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Vision</label>
-                    <textarea
-                      value={formState.vision}
-                      onChange={(e) => onFieldChange('vision', e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="What is the vision for this event?"
-                    />
-                  </div>
+                  <h3 className="font-bold text-slate-800">Visuals & Branding</h3>
                 </div>
-              </div>
-
-              {/* Highlights & Achievements */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Target className="h-5 w-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Highlights</h2>
-                  </div>
-                  <textarea
-                    value={formState.highlightsText}
-                    onChange={(e) => onFieldChange('highlightsText', e.target.value)}
-                    rows={6}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter each highlight on a new line..."
-                  />
-                </div>
-
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Award className="h-5 w-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Achievements</h2>
-                  </div>
-                  <textarea
-                    value={formState.achievementsText}
-                    onChange={(e) => onFieldChange('achievementsText', e.target.value)}
-                    rows={6}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter each achievement on a new line..."
-                  />
-                </div>
-              </div>
-
-              {/* Gallery Images */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <Layers className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-lg font-semibold text-slate-900">Gallery Images</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <ImageUploader
-                    currentImageUrl=""
-                    onUploadSuccess={(url) => {
-                      const newList = [...formState.galleryImageUrls, url];
-                      onFieldChange('galleryImageUrls', newList);
-                    }}
-                    onUploadUrlRequest={(fileName: string, contentType: string) =>
+                
+                <div className="space-y-6">
+                  <ImageUploader 
+                    label="Main Poster Image"
+                    currentImageUrl={formState.posterImageUrl}
+                    onUploadSuccess={(url: string) => onFieldChange('posterImageUrl', url)}
+                    onUploadUrlRequest={(fileName: string, contentType: string) => 
                       chapterHeadAPI.getEventProfileUploadUrl(eventId!, fileName, contentType)
                     }
+                    aspectRatio="3/2"
+                    className="mb-8"
                   />
 
-                  {formState.galleryImageUrls.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                      {formState.galleryImageUrls.map((url, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={encodeS3Url(url)}
-                            alt={`Gallery ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-semibold text-slate-700">Gallery Items</label>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{formState.galleryImageUrls.length} / 6</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {formState.galleryImageUrls.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-100 shadow-sm">
+                          <img src={encodeS3Url(url)} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
-                            onClick={() => removeGalleryImage(index)}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeGalleryImage(idx)}
+                            className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
                       ))}
+                      
+                      {formState.galleryImageUrls.length < 6 && (
+                        <ImageUploader 
+                          onUploadSuccess={(url: string | null) => {
+                            if (url) onFieldChange('galleryImageUrls', [...formState.galleryImageUrls, url]);
+                          }}
+                          onUploadUrlRequest={(fileName: string, contentType: string) => 
+                            chapterHeadAPI.getEventProfileUploadUrl(eventId!, fileName, contentType)
+                          }
+                          aspectRatio="1/1"
+                        />
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact & Social Links */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Contact</h2>
-                  </div>
-                  <textarea
-                    value={formState.contact}
-                    onChange={(e) => onFieldChange('contact', e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Contact information..."
-                  />
-                </div>
-
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="h-5 w-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Social Links</h2>
-                  </div>
-                  <div className="space-y-3">
-                    <input
-                      type="url"
-                      value={formState.instagram}
-                      onChange={(e) => onFieldChange('instagram', e.target.value)}
-                      placeholder="Instagram URL"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                      type="url"
-                      value={formState.linkedin}
-                      onChange={(e) => onFieldChange('linkedin', e.target.value)}
-                      placeholder="LinkedIn URL"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                      type="url"
-                      value={formState.twitter}
-                      onChange={(e) => onFieldChange('twitter', e.target.value)}
-                      placeholder="Twitter URL"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                      type="url"
-                      value={formState.facebook}
-                      onChange={(e) => onFieldChange('facebook', e.target.value)}
-                      placeholder="Facebook URL"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                      type="url"
-                      value={formState.website}
-                      onChange={(e) => onFieldChange('website', e.target.value)}
-                      placeholder="Website URL"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Save Button */}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed"
-                >
-                  {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                  {saving ? 'Saving...' : 'Save Profile'}
-                </button>
+              {/* Middle/Right Columns: Form Content */}
+              <div className="xl:col-span-3 space-y-8">
+                {/* Basic Information */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <Info className="h-4 w-4" />
+                    </div>
+                    <h3 className="font-bold text-slate-800">Basic Information</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">About the Event</label>
+                      <textarea
+                        value={formState.about}
+                        onChange={(e) => onFieldChange('about', e.target.value)}
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                        rows={5}
+                        placeholder="Welcome students! Describe what makes this event special..."
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Event Details & Specifics</label>
+                      <textarea 
+                        value={formState.eventDetails} 
+                        onChange={(e) => onFieldChange('eventDetails', e.target.value)} 
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                        placeholder="Prerequisites, schedule, or venue info..."
+                        rows={4}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Mission</label>
+                        <textarea 
+                          value={formState.mission} 
+                          onChange={(e) => onFieldChange('mission', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                          placeholder="Event goal..."
+                          rows={4}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Vision</label>
+                        <textarea 
+                          value={formState.vision} 
+                          onChange={(e) => onFieldChange('vision', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm leading-relaxed"
+                          placeholder="Long-term impact..."
+                          rows={4}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid for Highlights, Achievements, Contacts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Highlights & Achievements */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <Award className="h-4 w-4" />
+                      </div>
+                      <h3 className="font-bold text-slate-800">Highlights & Achievements</h3>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Highlights (One per line)</label>
+                        <textarea 
+                          value={formState.highlightsText} 
+                          onChange={(e) => onFieldChange('highlightsText', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
+                          rows={4} 
+                          placeholder="Networking sessions, Workbooks..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Notable Outcomes</label>
+                        <textarea 
+                          value={formState.achievementsText} 
+                          onChange={(e) => onFieldChange('achievementsText', e.target.value)} 
+                          className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-600 text-sm" 
+                          rows={4} 
+                          placeholder="Certificate of Participation..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact & Socials */}
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
+                        <Globe className="h-4 w-4" />
+                      </div>
+                      <h3 className="font-bold text-slate-800">Contact & Socials</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Support Email/Link</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                          <input 
+                            value={formState.contact} 
+                            onChange={(e) => onFieldChange('contact', e.target.value)} 
+                            className="w-full pl-10 p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="events@example.org" 
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <input 
+                            value={formState.instagram} 
+                            onChange={(e) => onFieldChange('instagram', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Instagram" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.linkedin} 
+                            onChange={(e) => onFieldChange('linkedin', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="LinkedIn" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.twitter} 
+                            onChange={(e) => onFieldChange('twitter', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Twitter" 
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            value={formState.website} 
+                            onChange={(e) => onFieldChange('website', e.target.value)} 
+                            className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none text-slate-600 text-sm" 
+                            placeholder="Website" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 pb-12">
+                  <p className="text-[10px] text-slate-400 italic">
+                    Changes take effect immediately on student dashboard after save.
+                  </p>
+                  <div className="flex gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => navigate('/head/events/manage')} 
+                      className="px-6 py-2.5 rounded-xl text-slate-600 font-semibold hover:bg-slate-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-70"
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Save className="h-5 w-5" />
+                      )}
+                      {saving ? 'Publishing...' : 'Save & Publish'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </motion.form>
           ) : (
@@ -432,7 +455,7 @@ const EditEventProfile: React.FC = () => {
               key="preview"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="max-w-3xl mx-auto"
+              className="w-full"
             >
               <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden min-h-[600px] flex flex-col mb-20">
                 <div className="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">

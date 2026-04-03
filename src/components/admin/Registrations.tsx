@@ -193,21 +193,12 @@ const Registrations: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Registrations</h1>
-              <p className="text-gray-600">
-                View and manage student chapter registrations.
-              </p>
-            </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export CSV</span>
-            </button>
+        <div className="mb-8 flex flex-col items-center">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Registrations</h1>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              View and manage student chapter registrations.
+            </p>
           </div>
         </div>
 
@@ -261,7 +252,7 @@ const Registrations: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 mb-8"
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -299,11 +290,20 @@ const Registrations: React.FC = () => {
               <option value="status">Sort by Status</option>
             </select>
 
-            {/* Results Count */}
-            <div className="flex items-center text-sm text-gray-600">
-              <Filter className="h-4 w-4 mr-2" />
-              <span>{sortedRegistrations.length} registrations</span>
+            {/* Results Count (4th Item) */}
+            <div className="flex items-center text-sm text-gray-600 bg-gray-50/50 px-4 py-2 rounded-lg border border-gray-100 h-full">
+              <Filter className="h-4 w-4 mr-2 text-blue-500" />
+              <span className="font-medium">{sortedRegistrations.length} found</span>
             </div>
+
+            {/* Export Action (5th Item) */}
+            <button
+              onClick={handleExport}
+              className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] text-sm font-bold w-full h-full"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export CSV</span>
+            </button>
           </div>
         </motion.div>
 

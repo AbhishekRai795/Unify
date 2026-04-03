@@ -89,7 +89,7 @@ const EventsList: React.FC = () => {
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="text-center mb-8">
           <h1 className={`
             text-3xl font-bold mb-2 transition-all duration-300
             ${isDark 
@@ -97,7 +97,7 @@ const EventsList: React.FC = () => {
               : 'text-gray-900'
             }
           `}>Live Events</h1>
-          <p className={`transition-colors duration-300 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+          <p className={`max-w-2xl mx-auto transition-colors duration-300 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
             Stay updated with all the exciting events happening across chapters.
           </p>
         </div>

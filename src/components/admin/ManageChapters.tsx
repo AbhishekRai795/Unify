@@ -120,10 +120,10 @@ const ManageChapters: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 text-center"
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Chapters</h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Control registration status and view chapter details for your assigned chapters.
           </p>
         </motion.div>

@@ -95,9 +95,9 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
           </Link>
-          <div className="mt-3">
+          <div className="mt-3 text-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{title}</h1>
-            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{subtitle}</p>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1 max-w-2xl mx-auto">{subtitle}</p>
           </div>
         </div>
 
