@@ -41,7 +41,7 @@ echo ""
 # ── Step 4: SAM Deploy ────────────────────────────────────────────────────────
 echo "Step 4/5 — Deploying to AWS ($REGION)..."
 sam deploy \
-  --template-file template.yaml \
+  --template-file .aws-sam/build/template.yaml \
   --stack-name "$STACK_NAME" \
   --region "$REGION" \
   --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \

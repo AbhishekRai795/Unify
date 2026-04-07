@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, Clock, MessageSquare, Megaphone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,12 +9,14 @@ import ConversationsList from '../chat/ConversationsList';
 import Loader from '../common/Loader';
 import { formatDistanceToNow } from 'date-fns';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
+import PaymentStatsModal from '../admin/PaymentStatsModal';
 
 // Define a specific type for the colors to ensure type safety
 type StatColor = 'blue' | 'green' | 'purple' | 'orange';
 
 const HeadDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { 
     profile,
     chapters,
@@ -220,7 +222,7 @@ const HeadDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               <Link
                 to="/head/events/create" // FIX: Changed from /admin
                 className="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-all duration-200 group"
@@ -275,6 +277,22 @@ const HeadDashboard: React.FC = () => {
                   <p className="text-sm text-emerald-700">Open dedicated chat workspace</p>
                 </div>
               </Link>
+
+              <button
+                onClick={() => {
+                  const chId = profile?.chapterId || (headChapterIds.length > 0 ? headChapterIds[0] : null);
+                  if (chId) {
+                    navigate(`/head/chapter/${chId}/stats`);
+                  }
+                }}
+                className="w-full flex items-center p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg hover:from-indigo-100 hover:to-indigo-200 transition-all duration-200 group text-left"
+              >
+                <TrendingUp className="h-5 w-5 text-indigo-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <p className="font-medium text-indigo-900">Payment Stats</p>
+                  <p className="text-sm text-indigo-700">View real-time financial transparency</p>
+                </div>
+              </button>
             </div>
           </div>
 

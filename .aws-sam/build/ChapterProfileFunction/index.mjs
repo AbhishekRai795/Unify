@@ -94,18 +94,21 @@ export const handler = async (event) => {
     // --------------------------------------------------------------------------
     if (method === 'GET' && (rawPath.includes('/profile') || routeKey.includes('/profile'))) {
       const profile = await getChapterProfile(chapterId);
-      return { 
-        statusCode: 200, 
-        headers: corsHeaders, 
-        body: JSON.stringify({ 
-          chapterId, 
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          chapterId,
           profile: profile || null,
           chapter: {
-            ...chapter,
-            chapterName: chapter.chapterName || chapter.name || "",
-            university: chapter.university || chapter.universityName || ""
+            chapterName: chapter.chapterName,
+            university: chapter.university || '',
+            adminName: chapter.adminName,
+            memberCount: chapter.memberCount || 0,
+            contactEmail: chapter.contactEmail,
+            isRegistrationOpen: chapter.isRegistrationOpen
           }
-        }) 
+        })
       };
     }
 
@@ -207,13 +210,13 @@ export const handler = async (event) => {
     }
 
     console.warn(`No matching route found for: ${method} ${rawPath} / ${routeKey}`);
-    return { 
-      statusCode: 404, 
-      headers: corsHeaders, 
-      body: JSON.stringify({ 
-        error: 'Endpoint not found', 
-        debug: { method, routeKey, rawPath } 
-      }) 
+    return {
+      statusCode: 404,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        error: 'Endpoint not found',
+        debug: { method, routeKey, rawPath }
+      })
     };
   } catch (error) {
     console.error('Error chapterProfile lambda:', error);

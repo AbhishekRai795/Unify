@@ -1354,6 +1354,7 @@ Resources:
       CodeUri: deploy/functions/adminPaymentTransparency-payment/
       Description: Returns chapter event payment transparency details for admin
       Timeout: 60
+      MemorySize: 512
       Environment:
         Variables:
           CHAPTERS_TABLE: Chapters
