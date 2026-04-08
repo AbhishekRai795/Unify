@@ -210,13 +210,13 @@ const AuthPage: React.FC = () => {
             
             userPool.signUp(testEmail, testPassword, attributeList, [], (err: any, result: any) => {
                 if (err) {
-                    console.error('❌ DEBUG SIGNUP FAILED:');
+                    console.error('  DEBUG SIGNUP FAILED:');
                     console.error('Code:', err.code || err.name);
                     console.error('Message:', err.message);
                     console.error('Status:', err.statusCode);
                     console.error('Full Error:', err);
                 } else {
-                    console.log('✅ DEBUG SIGNUP SUCCESS:', result);
+                    console.log('   DEBUG SIGNUP SUCCESS:', result);
                 }
             });
         };

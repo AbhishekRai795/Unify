@@ -240,7 +240,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error retrieving chat messages:", error);
+    console.error("  Error retrieving chat messages:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

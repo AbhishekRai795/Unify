@@ -131,13 +131,13 @@ export const handler = async (event) => {
         TableName: "Activities",
         Item: activity
       }));
-      console.log("✅ Activity logged successfully");
+      console.log("   Activity logged successfully");
     } catch (activityError) {
       console.warn("⚠️ Warning: Failed to log activity, but continuing:", activityError.message);
       // Don't throw error here to keep event creation successful
     }
 
-    console.log("✅ Event created and activity logged successfully:", eventId);
+    console.log("   Event created and activity logged successfully:", eventId);
 
     return {
       statusCode: 201,
@@ -149,7 +149,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error in createEvent:", error);
+    console.error("  Error in createEvent:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

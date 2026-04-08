@@ -155,7 +155,7 @@ export const handler = async (event) => {
     );
 
     if (!isSignatureValid) {
-      console.error("❌ Payment signature verification failed");
+      console.error("  Payment signature verification failed");
       
       // Update transaction status to FAILED
       await docClient.send(new UpdateCommand({
@@ -241,7 +241,7 @@ export const handler = async (event) => {
           "receipt-id": receiptId
         }
       }));
-      console.log("✅ Receipt uploaded to S3:", receiptKey);
+      console.log("   Receipt uploaded to S3:", receiptKey);
     } catch (s3Error) {
       console.warn("⚠️  Warning: Could not upload receipt to S3", s3Error);
       // Continue even if receipt upload fails
@@ -273,7 +273,7 @@ export const handler = async (event) => {
       }
     }));
 
-    console.log("✅ Payment verified successfully:", {
+    console.log("   Payment verified successfully:", {
       paymentId: razorpayPaymentId,
       orderId: razorpayOrderId,
       transactionId,
@@ -295,7 +295,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error in verifyPayment:", error);
+    console.error("  Error in verifyPayment:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

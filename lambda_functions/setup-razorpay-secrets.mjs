@@ -21,7 +21,7 @@ export const setupRazorpayCredentials = async () => {
       ]
     }));
 
-    console.log("✅ Razorpay credentials stored successfully");
+    console.log("   Razorpay credentials stored successfully");
     console.log("Secret ARN:", response.ARN);
     console.log("Secret Name: unify/razorpay/credentials");
     
@@ -30,7 +30,7 @@ export const setupRazorpayCredentials = async () => {
     if (error.name === "ResourceExistsException") {
       console.log("⚠️  Secret already exists. You can update it using AWS Secrets Manager console.");
     } else {
-      console.error("❌ Error storing credentials:", error);
+      console.error("  Error storing credentials:", error);
       throw error;
     }
   }

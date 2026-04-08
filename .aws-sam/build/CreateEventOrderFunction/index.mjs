@@ -26,7 +26,7 @@ async function getRazorpayCredentials() {
     const response = await smClient.send(new GetSecretValueCommand({ SecretId: RAZORPAY_SECRET_NAME }));
     return JSON.parse(response.SecretString);
   } catch (err) {
-    console.error("❌ Error fetching credentials from Secrets Manager:", err);
+    console.error("  Error fetching credentials from Secrets Manager:", err);
     throw new Error(`Failed to retrieve Razorpay credentials: ${err.message}`);
   }
 }
@@ -98,7 +98,7 @@ export const handler = async (event) => {
       currency: "INR",
       receipt
     });
-    console.log("✅ Razorpay order created successfully:", order.id);
+    console.log("   Razorpay order created successfully:", order.id);
 
     // Store pending transaction
     const transactionId = `TXN-EVT-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
@@ -123,7 +123,7 @@ export const handler = async (event) => {
       TableName: EVENT_PAYMENTS_TABLE,
       Item: pendingRegistration
     }));
-    console.log("✅ Pending registration stored successfully");
+    console.log("   Pending registration stored successfully");
 
     return {
       statusCode: 200,
@@ -139,7 +139,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Critical Error in createEventOrder handler:", error);
+    console.error("  Critical Error in createEventOrder handler:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

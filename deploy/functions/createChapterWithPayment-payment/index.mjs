@@ -144,7 +144,7 @@ export const handler = async (event) => {
       Item: chapterItem
     }));
 
-    console.log('✅ Chapter created successfully');
+    console.log('   Chapter created successfully');
 
     // Create payment configuration if chapter is paid
     if (isPaid) {
@@ -164,7 +164,7 @@ export const handler = async (event) => {
         Item: paymentConfigItem
       }));
 
-      console.log('✅ Payment configuration created:', {
+      console.log('   Payment configuration created:', {
         chapterId,
         isPaid: true,
         fee: registrationFee,
@@ -191,7 +191,7 @@ export const handler = async (event) => {
         Item: chapterHeadItem
       }));
 
-      console.log('✅ Chapter head mapping created successfully');
+      console.log('   Chapter head mapping created successfully');
 
       // Add user to chapter-head group
       if (process.env.USER_POOL_ID) {
@@ -204,7 +204,7 @@ export const handler = async (event) => {
             GroupName: 'chapter-head'
           }));
           
-          console.log('✅ User successfully added to chapter-head group');
+          console.log('   User successfully added to chapter-head group');
           
         } catch (cognitoError) {
           console.error('Failed to add user to group:', {
@@ -236,7 +236,7 @@ export const handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('❌ Error creating chapter:', {
+    console.error('  Error creating chapter:', {
       error: error,
       message: error.message,
       stack: error.stack

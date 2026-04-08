@@ -30,7 +30,7 @@ if echo "$EXISTING" | grep -q "ARN"; then
     --secret-string "{\"key_id\":\"$KEY_ID\",\"key_secret\":\"$KEY_SECRET\"}" \
     --region "$REGION"
   
-  echo "✅ Secret updated successfully!"
+  echo "   Secret updated successfully!"
 else
   echo "📝 Creating new secret '$SECRET_NAME'..."
   
@@ -42,7 +42,7 @@ else
     --tags \
       '[{"Key":"Application","Value":"Unify"},{"Key":"Component","Value":"Payment"}]'
   
-  echo "✅ Secret created successfully!"
+  echo "   Secret created successfully!"
 fi
 
 echo ""
@@ -51,5 +51,5 @@ echo "   Secret Name : $SECRET_NAME"
 echo "   Region      : $REGION"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "✅ Razorpay credentials are ready in AWS Secrets Manager."
+echo "   Razorpay credentials are ready in AWS Secrets Manager."
 echo "   You can now run: sam build && sam deploy"

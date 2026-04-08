@@ -115,7 +115,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error updating chapter payment config:", error);
+    console.error("  Error updating chapter payment config:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

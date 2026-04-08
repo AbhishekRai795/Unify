@@ -53,7 +53,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error listing events:", error);
+    console.error("  Error listing events:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

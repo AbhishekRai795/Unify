@@ -98,7 +98,7 @@ export const handler = async (event) => {
       try {
         // FIXED: Correct table name (singular)
         await docClient.send(new DeleteCommand({
-          TableName: "ChapterHead",  // ✅ Fixed: "ChapterHead" not "ChapterHeads"
+          TableName: "ChapterHead",  //    Fixed: "ChapterHead" not "ChapterHeads"
           Key: { email: chapter.Item.headEmail }
         }));
         console.log(`Successfully removed ${chapter.Item.headEmail} from ChapterHead table`);

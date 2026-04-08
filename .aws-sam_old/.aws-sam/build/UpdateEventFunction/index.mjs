@@ -127,7 +127,7 @@ export const handler = async (event) => {
           metadata: { eventId, updatedFields: updateExpression }
         }
       }));
-      console.log("✅ Update activity logged successfully");
+      console.log("   Update activity logged successfully");
     } catch (activityError) {
       console.warn("⚠️ Warning: Failed to log update activity, but continuing:", activityError.message);
       // Don't throw error here to keep event update successful

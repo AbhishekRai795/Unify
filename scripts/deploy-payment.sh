@@ -16,10 +16,10 @@ STACK_NAME="unify-payment-stack"
 # ── Step 1: Verify AWS credentials ────────────────────────────────────────────
 echo "Step 1/5 — Checking AWS credentials..."
 aws sts get-caller-identity --region "$REGION" > /dev/null 2>&1 || {
-  echo "❌ AWS credentials not configured. Run: aws configure"
+  echo "  AWS credentials not configured. Run: aws configure"
   exit 1
 }
-echo "✅ AWS credentials OK"
+echo "   AWS credentials OK"
 echo ""
 
 # ── Step 2: (Skipped) Secrets Manager handled by SAM ──────────────────────────
@@ -35,7 +35,7 @@ if ! sam build --use-container 2>/dev/null; then
     sam build --build-dir "$ALT_BUILD_DIR"
   fi
 fi
-echo "✅ SAM build complete"
+echo "   SAM build complete"
 echo ""
 
 # ── Step 4: SAM Deploy ────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ sam deploy \
     "RazorpayKeySecret=llIrsgJJLG8NaIQsUPUPCYs1"
 
 echo ""
-echo "✅ Deployment complete!"
+echo "   Deployment complete!"
 echo ""
 
 # ── Step 5: Get the new API URL ────────────────────────────────────────────────
@@ -93,7 +93,7 @@ if [ -n "$PAYMENT_API_URL" ]; then
       echo "# Payment API (new stack — separate from existing Unify backend)" >> .env
       echo "VITE_PAYMENT_API_BASE_URL=$PAYMENT_API_URL" >> .env
     fi
-    echo "✅ .env file updated with VITE_PAYMENT_API_BASE_URL"
+    echo "   .env file updated with VITE_PAYMENT_API_BASE_URL"
     echo ""
     echo "👉 Now run: npm run dev — to test locally"
   fi

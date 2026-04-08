@@ -196,7 +196,7 @@ export const handler = async (event) => {
       }
     }));
 
-    console.log("✅ Payment registration completed successfully:", {
+    console.log("   Payment registration completed successfully:", {
       registrationId,
       chapterId,
       userId,
@@ -220,7 +220,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error in completePaymentRegistration:", error);
+    console.error("  Error in completePaymentRegistration:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

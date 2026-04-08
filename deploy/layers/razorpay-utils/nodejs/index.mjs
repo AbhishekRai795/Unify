@@ -26,10 +26,10 @@ export const getRazorpayCredentials = async () => {
     cachedCredentials = JSON.parse(response.SecretString);
     credentialsCacheTime = Date.now();
 
-    console.log("✅ Razorpay credentials retrieved from Secrets Manager");
+    console.log("   Razorpay credentials retrieved from Secrets Manager");
     return cachedCredentials;
   } catch (error) {
-    console.error("❌ Error retrieving Razorpay credentials:", error);
+    console.error("  Error retrieving Razorpay credentials:", error);
     throw new Error(`Failed to retrieve Razorpay credentials: ${error.message}`);
   }
 };
@@ -69,10 +69,10 @@ export const createRazorpayOrder = async (amount, chapterId, userId, receiptId, 
     }
 
     const order = await response.json();
-    console.log("✅ Razorpay order created:", order.id);
+    console.log("   Razorpay order created:", order.id);
     return order;
   } catch (error) {
-    console.error("❌ Error creating Razorpay order:", error);
+    console.error("  Error creating Razorpay order:", error);
     throw error;
   }
 };
@@ -95,14 +95,14 @@ export const verifyPaymentSignature = async (orderId, paymentId, signature) => {
     const isSignatureValid = expectedSignature === signature;
 
     if (isSignatureValid) {
-      console.log("✅ Payment signature verified successfully");
+      console.log("   Payment signature verified successfully");
     } else {
-      console.error("❌ Payment signature verification failed");
+      console.error("  Payment signature verification failed");
     }
 
     return isSignatureValid;
   } catch (error) {
-    console.error("❌ Error verifying payment signature:", error);
+    console.error("  Error verifying payment signature:", error);
     throw error;
   }
 };
@@ -129,10 +129,10 @@ export const getRazorpayPaymentDetails = async (paymentId) => {
     }
 
     const paymentDetails = await response.json();
-    console.log("✅ Payment details retrieved:", paymentId);
+    console.log("   Payment details retrieved:", paymentId);
     return paymentDetails;
   } catch (error) {
-    console.error("❌ Error fetching payment details:", error);
+    console.error("  Error fetching payment details:", error);
     throw error;
   }
 };

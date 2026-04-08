@@ -273,7 +273,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error listing chat conversations:", error);
+    console.error("  Error listing chat conversations:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

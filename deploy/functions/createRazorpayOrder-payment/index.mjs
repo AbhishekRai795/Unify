@@ -162,7 +162,7 @@ export const handler = async (event) => {
       Item: transactionRecord
     }));
 
-    console.log("✅ Order created successfully:", {
+    console.log("   Order created successfully:", {
       orderId: razorpayOrder.id,
       transactionId,
       amount: fee,
@@ -189,7 +189,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error in createRazorpayOrder:", error);
+    console.error("  Error in createRazorpayOrder:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

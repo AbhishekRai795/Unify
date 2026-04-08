@@ -78,7 +78,7 @@ export const CreateChapterWithPayment: React.FC = () => {
           isPaid: true,
           registrationFee: Math.round(formData.registrationFee * 100) // Convert ₹ to paise
         });
-        console.log('✅ Paid chapter created:', result);
+        console.log('   Paid chapter created:', result);
       } else {
         // FREE chapter: use the existing adminApi (unchanged)
         const chapterData = {
@@ -87,7 +87,7 @@ export const CreateChapterWithPayment: React.FC = () => {
           headName: formData.headName.trim() || undefined
         };
         const result = await adminApi.createChapter(chapterData);
-        console.log('✅ Free chapter created:', result);
+        console.log('   Free chapter created:', result);
       }
 
       setSuccess(true);

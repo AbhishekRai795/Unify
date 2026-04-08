@@ -137,11 +137,11 @@ export const handler = async (event) => {
           }
         }));
         attendeeUpdateSuccess = true;
-        console.log("✅ Attendee count incremented successfully");
+        console.log("   Attendee count incremented successfully");
       } catch (attendeeError) {
         retryCount++;
         if (attendeeError.name === "ConditionalCheckFailedException") {
-          console.error("❌ Event capacity exceeded during update. Rolling back registration.");
+          console.error("  Event capacity exceeded during update. Rolling back registration.");
           // Rollback - remove the registration we just created
           await docClient.send(new DeleteCommand({
             TableName: EVENT_PAYMENTS_TABLE,
@@ -154,7 +154,7 @@ export const handler = async (event) => {
           };
         }
         if (retryCount >= MAX_RETRIES) {
-          console.error(`❌ Failed to update attendee count after ${MAX_RETRIES} retries:`, attendeeError.message);
+          console.error(`  Failed to update attendee count after ${MAX_RETRIES} retries:`, attendeeError.message);
           // For now, succeed the registration even if count fails, but log critical issue
           console.error("⚠️ CRITICAL: Registration successful but attendee count update failed!");
           break;
@@ -214,7 +214,7 @@ export const handler = async (event) => {
           ":timestamp": new Date().toISOString()
         }
       }));
-      console.log("✅ User attendedEvents updated successfully via SET array update");
+      console.log("   User attendedEvents updated successfully via SET array update");
     } catch (userUpdateError) {
       console.error("⚠️ Warning: Failed to update user attendedEvents:", userUpdateError);
       // Non-blocking
@@ -230,7 +230,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error joining free event:", error);
+    console.error("  Error joining free event:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

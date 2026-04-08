@@ -58,7 +58,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error listing chapter events:", error);
+    console.error("  Error listing chapter events:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

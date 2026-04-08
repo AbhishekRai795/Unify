@@ -88,7 +88,7 @@ export const handler = async (event) => {
     }));
 
     if (!eventResponse.Item) {
-      console.error("❌ Event not found for capacity check:", eventId);
+      console.error("  Event not found for capacity check:", eventId);
       return {
         statusCode: 404,
         headers: corsHeaders,
@@ -158,11 +158,11 @@ export const handler = async (event) => {
           ConditionExpression: "attribute_not_exists(currentAttendees) OR currentAttendees < :maxVal"
         }));
         attendeeUpdateSuccess = true;
-        console.log("✅ Attendee count incremented successfully");
+        console.log("   Attendee count incremented successfully");
       } catch (attendeeError) {
         retryCount++;
         if (attendeeError.name === "ConditionalCheckFailedException") {
-          console.error("❌ Event capacity exceeded during payment verification. Reverting payment.");
+          console.error("  Event capacity exceeded during payment verification. Reverting payment.");
           // Revert registration to FAILED status
           await docClient.send(new UpdateCommand({
             TableName: EVENT_PAYMENTS_TABLE,
@@ -183,7 +183,7 @@ export const handler = async (event) => {
           };
         }
         if (retryCount >= MAX_RETRIES) {
-          console.error(`❌ Failed to update attendee count after ${MAX_RETRIES} retries:`, attendeeError.message);
+          console.error(`  Failed to update attendee count after ${MAX_RETRIES} retries:`, attendeeError.message);
           console.error("⚠️ CRITICAL: Payment verified but attendee count update failed!");
           // Don't fail the verification, but alert monitoring
           break;
@@ -216,7 +216,7 @@ export const handler = async (event) => {
         TableName: "Activities",
         Item: activity
       }));
-      console.log("✅ Activity logged successfully");
+      console.log("   Activity logged successfully");
 
       // Update student's attendedEvents in Unify-Users table
       try {
@@ -243,7 +243,7 @@ export const handler = async (event) => {
             ":timestamp": new Date().toISOString()
           }
         }));
-        console.log("✅ User attendedEvents updated successfully via SET array update");
+        console.log("   User attendedEvents updated successfully via SET array update");
       } catch (userUpdateError) {
         console.error("⚠️ Warning: Failed to update user attendedEvents:", userUpdateError);
         // Non-blocking
@@ -263,7 +263,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error verifying event payment:", error);
+    console.error("  Error verifying event payment:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

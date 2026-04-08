@@ -218,7 +218,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error sending chat message:", error);
+    console.error("  Error sending chat message:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

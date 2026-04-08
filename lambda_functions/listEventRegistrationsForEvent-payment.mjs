@@ -57,7 +57,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error listing event registrations:", error);
+    console.error("  Error listing event registrations:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

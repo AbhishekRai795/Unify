@@ -310,7 +310,7 @@ export const handler = async (event) => {
     };
 
   } catch (error) {
-    console.error("❌ Error in getPaymentDetails:", error);
+    console.error("  Error in getPaymentDetails:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

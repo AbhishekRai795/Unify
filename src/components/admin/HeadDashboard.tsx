@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, Clock, MessageSquare, Megaphone } from 'lucide-react';
+import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, Clock, MessageSquare, Megaphone, Activity, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -220,79 +220,109 @@ const HeadDashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              <Link
-                to="/head/events/create" // FIX: Changed from /admin
-                className="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-all duration-200 group"
-              >
-                <Plus className="h-5 w-5 text-green-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-green-900">Create Event</p>
-                  <p className="text-sm text-green-700">Post a new event for students</p>
-                </div>
-              </Link>
-              
-              <Link
-                to="/head/events/manage"
-                className="flex items-center p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg hover:from-orange-100 hover:to-orange-200 transition-all duration-200 group"
-              >
-                <Plus className="h-5 w-5 text-orange-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-orange-900">Manage Events</p>
-                  <p className="text-sm text-orange-700">Edit or delete existing events</p>
-                </div>
-              </Link>
-              
-              <Link
-                to="/head/chapters" // FIX: Changed from /admin
-                className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group"
-              >
-                <Settings className="h-5 w-5 text-blue-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-blue-900">Manage Chapters</p>
-                  <p className="text-sm text-blue-700">Open/close registrations</p>
-                </div>
-              </Link>
-              
-              <Link
-                to="/head/registrations" // FIX: Changed from /admin
-                className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group"
-              >
-                <Eye className="h-5 w-5 text-purple-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-purple-900">View Registrations</p>
-                  <p className="text-sm text-purple-700">See who has registered</p>
-                </div>
-              </Link>
+          <div className="p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md bg-white/40 border-white/20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+              <Activity className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="space-y-3 max-h-[300px] overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <Link to="/head/events/create" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-green-100/70">
+                         <Plus className="h-5 w-5 text-green-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">Create Event</p>
+                       <p className="text-sm text-gray-600">Post a new event for students</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors" />
+                 </Link>
+               </motion.div>
+               
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <Link to="/head/events/manage" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-orange-100/70">
+                         <Plus className="h-5 w-5 text-orange-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">Manage Events</p>
+                       <p className="text-sm text-gray-600">Edit or delete existing events</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-orange-600 transition-colors" />
+                 </Link>
+               </motion.div>
+               
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <Link to="/head/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-blue-100/70">
+                         <Settings className="h-5 w-5 text-blue-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">Manage Chapters</p>
+                       <p className="text-sm text-gray-600">Open/close registrations</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                 </Link>
+               </motion.div>
+               
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <Link to="/head/registrations" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-purple-100/70">
+                         <Eye className="h-5 w-5 text-purple-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">View Registrations</p>
+                       <p className="text-sm text-gray-600">See who has registered</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                 </Link>
+               </motion.div>
 
-              <Link
-                to="/head/messages"
-                className="flex items-center p-4 bg-gradient-to-r from-emerald-50 to-teal-100 rounded-lg hover:from-emerald-100 hover:to-teal-200 transition-all duration-200 group"
-              >
-                <MessageSquare className="h-5 w-5 text-emerald-700 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-emerald-900">Messaging</p>
-                  <p className="text-sm text-emerald-700">Open dedicated chat workspace</p>
-                </div>
-              </Link>
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <Link to="/head/messages" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-emerald-100/70">
+                         <MessageSquare className="h-5 w-5 text-emerald-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">Messaging</p>
+                       <p className="text-sm text-gray-600">Open dedicated chat workspace</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                 </Link>
+               </motion.div>
 
-              <button
-                onClick={() => {
-                  const chId = profile?.chapterId || (headChapterIds.length > 0 ? headChapterIds[0] : null);
-                  if (chId) {
-                    navigate(`/head/chapter/${chId}/stats`);
-                  }
-                }}
-                className="w-full flex items-center p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg hover:from-indigo-100 hover:to-indigo-200 transition-all duration-200 group text-left"
-              >
-                <TrendingUp className="h-5 w-5 text-indigo-600 mr-3 group-hover:scale-110 transition-transform duration-200" />
-                <div>
-                  <p className="font-medium text-indigo-900">Payment Stats</p>
-                  <p className="text-sm text-indigo-700">View real-time financial transparency</p>
-                </div>
-              </button>
+               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                 <button
+                   onClick={() => {
+                     const chId = profile?.chapterId || (headChapterIds.length > 0 ? headChapterIds[0] : null);
+                     if (chId) {
+                       navigate(`/head/chapter/${chId}/stats`);
+                     }
+                   }}
+                   className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group text-left"
+                 >
+                   <div className="flex items-center space-x-4">
+                     <div className="p-3 rounded-lg bg-indigo-100/70">
+                         <TrendingUp className="h-5 w-5 text-indigo-600" />
+                     </div>
+                     <div>
+                       <p className="font-semibold text-gray-900">Payment Stats</p>
+                       <p className="text-sm text-gray-600">View real-time financial transparency</p>
+                     </div>
+                   </div>
+                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+                 </button>
+               </motion.div>
             </div>
           </div>
 

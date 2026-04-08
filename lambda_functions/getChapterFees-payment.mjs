@@ -100,7 +100,7 @@ export const handler = async (event) => {
 
     const completedPayments = completedPaymentsResponse.Count || 0;
 
-    console.log("✅ Chapter fee information retrieved:", {
+    console.log("   Chapter fee information retrieved:", {
       chapterId,
       isPaid: feeConfig.isPaid,
       fee: feeConfig.registrationFee,
@@ -133,7 +133,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error("❌ Error in getChapterFees:", error);
+    console.error("  Error in getChapterFees:", error);
     return {
       statusCode: 500,
       headers: corsHeaders,

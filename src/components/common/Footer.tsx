@@ -66,7 +66,7 @@ const Footer: React.FC = () => {
 
         <div className={`border-t mt-8 pt-8 text-center ${isDark ? 'border-dark-border/50' : 'border-gray-800'}`}>
           <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-400'}`}>
-            © 2026 Unify. Built with ❤️ for students.
+              2026 Unify. Built with ❤️ for students.
           </p>
         </div>
       </div>

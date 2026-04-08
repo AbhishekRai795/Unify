@@ -189,7 +189,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
-        console.log('✅ Connected to Direct Message WS');
+        console.log('   Connected to Direct Message WS');
         setIsConnected(true);
       };
 
@@ -208,7 +208,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       socket.onclose = () => {
-        console.log('❌ Disconnected from WS');
+        console.log('  Disconnected from WS');
         setIsConnected(false);
       };
 

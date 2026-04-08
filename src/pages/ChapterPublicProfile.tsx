@@ -358,7 +358,7 @@ const ChapterPublicProfile: React.FC = () => {
 
           <div className="text-right">
             <p className={`text-xs font-black tracking-widest ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>
-              © 2026 UNIFY | BE THE CHANGE
+                2026 UNIFY | BE THE CHANGE
             </p>
           </div>
         </div>
