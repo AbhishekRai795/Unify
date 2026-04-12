@@ -1,0 +1,12 @@
+{
+  "name": "unify-payment-function",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
+    "@aws-sdk/client-secrets-manager": "^3.600.0",
+    "razorpay": "^2.9.2"
+  }
+}
+

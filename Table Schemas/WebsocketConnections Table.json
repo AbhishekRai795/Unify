@@ -1,0 +1,9 @@
+{
+  "tableName": "WebsocketConnections",
+  "primaryKey": {
+    "partitionKey": "connectionId"
+  },
+  "attributes": {
+    "connectionId": "String"
+  }
+}

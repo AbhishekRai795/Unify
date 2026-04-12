@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Mail, CheckCircle, AlertCircle, FileText, User, Hash, GraduationCap } from 'lucide-react';
-import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import { encodeS3Url } from '../../utils/s3Utils';
 
 const ChapterRegistration: React.FC = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
@@ -114,7 +115,7 @@ const ChapterRegistration: React.FC = () => {
             <div className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 p-6 sticky top-8">
               {chapter.imageUrl && (
                 <img
-                  src={chapter.imageUrl}
+                  src={encodeS3Url(chapter.imageUrl)}
                   alt={chapter.name}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />

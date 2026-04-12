@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
         : 'bg-gray-900'
       } text-white
     `}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-6 sm:px-8 lg:px-10 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -45,18 +45,18 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          <div>
+          <div className="md:justify-self-end md:text-right">
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-dark-text-primary' : 'text-white'}`}>Contact Info</h3>
             <div className="space-y-2">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 md:justify-end">
                 <Mail className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-400'}`} />
                 <span className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-400'}`}>contact@unify.edu</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 md:justify-end">
                 <Phone className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-400'}`} />
                 <span className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-400'}`}>+1 (555) 123-4567</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 md:justify-end">
                 <MapPin className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-400'}`} />
                 <span className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-400'}`}>University Campus</span>
               </div>
@@ -66,7 +66,7 @@ const Footer: React.FC = () => {
 
         <div className={`border-t mt-8 pt-8 text-center ${isDark ? 'border-dark-border/50' : 'border-gray-800'}`}>
           <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-400'}`}>
-            © 2024 Unify. All rights reserved. Built with ❤️ for students.
+              2026 Unify. Built with ❤️ for students.
           </p>
         </div>
       </div>

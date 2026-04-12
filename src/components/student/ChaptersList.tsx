@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { Search, Users, MapPin, Clock, UserPlus, UserMinus, Loader2, CheckCircle, XCircle, Mail, Sparkles, ArrowLeft } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { studentAPI } from '../../services/api';
+import { paymentAPI } from '../../services/paymentApi';
 import ErrorMessage from '../common/ErrorMessage';
+import ChapterPaymentModal from './ChapterPaymentModal';
 
 interface Chapter {
   id: string;
@@ -36,6 +38,10 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
   const isLeft = chapter.registrationStatus === 'left';
   const isKicked = chapter.registrationStatus === 'kicked';
   const canRegister = !isApproved && !isPending && isRegistrationOpen;
+
+  const openProfile = () => {
+    window.open(`/student/chapters/${chapter.id}/about`, '_blank');
+  };
   
   return (
     <div className={`
@@ -307,8 +313,24 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               }
             </div>
           )}
+
+          {/* Explore Button */}
+          <button
+            onClick={openProfile}
+            className={`
+              mt-3 w-full py-2.5 px-4 rounded-xl border font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm backdrop-blur-sm
+              ${isDark 
+                ? 'border-accent-500/30 text-accent-300 bg-accent-500/10 hover:bg-accent-500/20 shadow-accent-500/10' 
+                : 'border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100'
+              }
+            `}
+          >
+            <Sparkles className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
+            Explore
+          </button>
         </div>
       </div>
+
     </div>
   );
 };
@@ -322,6 +344,8 @@ const ChaptersList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedChapterForPayment, setSelectedChapterForPayment] = useState<Chapter | null>(null);
 
   useEffect(() => {
     fetchChapters();
@@ -411,7 +435,22 @@ const ChaptersList: React.FC = () => {
       setError('Registration is currently closed for this chapter.');
       return;
     }
+
+    // Check if chapter requires payment
+    try {
+      const feeInfo = await paymentAPI.getChapterFees(chapterId);
+      
+      if (feeInfo.feeInfo?.isPaid) {
+        // Show payment modal for paid chapters
+        setSelectedChapterForPayment(chapter);
+        setShowPaymentModal(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('Could not fetch fee info, proceeding with free registration:', err);
+    }
     
+    // Free registration flow
     setActionLoading(chapterId);
     setError(null);
     
@@ -479,28 +518,50 @@ const ChaptersList: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gray-50'}`}>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => window.location.href = '/student/dashboard'}
+            className={`
+              group flex items-center text-sm font-medium transition-all duration-200
+              ${isDark ? 'text-dark-text-secondary hover:text-accent-300' : 'text-slate-600 hover:text-slate-900'}
+            `}
+          >
+            <div className={`
+              p-2 mr-2 rounded-lg border transition-all
+              ${isDark 
+                ? 'bg-dark-surface/40 border-accent-500/20 group-hover:border-accent-400 group-hover:bg-accent-500/10' 
+                : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'
+              }
+            `}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <h1 className={`
-            text-3xl font-bold mb-4 transition-all duration-300
+            text-4xl font-black mb-4 transition-all duration-300 tracking-tight
             ${isDark 
-              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 to-primary-400 bg-clip-text text-transparent' 
-              : 'text-gray-900'
+              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
+              : 'text-slate-900'
             }
           `}>
             Browse Chapters
           </h1>
           <p className={`
-            text-lg max-w-2xl mx-auto transition-colors duration-300
-            ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
           `}>
             Discover and join chapters that match your interests and goals.
           </p>
         </div>
 
       {/* Search */}
-      <div className="max-w-2xl mx-auto mb-8">
+      <div className="mb-8">
         <div className={`
           relative rounded-xl p-6 backdrop-blur-sm border
           ${isDark 
@@ -656,7 +717,7 @@ const ChaptersList: React.FC = () => {
                   {registeredChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {registeredChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -679,7 +740,7 @@ const ChaptersList: React.FC = () => {
                   {pendingChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {pendingChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -702,7 +763,7 @@ const ChaptersList: React.FC = () => {
                   {openChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {openChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -725,7 +786,7 @@ const ChaptersList: React.FC = () => {
                   {reJoinableChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {reJoinableChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -748,7 +809,7 @@ const ChaptersList: React.FC = () => {
                   {rejectedChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {rejectedChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -771,7 +832,7 @@ const ChaptersList: React.FC = () => {
                   {closedChapters.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 {closedChapters.map((chapter) => (
                   <ChapterCard
                     key={chapter.id}
@@ -809,6 +870,28 @@ const ChaptersList: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Payment Modal */}
+      {selectedChapterForPayment && (
+        <ChapterPaymentModal
+          isOpen={showPaymentModal}
+          chapterId={selectedChapterForPayment.id}
+          chapterName={selectedChapterForPayment.name}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedChapterForPayment(null);
+          }}
+          onPaymentSuccess={async () => {
+            setShowPaymentModal(false);
+            setSelectedChapterForPayment(null);
+            // Refresh chapters list after successful payment
+            await fetchChapters();
+          }}
+          onPaymentFailed={(errorMsg) => {
+            setError(errorMsg);
+          }}
+        />
       )}
       </div>
     </div>

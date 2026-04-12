@@ -1,15 +1,34 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle, Sparkles, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
+import { EventPaymentModal } from './EventPaymentModal';
+import { encodeS3Url } from '../../utils/s3Utils';
+
 
 const EventsList: React.FC = () => {
-  const { events, isLoading, registerForEvent } = useData();
+  const { 
+    events, 
+    eventRegistrations, 
+    dashboardData,
+    fetchEvents, 
+    fetchEventRegistrations, 
+    registerForEvent, 
+    isLoading 
+  } = useData();
   const { isDark } = useTheme();
   const [selectedType, setSelectedType] = useState('all');
   const [registering, setRegistering] = useState<string | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; event: any }>({
+    isOpen: false,
+    event: null
+  });
+
+  React.useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const eventTypes = ['all', 'workshop', 'seminar', 'competition', 'meeting', 'social'];
   const liveEvents = events.filter(event => event.isLive);
@@ -18,17 +37,20 @@ const EventsList: React.FC = () => {
     selectedType === 'all' || event.eventType === selectedType
   );
 
-  const handleRegister = async (eventId: string) => {
-    setRegistering(eventId);
+  const handleRegister = async (event: any) => {
+    if (event.isPaid) {
+      setPaymentModal({ isOpen: true, event });
+      return;
+    }
+
+    setRegistering(event.eventId || event.id);
     try {
-      const success = await registerForEvent(eventId);
+      const success = await registerForEvent(event.eventId || event.id, event.chapterId, false);
       if (success) {
         alert('Successfully registered for event!');
-      } else {
-        alert('Registration failed. Please try again.');
       }
-    } catch (error) {
-      alert('An error occurred during registration.');
+    } catch (error: any) {
+      alert(error.message || 'An error occurred during registration.');
     } finally {
       setRegistering(null);
     }
@@ -65,17 +87,42 @@ const EventsList: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${isDark ? 'aurora-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => window.location.href = '/student/dashboard'}
+            className={`
+              group flex items-center text-sm font-medium transition-all duration-200
+              ${isDark ? 'text-dark-text-secondary hover:text-accent-300' : 'text-slate-600 hover:text-slate-900'}
+            `}
+          >
+            <div className={`
+              p-2 mr-2 rounded-lg border transition-all
+              ${isDark 
+                ? 'bg-dark-surface/40 border-accent-500/20 group-hover:border-accent-400 group-hover:bg-accent-500/10' 
+                : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'
+              }
+            `}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
-        <div className="mb-8">
+        <div className="text-center mb-10">
           <h1 className={`
-            text-3xl font-bold mb-2 transition-all duration-300
+            text-4xl font-black mb-4 transition-all duration-300 tracking-tight
             ${isDark 
-              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 to-primary-400 bg-clip-text text-transparent' 
-              : 'text-gray-900'
+              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
+              : 'text-slate-900'
             }
           `}>Live Events</h1>
-          <p className={`transition-colors duration-300 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+          <p className={`
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
+          `}>
             Stay updated with all the exciting events happening across chapters.
           </p>
         </div>
@@ -121,154 +168,191 @@ const EventsList: React.FC = () => {
         {/* Events List */}
         {filteredEvents.length > 0 ? (
           <div className="space-y-6">
-            {filteredEvents.map((event) => (
-              <div key={event.id} className={`
-                rounded-2xl backdrop-blur-md border overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1
-                ${isDark 
-                  ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
-                  : 'bg-white/80 border-white/20'
-                }
-              `}>
-                <div className="md:flex">
-                  {event.imageUrl && (
-                    <div className="md:w-80 h-48 md:h-auto">
-                      <img
-                        src={event.imageUrl}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.eventType)}`}>
-                            {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}
-                          </span>
-                          <div className="flex items-center space-x-1 text-green-600">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-xs font-medium">Live</span>
-                          </div>
-                        </div>
-                        
-                        <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
-                          {event.title}
-                        </h3>
-                        
-                        <p className={`mb-3 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                          {event.description}
-                        </p>
-                        
-                        <div className={`text-sm font-medium mb-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
-                          by {event.chapterName}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                        <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
-                        <span>
-                          {format(new Date(event.startDateTime), 'PPP')}
-                        </span>
-                      </div>
-                      
-                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                        <Clock className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
-                        <span>
-                          {format(new Date(event.startDateTime), 'p')} - {format(new Date(event.endDateTime), 'p')}
-                        </span>
-                      </div>
-                      
-                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                        {event.isOnline ? (
-                          <>
-                            <Video className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
-                            <span>Online Event</span>
-                          </>
-                        ) : (
-                          <>
-                            <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
-                            <span>{event.location}</span>
-                          </>
-                        )}
-                      </div>
-                      
-                      {event.maxAttendees && (
-                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                          <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
-                          <span>
-                            {event.currentAttendees} / {event.maxAttendees} attendees
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {event.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {event.tags.map((tag, index) => (
-                          <span key={index} className={`
-                            inline-flex items-center text-xs px-2 py-1 rounded-full backdrop-blur-sm
-                            ${isDark 
-                              ? 'bg-accent-500/20 text-accent-200 border border-accent-500/30' 
-                              : 'bg-gray-100 text-gray-700'
-                            }
-                          `}>
-                            <Tag className={`h-3 w-3 mr-1 ${isDark ? 'text-accent-400' : ''}`} />
-                            {tag}
-                          </span>
-                        ))}
+            {filteredEvents.map((event) => {
+              const eventId = event.eventId || event.id;
+              const attendedList = dashboardData?.attendedEvents || dashboardData?.student?.attendedEvents || [];
+              const isRegistered = 
+                eventRegistrations.some((reg: any) => reg.eventId === eventId) ||
+                (Array.isArray(attendedList) && attendedList.includes(eventId));
+              const isRegistrationClosed = !!(event.registrationDeadline && new Date() > new Date(event.registrationDeadline));
+                
+              return (
+                <div key={event.id} className={`
+                  rounded-2xl backdrop-blur-md border overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1
+                  ${isDark 
+                    ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
+                    : 'bg-white/80 border-white/20'
+                  }
+                `}>
+                  <div className="md:flex">
+                    {event.imageUrl && (
+                      <div className="md:w-80 h-48 md:h-auto">
+                        <img 
+                          src={encodeS3Url(event.imageUrl)} 
+                          alt={event.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
                       </div>
                     )}
+                    
+                    <div className="flex-1 p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.eventType)}`}>
+                              {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}
+                            </span>
+                            <div className="flex items-center space-x-1 text-green-600">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-xs font-medium">Live</span>
+                            </div>
+                            {isRegistered && (
+                              <div className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                <CheckCircle className="h-3 w-3" />
+                                <span className="text-xs font-bold">Registered</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+                            {event.title}
+                          </h3>
+                          
+                          <p className={`mb-3 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                            {event.description}
+                          </p>
+                          
+                          <div className={`text-sm font-medium mb-4 flex items-center justify-between ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
+                            <span>by {event.chapterName}</span>
+                            <span className={`px-3 py-1 rounded-lg text-xs font-bold ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
+                              {event.isPaid ? `₹${event.registrationFee}` : 'FREE'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {event.registrationRequired && (
-                          <button
-                            onClick={() => handleRegister(event.id)}
-                            disabled={registering === event.id || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees)}
-                            className={`
-                              px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                          <span>
+                            {format(new Date(event.startDateTime), 'PPP')}
+                          </span>
+                        </div>
+                        
+                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <Clock className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                          <span>
+                            {format(new Date(event.startDateTime), 'p')} - {format(new Date(event.endDateTime), 'p')}
+                          </span>
+                        </div>
+                        
+                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          {event.isOnline ? (
+                            <>
+                              <Video className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                              <span>Online Event</span>
+                            </>
+                          ) : (
+                            <>
+                              <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                              <span>{event.location}</span>
+                            </>
+                          )}
+                        </div>
+                        
+                        {event.maxAttendees && (
+                          <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                            <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                            <span>
+                              {event.currentAttendees} / {event.maxAttendees} attendees
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {event.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {event.tags.map((tag, index) => (
+                            <span key={index} className={`
+                              inline-flex items-center text-xs px-2 py-1 rounded-full backdrop-blur-sm
                               ${isDark 
-                                ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25' 
-                                : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                                ? 'bg-accent-500/20 text-accent-200 border border-accent-500/30' 
+                                : 'bg-gray-100 text-gray-700'
+                              }
+                            `}>
+                              <Tag className={`h-3 w-3 mr-1 ${isDark ? 'text-accent-400' : ''}`} />
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          {event.registrationRequired && (
+                            <button
+                              onClick={() => handleRegister(event)}
+                              disabled={registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
+                              className={`
+                                px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm
+                                ${isDark 
+                                  ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25' 
+                                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                                }
+                              `}
+                            >
+                              {isRegistered
+                                ? 'Registered'
+                                : registering === eventId 
+                                  ? 'Registering...' 
+                                  : isRegistrationClosed
+                                    ? 'Registration Closed'
+                                    : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
+                                      ? 'Full'
+                                      : 'Register'
+                              }
+                            </button>
+                          )}
+                          
+                          {event.isOnline && event.meetingLink && (
+                            <a
+                              href={event.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center space-x-1 font-medium transition-colors duration-200 ${isDark ? 'text-accent-400 hover:text-accent-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Join Meeting</span>
+                            </a>
+                          )}
+
+                          {/* Know More About It Button */}
+                          <button
+                            onClick={() => window.open(`/student/events/${encodeURIComponent(eventId)}/about`, '_blank')}
+                            className={`
+                              px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 shadow-sm
+                              ${isDark
+                                ? 'border border-accent-500/30 text-accent-300 bg-accent-500/10 hover:bg-accent-500/20'
+                                : 'border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100'
                               }
                             `}
                           >
-                            {registering === event.id 
-                              ? 'Registering...' 
-                              : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
-                                ? 'Full'
-                                : 'Register'
-                            }
+                            <Sparkles className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
+                            Explore
                           </button>
-                        )}
+                        </div>
                         
-                        {event.isOnline && event.meetingLink && (
-                          <a
-                            href={event.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`flex items-center space-x-1 font-medium transition-colors duration-200 ${isDark ? 'text-accent-400 hover:text-accent-300' : 'text-blue-600 hover:text-blue-700'}`}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            <span>Join Meeting</span>
-                          </a>
+                        {event.registrationDeadline && (
+                          <div className={`text-xs ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
+                            Registration deadline: {format(new Date(event.registrationDeadline), 'PPp')}
+                          </div>
                         )}
                       </div>
-                      
-                      {event.registrationDeadline && (
-                        <div className={`text-xs ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
-                          Registration deadline: {format(new Date(event.registrationDeadline), 'PPp')}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className={`
@@ -285,6 +369,19 @@ const EventsList: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* Payment Modal */}
+        <EventPaymentModal
+          isOpen={paymentModal.isOpen}
+          event={paymentModal.event}
+          onClose={() => setPaymentModal({ isOpen: false, event: null })}
+          onPaymentSuccess={async () => {
+            alert('Registration and payment successful!');
+            await fetchEvents();
+            await fetchEventRegistrations();
+            setPaymentModal({ isOpen: false, event: null });
+          }}
+        />
       </div>
     </div>
   );

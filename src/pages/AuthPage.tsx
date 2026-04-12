@@ -17,8 +17,8 @@ import { Eye, EyeOff, Mail, Lock, User, Users, Hash, Calendar, Library } from 'l
 
 const poolData = {
     // Replace with your Cognito User Pool data
-    UserPoolId: 'ap-south-1_ueutDQExM',
-    ClientId: '6uac5t9b0oub9b1cjoot94uplc',
+    UserPoolId: import.meta.env.VITE_USER_POOL_ID || 'ap-south-1_ueutDQExM',
+    ClientId: import.meta.env.VITE_USER_POOL_WEB_CLIENT_ID || '6uac5t9b0oub9b1cjoot94uplc',
 };
 
 const userPool = new CognitoUserPool(poolData);
@@ -179,7 +179,7 @@ const QuotePanel: React.FC<{ isLoginView: boolean; setIsLoginView: (isLogin: boo
             <h3 className="text-3xl font-bold">
                 "Connecting students, one chapter at a time. Your community awaits."
             </h3>
-            <p className="mt-4 opacity-80">- The Unify Team</p>
+            <p className="mt-4 opacity-80"> Team Unify </p>
             <button onClick={() => setIsLoginView(!isLoginView)} className="mt-8 bg-white/20 border-2 border-white/50 rounded-full font-semibold uppercase px-12 py-3 hover:bg-white/30 transition-colors duration-300">
                 {isLoginView ? 'Sign Up' : 'Sign In'}
             </button>
@@ -210,13 +210,13 @@ const AuthPage: React.FC = () => {
             
             userPool.signUp(testEmail, testPassword, attributeList, [], (err: any, result: any) => {
                 if (err) {
-                    console.error('❌ DEBUG SIGNUP FAILED:');
+                    console.error('  DEBUG SIGNUP FAILED:');
                     console.error('Code:', err.code || err.name);
                     console.error('Message:', err.message);
                     console.error('Status:', err.statusCode);
                     console.error('Full Error:', err);
                 } else {
-                    console.log('✅ DEBUG SIGNUP SUCCESS:', result);
+                    console.log('   DEBUG SIGNUP SUCCESS:', result);
                 }
             });
         };
@@ -412,7 +412,7 @@ const AuthPage: React.FC = () => {
                 setNewPasswordError(""); // Clear old errors
                 try {
                     const apiRes = await fetch(
-                        "https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev/chapterhead-profile",
+                        `${import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev'}/chapterhead-profile`,
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },

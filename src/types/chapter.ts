@@ -27,3 +27,19 @@ export interface ChapterRegistration {
   approvedAt?: string;
   notes?: string;
 }
+
+export interface ChapterProfile {
+  chapterId: string;
+  about?: string;
+  mission?: string;
+  vision?: string;
+  posterImageUrl?: string;
+  galleryImageUrls?: string[];
+  highlights?: string[];
+  achievements?: string[];
+  socialLinks?: { [key: string]: string };
+  contact?: string;
+  activeFrom?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}

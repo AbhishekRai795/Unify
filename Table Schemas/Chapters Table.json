@@ -1,0 +1,17 @@
+{
+  "tableName": "Chapters",
+  "primaryKey": {
+    "partitionKey": "chapterId"
+  },
+  "attributes": {
+    "chapterId": "String",
+    "chapterName": "String",
+    "createdAt": "String (ISO Date)",
+    "headEmail": "String",
+    "headName": "String",
+    "memberCount": "Number",
+    "registrationOpen": "Boolean",
+    "status": "String",
+    "updatedAt": "String (ISO Date)"
+  }
+}

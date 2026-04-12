@@ -1,0 +1,13 @@
+{
+  "name": "chapter-profile-lambda",
+  "version": "1.0.0",
+  "description": "Lambda for chapter profile management and image uploads",
+  "main": "index.mjs",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1019.0",
+    "@aws-sdk/client-s3": "^3.1019.0",
+    "@aws-sdk/lib-dynamodb": "^3.1019.0",
+    "@aws-sdk/s3-request-presigner": "^3.1019.0"
+  }
+}

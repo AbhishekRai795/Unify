@@ -1,9 +1,10 @@
-// src/pages/AdminPortal.tsx
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/adminApi';
 import { useAuth } from '../contexts/AuthContext';
 import EditChapter from '../components/admin/EditChapter';
+import CreateChapterWithPayment from '../components/admin/CreateChapterWithPayment';
+import PaymentStatsPage from './PaymentStatsPage';
 import { ChapterHeadProvider } from '../contexts/ChapterHeadContext';
 
 interface Chapter {
@@ -81,20 +82,18 @@ const AdminDashboard: React.FC = () => {
     navigate(`/admin/chapters/edit/${chapter.chapterId}`);
   };
 
-  if (!user?.groups.includes('admin')) {
-    return (
-      <div className="p-6">
-        <div className="text-red-600">Access denied: Admin privileges required</div>
-      </div>
-    );
-  }
+  const handleOpenPaymentTransparency = (chapter: Chapter) => {
+    navigate(`/admin/chapter/${chapter.chapterId}/stats`);
+  };
+
+
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Portal</h1>
         <button 
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => navigate('/admin/chapters/create-with-payment')}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Create Chapter
@@ -163,6 +162,12 @@ const AdminDashboard: React.FC = () => {
                         onClick={() => handleEditChapter(chapter)}
                       >
                         Edit
+                      </button>
+                      <button 
+                        className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                        onClick={() => handleOpenPaymentTransparency(chapter)}
+                      >
+                        Payment Stats
                       </button>
                       <button 
                         className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
@@ -310,6 +315,8 @@ const AdminPortal: React.FC = () => {
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/chapters/edit/:chapterId" element={<EditChapter />} />
+        <Route path="/chapters/create-with-payment" element={<CreateChapterWithPayment />} />
+        <Route path="/chapter/:chapterId/stats" element={<PaymentStatsPage />} />
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </ChapterHeadProvider>

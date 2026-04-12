@@ -24,9 +24,9 @@ const CognitoDiagnostic: React.FC = () => {
 
         userPool.signUp('test1@example.com', 'TempPass123!', attributeList, [], (err: any, result) => {
             if (err) {
-                addResult(`❌ Basic signup failed: ${err.code || err.name} - ${err.message}`);
+                addResult(`  Basic signup failed: ${err.code || err.name} - ${err.message}`);
             } else {
-                addResult(`✅ Basic signup succeeded: ${result?.userSub}`);
+                addResult(`   Basic signup succeeded: ${result?.userSub}`);
             }
         });
     };
@@ -42,10 +42,10 @@ const CognitoDiagnostic: React.FC = () => {
 
         userPool.signUp('test2@example.com', 'TempPass123!', attributeList, [], (err: any, result) => {
             if (err) {
-                addResult(`❌ Custom attribute signup failed: ${err.code || err.name} - ${err.message}`);
+                addResult(`  Custom attribute signup failed: ${err.code || err.name} - ${err.message}`);
                 console.error('Full error:', err);
             } else {
-                addResult(`✅ Custom attribute signup succeeded: ${result?.userSub}`);
+                addResult(`   Custom attribute signup succeeded: ${result?.userSub}`);
             }
         });
     };
@@ -57,7 +57,7 @@ const CognitoDiagnostic: React.FC = () => {
             const currentUser = userPool.getCurrentUser();
             addResult(`Pool connection: ${currentUser ? 'Active user found' : 'No active user (normal)'}`);
         } catch (err: any) {
-            addResult(`❌ Pool connection error: ${err.message}`);
+            addResult(`  Pool connection error: ${err.message}`);
         }
     };
 

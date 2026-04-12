@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Calendar, 
   Users, 
   BookOpen, 
   Clock, 
   ArrowRight,
-  Activity
+  Activity,
+  CreditCard,
+  MessageSquare,
+  Megaphone
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useChat } from '../../contexts/ChatContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
+import ConversationsList from '../chat/ConversationsList';
 import { motion, Variants } from 'framer-motion';
 
 // Animation variants for Framer Motion
@@ -39,48 +44,130 @@ const itemVariants: Variants = {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { dashboardData, myChapters, isLoading, fetchDashboard, fetchMyChapters } = useData();
+  const { dashboardData, myChapters, events, isLoading, fetchDashboard, fetchMyChapters, fetchEvents } = useData();
+  const { conversations, setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
   const { isDark } = useTheme();
 
-  React.useEffect(() => {
+  const getChapterId = (chapter: any): string =>
+    chapter?.chapterId || chapter?.chapterID || chapter?.id || '';
+
+  const getChapterName = (chapter: any): string =>
+    chapter?.name || chapter?.chapterName || 'Chapter';
+
+  const getHeadRecipientId = (chapter: any): string =>
+    chapter?.headId ||
+    chapter?.headID ||
+    chapter?.headUserId ||
+    chapter?.head_user_id ||
+    chapter?.chapterHeadUserId ||
+    chapter?.chapterHeadId ||
+    chapter?.headSub ||
+    chapter?.chapterHeadSub ||
+    '';
+
+  const resolveRecipientIdFromConversations = (chapter: any): string => {
+    const expectedName = (chapter?.headName || chapter?.chapterHead || '').trim().toLowerCase();
+    if (!expectedName) return '';
+
+    const byName = (conversations || []).find((conv: any) => {
+      const name = (conv?.otherParticipantName || conv?.recipientName || '').trim().toLowerCase();
+      return !!name && name === expectedName;
+    });
+    return byName?.otherParticipantId || byName?.recipientId || '';
+  };
+
+  const studentChapterIds = Array.from(new Set(
+    (myChapters || [])
+      .map((chapter) => getChapterId(chapter))
+      .filter(Boolean)
+  )) as string[];
+
+  useEffect(() => {
     fetchDashboard();
     fetchMyChapters();
+    fetchEvents();
   }, []);
+
+  useEffect(() => {
+    // Keep announcements fresh on dashboard without manual refresh.
+    const intervalId = window.setInterval(() => {
+      fetchEvents();
+    }, 15000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    if (studentChapterIds.length === 0) return;
+
+    setActiveChapterId(studentChapterIds[0]);
+    refreshConversations(studentChapterIds);
+  }, [studentChapterIds, setActiveChapterId, refreshConversations]);
 
   if (isLoading && !dashboardData) {
     return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
   }
 
+  const registeredChaptersCount = Number(dashboardData?.student?.registeredChaptersCount || myChapters.length || 0);
+  const totalChaptersCount = Number(dashboardData?.stats?.totalChapters || 0);
+  const availableChaptersCount = Math.max(totalChaptersCount - registeredChaptersCount, 0);
+  const attendedEventsCount = Number(dashboardData?.stats?.completedEvents || dashboardData?.attendedEvents?.length || 0);
+  const upcomingEventsCount = Number(dashboardData?.stats?.upcomingEvents || 0);
+
   const stats = [
     {
       label: 'Registered Chapters',
-      value: dashboardData?.student?.registeredChaptersCount || myChapters.length || 0,
+      value: registeredChaptersCount,
       icon: Users,
       color: 'blue',
-      change: '+2 this month'
+      change: 'Currently joined',
+      link: '/student/chapters'
     },
     {
       label: 'Available Chapters',
-      value: dashboardData?.stats?.totalChapters || 0,
+      value: availableChaptersCount,
       icon: BookOpen,
       color: 'green',
-      change: 'Total active'
+      change: `${totalChaptersCount} total active`,
+      link: '/student/chapters'
     },
     {
       label: 'Events Attended',
-      value: dashboardData?.stats?.completedEvents || '0',
+      value: attendedEventsCount,
       icon: Calendar,
       color: 'purple',
-      change: 'This semester'
+      change: 'Completed events',
+      link: '/student/events'
     },
     {
-      label: 'Learning Hours',
-      value: dashboardData?.stats?.upcomingEvents || '0',
+      label: 'Upcoming Events',
+      value: upcomingEventsCount,
       icon: Clock,
       color: 'orange',
-      change: 'This month'
+      change: 'Scheduled ahead',
+      link: '/student/events'
     }
   ];
+
+  const chapterIdSet = new Set(
+    (myChapters || [])
+      .map((chapter: any) => getChapterId(chapter))
+      .filter(Boolean)
+  );
+
+  const announcements = (events || [])
+    .filter((event: any) => chapterIdSet.size === 0 || chapterIdSet.has(event.chapterId))
+    .flatMap((event: any) => {
+      const list = Array.isArray(event.announcements) ? event.announcements : [];
+      return list.map((announcement: any, index: number) => ({
+        id: `${event.eventId || event.id}-announcement-${index}`,
+        message: announcement?.message || '',
+        timestamp: announcement?.timestamp || event.updatedAt || event.createdAt,
+        chapterName: event.chapterName || event.chapterId || 'Unknown Chapter',
+        eventName: event.title || event.eventId || event.id || 'Event'
+      }));
+    })
+    .filter((item: any) => item.message)
+    .sort((a: any, b: any) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
 
   return (
     <div className={isDark ? 'aurora-bg' : ''}>
@@ -110,36 +197,39 @@ const Dashboard: React.FC = () => {
             return (
               <motion.div
                 key={stat.label}
-                className={`
-                  relative overflow-hidden p-6 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-md
-                  ${isDark 
-                    ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
-                    : 'bg-white/40 border-white/20'
-                  }
-                `}
                 variants={itemVariants}
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">{stat.label}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{stat.value}</p>
-                    <p className="text-xs text-gray-600 dark:text-dark-text-muted mt-1">{stat.change}</p>
+                <Link
+                  to={stat.link}
+                  className={`
+                    block relative overflow-hidden p-6 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-md
+                    ${isDark 
+                      ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
+                      : 'bg-white/40 border-white/20'
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">{stat.label}</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{stat.value}</p>
+                      <p className="text-xs text-gray-600 dark:text-dark-text-muted mt-1">{stat.change}</p>
+                    </div>
+                    <div className={`p-3 rounded-xl ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-white/50'}`}>
+                      <IconComponent className={`h-7 w-7 ${isDark ? 'text-accent-400' : `text-${stat.color}-600`}`} />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-white/50'}`}>
-                    <IconComponent className={`h-7 w-7 ${isDark ? 'text-accent-400' : `text-${stat.color}-600`}`} />
-                  </div>
-                </div>
-                {/* Updated Highlight Bar - Only in Dark Mode */}
-                {isDark && <div className="absolute bottom-0 left-0 h-1 w-full bg-accent"></div>}
+                  {isDark && <div className="absolute bottom-0 left-0 h-1 w-full bg-accent"></div>}
+                </Link>
               </motion.div>
             );
           })}
         </motion.div>
 
-        {/* Quick Actions & Recent Activity Grid */}
+        {/* Quick Actions, Recent Activity & Announcements Grid */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           variants={containerVariants}
         >
           <motion.div 
@@ -185,6 +275,71 @@ const Dashboard: React.FC = () => {
                   <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
                 </Link>
               </motion.div>
+              <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <Link to="/student/payments/history" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-purple-600/20 to-accent-600/20 border border-purple-500/30' : 'bg-purple-100/70'}`}>
+                        <CreditCard className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Payment History</p>
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">View your transactions</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <Link to="/student/messages" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-emerald-600/20 to-accent-600/20 border border-emerald-500/30' : 'bg-emerald-100/70'}`}>
+                      <MessageSquare className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Messaging</p>
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Open your chat workspace</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className={`
+              p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md
+              ${isDark 
+                ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20' 
+                : 'bg-white/40 border-white/20'
+              }
+            `}
+            variants={itemVariants}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Announcements</h2>
+              <Megaphone className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
+            </div>
+
+            <div className={`space-y-3 p-4 ${isDark ? 'bg-dark-bg/80' : 'bg-gray-50/50'} rounded-2xl border border-gray-100 dark:border-dark-border/50 h-[300px] overflow-y-auto custom-scrollbar`}>
+              {announcements.length > 0 ? (
+                announcements.map((item: any) => (
+                  <div key={item.id} className="p-3 rounded-xl border border-gray-100 dark:border-dark-border/40 bg-white/70 dark:bg-dark-card/40">
+                    <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{item.message}</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
+                      {item.timestamp ? `${new Date(item.timestamp).toLocaleDateString()} • ${new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Just now'}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-2">
+                      Chapter: <span className="font-medium">{item.chapterName}</span> | Event: <span className="font-medium">{item.eventName}</span>
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <Megaphone className="h-8 w-8 text-gray-300 dark:text-dark-text-muted mx-auto mb-2" />
+                  <p className="text-gray-500 dark:text-dark-text-muted text-sm italic">No announcements yet</p>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -202,65 +357,114 @@ const Dashboard: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Recent Activity</h2>
               <Clock className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
             </div>
-            <div className="space-y-3 p-3 bg-white/30 dark:bg-dark-bg/80 rounded-lg">
-              {dashboardData?.recentActivity ? (
-                <p className="text-gray-700 dark:text-dark-text-secondary">{dashboardData.recentActivity}</p>
+            <div className={`space-y-4 p-4 ${isDark ? 'bg-dark-bg/80' : 'bg-gray-50/50'} rounded-2xl border border-gray-100 dark:border-dark-border/50 max-h-[300px] overflow-y-auto custom-scrollbar`}>
+              {dashboardData?.recentActivities && dashboardData.recentActivities.length > 0 ? (
+                dashboardData.recentActivities.map((activity: any) => (
+                  <div key={activity.id} className="flex items-start space-x-3 group cursor-default">
+                    <div className={`mt-1 p-1.5 rounded-lg ${
+                      activity.type.includes('event') ? 'bg-green-100 text-green-600' :
+                      activity.type.includes('registration') ? 'bg-blue-100 text-blue-600' :
+                      'bg-purple-100 text-purple-600'
+                    }`}>
+                      <Activity className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary line-clamp-1 group-hover:text-accent transition-colors">
+                        {activity.message}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-0.5">
+                        {new Date(activity.timestamp).toLocaleDateString()} • {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <p className="text-gray-500 dark:text-dark-text-muted italic">No recent activity</p>
+                <div className="text-center py-6">
+                  <Clock className="h-8 w-8 text-gray-300 dark:text-dark-text-muted mx-auto mb-2" />
+                  <p className="text-gray-500 dark:text-dark-text-muted text-sm italic">No recent activities found</p>
+                </div>
               )}
             </div>
           </motion.div>
         </motion.div>
 
-        {/* My Chapters */}
-        <motion.div 
-          className="bg-white/40 dark:bg-dark-surface/70 dark:backdrop-blur-md rounded-2xl shadow-lg dark:shadow-none border border-white/20 dark:border-dark-border/50 p-6"
-          variants={itemVariants}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">My Chapters</h2>
-            <Link to="/student/chapters" className="text-accent hover:underline text-sm font-medium transition-colors">
-              View All
-            </Link>
-          </div>
-          
-          {myChapters.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {myChapters.slice(0, 4).map((chapter) => (
-                <motion.div
-                  key={chapter.id}
-                  className="border border-white/30 dark:border-dark-border/50 rounded-xl p-4 hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors cursor-pointer"
-                  whileHover={{ scale: 1.03 }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary">{chapter.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
-                        Joined on {new Date(chapter.joinedAt || chapter.createdAt || Date.now()).toLocaleDateString()}
-                      </p>
-                      {(chapter.headName || chapter.chapterHead) && (
-                        <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
-                          Head: {chapter.headName || chapter.chapterHead}
-                        </p>
-                      )}
-                    </div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm mt-1"></div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-gray-400 dark:text-dark-text-muted mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-dark-text-secondary mb-4">You haven't joined any chapters yet</p>
-              <Link
-                to="/student/chapters"
-                className="inline-flex items-center px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Browse Chapters
+        {/* Recent Messages + My Chapters */}
+        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8" variants={containerVariants}>
+          <motion.div variants={itemVariants}>
+            <ConversationsList chapterIds={studentChapterIds} />
+          </motion.div>
+
+          <motion.div 
+            className="bg-white/40 dark:bg-dark-surface/70 dark:backdrop-blur-md rounded-2xl shadow-lg dark:shadow-none border border-white/20 dark:border-dark-border/50 p-6"
+            variants={itemVariants}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">My Chapters</h2>
+              <Link to="/student/chapters" className="text-accent hover:underline text-sm font-medium transition-colors">
+                View All
               </Link>
             </div>
-          )}
+            
+            {myChapters.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                {myChapters.slice(0, 4).map((chapter) => (
+                  <motion.div
+                    key={getChapterId(chapter) || chapter?.name || chapter?.chapterName}
+                    className="border border-white/30 dark:border-dark-border/50 rounded-xl p-4 hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors cursor-pointer"
+                    whileHover={{ scale: 1.03 }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary">{getChapterName(chapter)}</h3>
+                        <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
+                          Joined on {new Date(chapter.joinedAt || chapter.createdAt || Date.now()).toLocaleDateString()}
+                        </p>
+                        {(chapter.headName || chapter.chapterHead) && (
+                          <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
+                            Head: {chapter.headName || chapter.chapterHead}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const recipientId = getHeadRecipientId(chapter) || resolveRecipientIdFromConversations(chapter);
+                            if (!recipientId) {
+                              alert('Chat is available, but this chapter head user is not fully linked yet. Please contact admin to map chapter head user ID.');
+                              return;
+                            }
+                            setActiveConversation({
+                              chapterId: getChapterId(chapter),
+                              recipientId,
+                              recipientName: chapter.headName || chapter.chapterHead || 'Chapter Head'
+                            });
+                            setIsWidgetOpen(true);
+                          }}
+                          className="bg-accent/10 hover:bg-accent/20 text-accent font-medium text-xs px-2 py-1 rounded-md transition-colors flex items-center"
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-gray-400 dark:text-dark-text-muted mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-dark-text-secondary mb-4">You haven't joined any chapters yet</p>
+                <Link
+                  to="/student/chapters"
+                  className="inline-flex items-center px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Browse Chapters
+                </Link>
+              </div>
+            )}
+          </motion.div>
         </motion.div>
       </motion.div>
     </div>
