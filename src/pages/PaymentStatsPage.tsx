@@ -5,6 +5,7 @@ import { adminApi } from '../services/adminApi';
 import { ArrowLeft, Download, Filter, TrendingUp, Users, Calendar, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Loader from '../components/common/Loader';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface TransparencyData {
   chapter: {
@@ -69,12 +70,18 @@ interface TransparencyData {
 const PaymentStatsPage: React.FC = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [data, setData] = useState<TransparencyData | null>(null);
   const [viewType, setViewType] = useState<'chapter' | 'events'>('events');
   const [eventFilter, setEventFilter] = useState<string>('all');
   const [chapterName, setChapterName] = useState('');
+  const pageClass = isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50';
+  const cardClass = isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20';
+  const cardStrongClass = isDark ? 'bg-dark-surface/92 border-dark-border/70' : 'bg-white/90 border-white/20';
+  const headingClass = isDark ? 'text-dark-text-primary' : 'text-gray-900';
+  const subtleClass = isDark ? 'text-dark-text-secondary' : 'text-gray-600';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -165,7 +172,7 @@ const PaymentStatsPage: React.FC = () => {
 
   if (loading && !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className={`min-h-screen flex items-center justify-center ${pageClass}`}>
         <Loader />
       </div>
     );
@@ -173,11 +180,11 @@ const PaymentStatsPage: React.FC = () => {
 
   if (error) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8 flex flex-col items-center justify-center">
-            <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-red-100 max-w-md text-center">
+      <div className={`min-h-screen p-8 flex flex-col items-center justify-center ${pageClass}`}>
+        <div className={`backdrop-blur-md p-8 rounded-2xl shadow-xl border max-w-md text-center transition-colors duration-300 ${isDark ? 'bg-dark-surface/90 border-red-500/30' : 'bg-white/80 border-red-100'}`}>
                 <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied Or Error</h1>
-                <p className="text-gray-600 mb-6">{error}</p>
+          <h1 className={`text-2xl font-bold mb-2 ${headingClass}`}>Access Denied Or Error</h1>
+          <p className={`mb-6 ${subtleClass}`}>{error}</p>
                 <div className="flex gap-4 justify-center">
                     <button 
                         onClick={() => navigate(-1)}
@@ -198,21 +205,21 @@ const PaymentStatsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${pageClass}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation & Title */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
                 onClick={() => navigate(-1)}
-                className="p-3 bg-white/80 backdrop-blur-md border border-white/20 rounded-xl hover:shadow-lg transition-all text-gray-600 hover:text-blue-600 group"
+                className={`p-3 backdrop-blur-md border rounded-xl hover:shadow-lg transition-all group ${cardClass} ${isDark ? 'text-dark-text-secondary hover:text-accent-400' : 'text-gray-600 hover:text-blue-600'}`}
                 title="Back to Dashboard"
             >
               <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
             </button>
             <div>
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payment Statistics Dashboard</h1>
-                <p className="text-gray-500 font-medium flex items-center gap-2 mt-1">
+                <h1 className={`text-3xl font-bold tracking-tight ${headingClass}`}>Payment Statistics Dashboard</h1>
+                <p className={`font-medium flex items-center gap-2 mt-1 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                     <ShieldCheck className="w-4 h-4 text-green-500" />
                     Chapter Management Center • <span className="text-blue-600">{chapterName}</span>
                 </p>
@@ -232,11 +239,11 @@ const PaymentStatsPage: React.FC = () => {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Active Chapter Members</p>
-                    <p className="text-3xl font-bold text-gray-900">{data?.overallStats.chapterEnrolledMembersCountFromRegistrations}</p>
+                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Active Chapter Members</p>
+                    <p className={`text-3xl font-bold ${headingClass}`}>{data?.overallStats.chapterEnrolledMembersCountFromRegistrations}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-500 group-hover:scale-110 transition-transform duration-200">
                     <Users className="h-6 w-6 text-white" />
@@ -244,11 +251,11 @@ const PaymentStatsPage: React.FC = () => {
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Managed Active Events</p>
-                    <p className="text-3xl font-bold text-gray-900">{data?.overallStats.totalEvents}</p>
+                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Managed Active Events</p>
+                    <p className={`text-3xl font-bold ${headingClass}`}>{data?.overallStats.totalEvents}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-purple-500 group-hover:scale-110 transition-transform duration-200">
                     <Calendar className="h-6 w-6 text-white" />
@@ -256,11 +263,11 @@ const PaymentStatsPage: React.FC = () => {
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Total Completion Value</p>
-                    <p className="text-3xl font-bold text-gray-900">₹{data?.overallStats.totalRevenueInRupees.toLocaleString('en-IN')}</p>
+                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Total Completion Value</p>
+                    <p className={`text-3xl font-bold ${headingClass}`}>₹{data?.overallStats.totalRevenueInRupees.toLocaleString('en-IN')}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-emerald-500 group-hover:scale-110 transition-transform duration-200">
                     <TrendingUp className="h-6 w-6 text-white" />
@@ -268,11 +275,11 @@ const PaymentStatsPage: React.FC = () => {
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Registration Success Hub</p>
-                    <p className="text-3xl font-bold text-gray-900">
+                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Registration Success Hub</p>
+                    <p className={`text-3xl font-bold ${headingClass}`}>
                     {(() => {
                   const totalRows = data?.overallStats.totalEventRegistrationRows ?? 0;
                   const completed = data?.overallStats.totalCompletedPayments ?? 0;
@@ -294,8 +301,8 @@ const PaymentStatsPage: React.FC = () => {
             
             {/* Sidebar Controls */}
             <div className="lg:col-span-1 space-y-6">
-                <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">View Category</h2>
+                <div className={`backdrop-blur-md rounded-xl p-6 border shadow-sm ${cardClass}`}>
+                  <h2 className={`text-xl font-bold mb-4 ${headingClass}`}>View Category</h2>
                     <div className="flex flex-col gap-2">
                         <button
                             onClick={() => setViewType('events')}
@@ -317,8 +324,8 @@ const PaymentStatsPage: React.FC = () => {
                 </div>
 
                 {viewType === 'events' && (
-                    <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <div className={`backdrop-blur-md rounded-xl p-6 border shadow-sm ${cardClass}`}>
+                      <h2 className={`text-xl font-bold mb-4 flex items-center ${headingClass}`}>
                             <Filter className="w-5 h-5 mr-2 text-gray-500" /> Event Filter
                         </h2>
                         <div className="space-y-2">
@@ -341,7 +348,7 @@ const PaymentStatsPage: React.FC = () => {
 
             {/* Main Data Table Area */}
             <div className="lg:col-span-3 space-y-6">
-                <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl overflow-hidden min-h-[600px] flex flex-col">
+                <div className={`backdrop-blur-md rounded-3xl border shadow-xl overflow-hidden min-h-[600px] flex flex-col ${cardStrongClass}`}>
                     <div className="flex-1 overflow-x-auto custom-scrollbar">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50/80 sticky top-0 z-10 border-b border-gray-200">

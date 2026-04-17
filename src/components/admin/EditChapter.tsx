@@ -7,10 +7,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../services/adminApi';
 import { paymentAPI } from '../../services/paymentApi';
 import Loader from '../common/Loader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const EditChapter: React.FC = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const { chapters, refreshData } = useChapterHead();
   const { user } = useAuth();
   
@@ -244,7 +246,7 @@ const EditChapter: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
       </div>
     );
@@ -252,16 +254,16 @@ const EditChapter: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 p-8 max-w-md w-full mx-4"
+          className={`backdrop-blur-md rounded-xl border p-8 max-w-md w-full mx-4 transition-colors duration-300 ${isDark ? 'bg-dark-surface/90 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Error</h2>
+            <p className={`mb-6 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>{error}</p>
             <button
               onClick={handleCancel}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -275,7 +277,7 @@ const EditChapter: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Notification */}
         {notification && (
@@ -319,8 +321,8 @@ const EditChapter: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Chapter Head</h1>
-              <p className="text-gray-600">{chapter?.chapterName}</p>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit Chapter Head</h1>
+              <p className={isDark ? 'text-dark-text-secondary' : 'text-gray-600'}>{chapter?.chapterName}</p>
             </div>
           </div>
         </motion.div>
@@ -329,7 +331,7 @@ const EditChapter: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden"
+          className={`backdrop-blur-md rounded-xl border overflow-hidden transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           <div className="p-8">
             <div className="mb-6">
