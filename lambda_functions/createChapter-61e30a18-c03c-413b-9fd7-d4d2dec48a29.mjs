@@ -12,13 +12,16 @@ const client = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(client);
 const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" });
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:5173",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+function getCorsHeaders(event) {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+  };
+}
 
 export const handler = async (event) => {
+  const corsHeaders = getCorsHeaders(event);
   console.log('Event received:', JSON.stringify(event, null, 2));
 
   // Handle preflight CORS
