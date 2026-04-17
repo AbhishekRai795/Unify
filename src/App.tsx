@@ -20,7 +20,7 @@ const MainLayout: React.FC = () => (
     <header>
       <Header />
     </header>
-    <main className="flex-1">
+    <main className="flex-1 bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
       <Outlet /> {/* Child routes will render here */}
     </main>
     <ChatWidget />

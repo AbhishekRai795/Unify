@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Users, Video, Tag, Image, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { motion } from 'framer-motion';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const { chapters, profile, createEvent } = useChapterHead();
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<{
@@ -74,15 +76,15 @@ const CreateEvent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation */}
         <div className="mb-6">
           <button
             onClick={() => navigate('/head/dashboard')}
-            className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+            className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
           >
-            <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+            <div className={`p-2 mr-2 rounded-lg border transition-all ${isDark ? 'bg-dark-surface border-dark-border group-hover:border-accent-500/50 group-hover:bg-accent-600/10' : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'}`}>
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             </div>
             Back to Dashboard
@@ -91,8 +93,8 @@ const CreateEvent: React.FC = () => {
 
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Create New Event</h1>
-          <p className="text-slate-600 max-w-2xl mx-auto font-medium">
+          <h1 className={`text-4xl font-black mb-2 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Create New Event</h1>
+          <p className={`max-w-2xl mx-auto font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
             Post a new event to engage with students across chapters.
           </p>
         </div>
@@ -119,7 +121,7 @@ const CreateEvent: React.FC = () => {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 p-8">
+        <form onSubmit={handleSubmit} className={`backdrop-blur-md rounded-xl border p-8 transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Title */}
             <div className="md:col-span-2">

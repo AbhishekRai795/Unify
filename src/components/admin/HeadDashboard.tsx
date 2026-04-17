@@ -10,12 +10,14 @@ import Loader from '../common/Loader';
 import { formatDistanceToNow } from 'date-fns';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import PaymentStatsModal from '../admin/PaymentStatsModal';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Define a specific type for the colors to ensure type safety
 type StatColor = 'blue' | 'green' | 'purple' | 'orange';
 
 const HeadDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const { 
     profile,
@@ -145,14 +147,14 @@ const HeadDashboard: React.FC = () => {
 
   if (isLoading && !dashboardStats) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Error Display */}
         {error && (
