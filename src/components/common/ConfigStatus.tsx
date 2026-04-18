@@ -33,24 +33,30 @@ const ConfigStatus: React.FC<ConfigStatusProps> = ({ onStatusChange }) => {
       console.log('Frontend Configuration:', configCheck);
       
       const hasConfig = Object.values(configCheck).every(Boolean);
+      const hasToken = !!localStorage.getItem('idToken');
       
-      // Try API health check
+      // Try API connectivity only when the user is authenticated.
+      // There is no dedicated public /health endpoint in the current API.
       let apiConnected = false;
-      try {
-        await studentAPI.healthCheck();
-        apiConnected = true;
-      } catch (error) {
-        console.error('API health check failed:', error);
+      if (hasToken) {
+        try {
+          await studentAPI.healthCheck();
+          apiConnected = true;
+        } catch (error) {
+          console.error('API health check failed:', error);
+        }
       }
 
       const newStatus = {
-        api: apiConnected,
+        api: hasToken ? apiConnected : hasConfig,
         config: hasConfig,
-        message: apiConnected 
-          ? 'Connected to backend successfully!' 
-          : hasConfig 
-            ? 'Configuration loaded, but API connection failed' 
-            : 'Missing environment configuration'
+        message: !hasConfig
+          ? 'Missing environment configuration'
+          : !hasToken
+            ? 'Configuration loaded. Sign in to verify API access.'
+            : apiConnected
+              ? 'Connected to backend successfully!'
+              : 'Configuration loaded, but API connection failed'
       };
 
       setStatus(newStatus);

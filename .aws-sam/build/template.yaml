@@ -1024,6 +1024,8 @@ Resources:
       - DynamoDBReadPolicy:
           TableName:
             Ref: ChapterEventsTable
+      - DynamoDBReadPolicy:
+          TableName: Unify-Users
       Events:
         ListEventsApi:
           Type: HttpApi
@@ -1032,6 +1034,8 @@ Resources:
               Ref: PaymentHttpApi
             Path: /api/events
             Method: GET
+            Auth:
+              Authorizer: CognitoAuth
       Tags:
         Application: Unify
         Component: Events
