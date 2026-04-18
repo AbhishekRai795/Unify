@@ -62,6 +62,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Role[]
 
   if (!allowedRoles.includes(user.activeRole as Role)) {
     // Fallback logic if they try to access a page they aren't allowed on
+    // Prioritize redirecting to their ACTIVE role's dashboard
+    if (user.activeRole === 'admin') return <Navigate to="/admin/dashboard" replace />;
+    if (user.activeRole === 'chapter-head') return <Navigate to="/head/dashboard" replace />;
+    if (user.activeRole === 'student') return <Navigate to="/student/dashboard" replace />;
+    
+    // Last resort fallbacks if activeRole is somehow missing or invalid
     if (user.groups.includes('admin')) return <Navigate to="/admin/dashboard" replace />;
     if (user.groups.includes('chapter-head')) return <Navigate to="/head/dashboard" replace />;
     if (user.groups.includes('student')) return <Navigate to="/student/dashboard" replace />;

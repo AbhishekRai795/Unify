@@ -222,17 +222,17 @@ const HeadDashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md bg-white/40 border-white/20">
+          <div className="p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md bg-white/80 border-white/20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+              <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
               <Activity className="h-5 w-5 text-gray-500" />
             </div>
             <div className="space-y-3 max-h-[300px] overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
                <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                 <Link to="/head/events/create" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                 <Link to="/head/events/create" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-green-100/70">
-                         <Plus className="h-5 w-5 text-green-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-green-600/20 border border-green-500/30' : 'bg-green-100/70'}`}>
+                         <Plus className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">Create Event</p>
@@ -244,10 +244,10 @@ const HeadDashboard: React.FC = () => {
                </motion.div>
                
                <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                 <Link to="/head/events/manage" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                 <Link to="/head/events/manage" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-orange-100/70">
-                         <Plus className="h-5 w-5 text-orange-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-orange-600/20 border border-orange-500/30' : 'bg-orange-100/70'}`}>
+                         <Plus className={`h-5 w-5 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">Manage Events</p>
@@ -259,10 +259,10 @@ const HeadDashboard: React.FC = () => {
                </motion.div>
                
                <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                 <Link to="/head/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                 <Link to="/head/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-blue-100/70">
-                         <Settings className="h-5 w-5 text-blue-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-600/20 border border-blue-500/30' : 'bg-blue-100/70'}`}>
+                         <Settings className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">Manage Chapters</p>
@@ -274,10 +274,10 @@ const HeadDashboard: React.FC = () => {
                </motion.div>
                
                <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                 <Link to="/head/registrations" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                 <Link to="/head/registrations" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-purple-100/70">
-                         <Eye className="h-5 w-5 text-purple-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-purple-600/20 border border-purple-500/30' : 'bg-purple-100/70'}`}>
+                         <Eye className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">View Registrations</p>
@@ -289,10 +289,10 @@ const HeadDashboard: React.FC = () => {
                </motion.div>
 
                <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                 <Link to="/head/messages" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group">
+                 <Link to="/head/messages" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-emerald-100/70">
-                         <MessageSquare className="h-5 w-5 text-emerald-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-emerald-600/20 border border-emerald-500/30' : 'bg-emerald-100/70'}`}>
+                         <MessageSquare className={`h-5 w-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">Messaging</p>
@@ -311,11 +311,11 @@ const HeadDashboard: React.FC = () => {
                        navigate(`/head/chapter/${chId}/stats`);
                      }
                    }}
-                   className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors group text-left"
+                   className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group text-left"
                  >
                    <div className="flex items-center space-x-4">
-                     <div className="p-3 rounded-lg bg-indigo-100/70">
-                         <TrendingUp className="h-5 w-5 text-indigo-600" />
+                     <div className={`p-3 rounded-lg ${isDark ? 'bg-indigo-600/20 border border-indigo-500/30' : 'bg-indigo-100/70'}`}>
+                         <TrendingUp className={`h-5 w-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
                      </div>
                      <div>
                        <p className="font-semibold text-gray-900">Payment Stats</p>

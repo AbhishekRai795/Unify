@@ -25,11 +25,16 @@ const getAuthHeaders = () => {
   } else {
     console.warn('No JWT token found in localStorage');
   }
-  
-  return {
+
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
 };
 
 // Helper function to handle API responses
@@ -67,7 +72,7 @@ export const studentAPI = {
   // Health check
   healthCheck: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/health`, {
+      const response = await fetch(`${API_BASE_URL}/get-chapters`, {
         method: 'GET',
         headers: getAuthHeaders()
       });

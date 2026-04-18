@@ -10,10 +10,15 @@ const PAYMENT_API_BASE_URL =
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('idToken');
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
 };
 
 const handleResponse = async (response: Response) => {
@@ -156,7 +161,7 @@ export const paymentAPI = {
   listEvents: async () => {
     const response = await fetch(`${PAYMENT_API_BASE_URL}/api/events`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: getAuthHeaders()
     });
     return handleResponse(response);
   },

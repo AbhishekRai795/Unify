@@ -148,23 +148,7 @@ const Dashboard: React.FC = () => {
     }
   ];
 
-  const normalizeId = (value: any): string => String(value || '').trim();
-
-  const chapterIdSet = new Set(
-    (myChapters || [])
-      .map((chapter: any) => normalizeId(getChapterId(chapter)))
-      .filter(Boolean)
-  );
-
   const announcements = (events || [])
-    .filter((event: any) => {
-      const eventChapterId = normalizeId(
-        event?.chapterId ||
-        event?.chapterID ||
-        event?.chapter?.id
-      );
-      return !!eventChapterId && chapterIdSet.has(eventChapterId);
-    })
     .flatMap((event: any) => {
       const list = Array.isArray(event.announcements) ? event.announcements : [];
       return list.map((announcement: any, index: number) => ({
