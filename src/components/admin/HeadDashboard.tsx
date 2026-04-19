@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, Clock, MessageSquare, Megaphone, Activity, ArrowRight } from 'lucide-react';
+import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, Clock, MessageSquare, Megaphone, Activity, ArrowRight, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -114,7 +114,7 @@ const HeadDashboard: React.FC = () => {
       value: dashboardStats?.pendingRegistrations || 0,
       color: 'orange',
       link: '/head/registrations'
-    }
+    },
   ];
 
   // Use a Record to map the StatColor type to string class names

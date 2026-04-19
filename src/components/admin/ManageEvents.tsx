@@ -17,7 +17,8 @@ import {
   Loader2,
   Download,
   Megaphone,
-  BookOpen
+  BookOpen,
+  Award
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { paymentAPI } from '../../services/paymentApi';
@@ -237,6 +238,13 @@ const ManageEvents: React.FC = () => {
           ))}
         </div>
         <Link
+          to="/head/certificates"
+          className="md:ml-2 inline-flex items-center px-6 py-2.5 border border-amber-200 text-sm font-bold rounded-xl shadow-md text-amber-700 bg-amber-50 hover:bg-amber-100 transform hover:scale-[1.02] transition-all shrink-0"
+        >
+          <Award className="h-4 w-4 mr-2" />
+          Issue Certificate
+        </Link>
+        <Link
           to="/head/events/create"
           className="md:ml-2 inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-bold rounded-xl shadow-md text-white bg-indigo-600 hover:bg-indigo-700 transform hover:scale-[1.02] transition-all shrink-0"
         >
@@ -264,7 +272,7 @@ const ManageEvents: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredEvents.map((event) => (
             <div 
               key={event.eventId}
@@ -280,12 +288,12 @@ const ManageEvents: React.FC = () => {
                     {event.isLive ? 'Live' : 'Draft'}
                   </span>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => setEditingEvent(event)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                      title="Edit Event"
+                    <button
+                      onClick={() => handleViewRegistrations(event)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                      title="View Registrations"
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Users className="h-4 w-4" />
                     </button>
                     <Link
                       to={`/head/events/profile/${encodeURIComponent(event.eventId)}`}
