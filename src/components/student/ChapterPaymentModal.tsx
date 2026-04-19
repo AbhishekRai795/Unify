@@ -28,6 +28,29 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
+const RAZORPAY_CHECKOUT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
+const CHECKOUT_IMAGE_URL = 'https://upes-unify.co.in/unify-mark.svg';
+
+const loadRazorpayCheckout = (): Promise<void> => {
+  if ((window as any).Razorpay) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${RAZORPAY_CHECKOUT_URL}"]`);
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('Unable to load Razorpay checkout')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = RAZORPAY_CHECKOUT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Unable to load Razorpay checkout'));
+    document.body.appendChild(script);
+  });
+};
+
 export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
   isOpen,
   chapterId,
@@ -55,6 +78,8 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         throw new Error('Failed to create payment order');
       }
 
+      await loadRazorpayCheckout();
+
       // Step 2: Initialize Razorpay payment
       const options = {
         key: orderData.keyId,
@@ -63,11 +88,16 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         currency: orderData.currency,
         name: 'Unify - Chapter Registration',
         description: `Registration fee for ${chapterName}`,
-        // Removed local image reference to fix CORS loopback error on Razorpay iframe
+        image: CHECKOUT_IMAGE_URL,
         prefill: {
           name: orderData.studentName || user?.name || '',
           email: orderData.studentEmail || user?.email || '',
-          contact: '9999999999' // Razorpay requires a contact number; providing dummy to bypass prompt/failures
+          contact: '+919999999999' // Razorpay recommends country-code formatted phone numbers.
+        },
+        readonly: {
+          name: true,
+          email: true,
+          contact: true
         },
         notes: orderData.notes,
         handler: async (response: RazorpayResponse) => {
@@ -222,6 +252,3 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
 };
 
 export default ChapterPaymentModal;
-
-// Add Razorpay script to your main.tsx or index.html:
-// <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

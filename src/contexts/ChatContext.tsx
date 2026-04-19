@@ -33,6 +33,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const refreshConversationsRef = useRef<(chapterId?: string | string[]) => Promise<void>>(async () => {});
+  const isRefreshingConversationsRef = useRef(false);
   const lastChapterIdsRef = useRef<string[]>([]);
 
   const getOtherParticipantId = (conv: any): string => {
@@ -123,6 +124,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshConversations = useCallback(async (chapterId?: string | string[]) => {
     const token = localStorage.getItem('idToken');
+    if (isRefreshingConversationsRef.current) return;
+
     const explicitChapterIds = Array.isArray(chapterId)
       ? chapterId.filter(Boolean)
       : (chapterId ? [chapterId] : []);
@@ -137,26 +140,31 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (token) {
-      const convs = await chatApi.getConversations(undefined, token);
-      const merged = (convs || [])
-        .map((conv) => normalizeConversation(conv, chapterIds[0]))
-        .filter(Boolean)
-        .sort((a, b) => {
-          const at = a?.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
-          const bt = b?.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
-          return bt - at;
+      isRefreshingConversationsRef.current = true;
+      try {
+        const convs = await chatApi.getConversations(undefined, token);
+        const merged = (convs || [])
+          .map((conv) => normalizeConversation(conv, chapterIds[0]))
+          .filter(Boolean)
+          .sort((a, b) => {
+            const at = a?.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+            const bt = b?.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+            return bt - at;
+          });
+
+        const uniqueConversations = mergeByConversationKey(merged);
+
+        setConversations((prev) => {
+          const prevScoped = (prev || []).map((conv) => normalizeConversation(conv));
+          const carryForward = prevScoped.filter((conv) =>
+            !uniqueConversations.some((fresh) => getConversationKey(fresh) === getConversationKey(conv))
+          );
+
+          return mergeByConversationKey([...uniqueConversations, ...carryForward]);
         });
-
-      const uniqueConversations = mergeByConversationKey(merged);
-
-      setConversations((prev) => {
-        const prevScoped = (prev || []).map((conv) => normalizeConversation(conv));
-        const carryForward = prevScoped.filter((conv) =>
-          !uniqueConversations.some((fresh) => getConversationKey(fresh) === getConversationKey(conv))
-        );
-
-        return mergeByConversationKey([...uniqueConversations, ...carryForward]);
-      });
+      } finally {
+        isRefreshingConversationsRef.current = false;
+      }
     } else {
       setConversations([]);
     }

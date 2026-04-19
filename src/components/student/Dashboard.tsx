@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { 
   Calendar, 
   Users, 
@@ -76,11 +76,14 @@ const Dashboard: React.FC = () => {
     return byName?.otherParticipantId || byName?.recipientId || '';
   };
 
-  const studentChapterIds = Array.from(new Set(
-    (myChapters || [])
-      .map((chapter) => getChapterId(chapter))
-      .filter(Boolean)
-  )) as string[];
+  const studentChapterIds = useMemo(
+    () => Array.from(new Set(
+      (myChapters || [])
+        .map((chapter) => getChapterId(chapter))
+        .filter(Boolean)
+    )) as string[],
+    [myChapters]
+  );
 
   useEffect(() => {
     fetchDashboard();
