@@ -13,7 +13,7 @@ Parameters:
   FrontendOrigin:
     Type: String
     Default: "*"
-    Description: Allowed CORS origin (use specific domain in production)
+    Description: Allowed CORS origin. Defaults to wildcard so custom domains, local dev, and API Gateway origins are all accepted.
 
   Environment:
     Type: String
@@ -65,7 +65,7 @@ Globals:
         RAZORPAY_SECRET_NAME: unify/razorpay/credentials
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         USER_POOL_ID: !Ref CognitoUserPoolId
-        ALLOWED_ORIGIN: !Ref FrontendOrigin
+        ALLOWED_ORIGIN: "*"
         ENVIRONMENT: !Ref Environment
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -83,17 +83,15 @@ Resources:
       Description: Unify Payment API - handles Razorpay payment flows
       CorsConfiguration:
         AllowOrigins:
-          - !Ref FrontendOrigin
+          - "*"
         AllowHeaders:
-          - Content-Type
-          - Authorization
-          - X-Amz-Date
-          - X-Api-Key
+          - "*"
         AllowMethods:
           - GET
           - POST
           - PUT
           - DELETE
+          - PATCH
           - OPTIONS
         MaxAge: 600
       Auth:

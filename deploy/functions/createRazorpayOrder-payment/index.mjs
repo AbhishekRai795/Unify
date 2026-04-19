@@ -2,7 +2,7 @@
 // Lambda function to create a Razorpay order for chapter registration
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { createRazorpayOrder, generateReceiptId } from "./razorpay-utils.mjs";
+import { createRazorpayOrder, generateReceiptId, getRazorpayCredentials } from "./razorpay-utils.mjs";
 import { randomUUID } from "crypto";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
@@ -110,7 +110,10 @@ export const handler = async (event) => {
 
     // Create Razorpay order
     let razorpayOrder;
+    let razorpayKeyId;
     try {
+      const credentials = await getRazorpayCredentials();
+      razorpayKeyId = credentials.key_id;
       razorpayOrder = await createRazorpayOrder(
         fee,
         chapterId,
@@ -173,7 +176,7 @@ export const handler = async (event) => {
         currency: "INR",
         receiptId,
         transactionId,
-        keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_SWAh58F3yse7lJ",
+        keyId: razorpayKeyId,
         studentEmail: userEmail,
         studentName: userName,
         notes: {

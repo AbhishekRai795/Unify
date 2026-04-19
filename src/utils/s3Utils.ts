@@ -12,6 +12,17 @@
  */
 export const encodeS3Url = (url: string | undefined | null): string => {
   if (!url) return '';
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    const isDeadLocalAsset =
+      parsedUrl.hostname === 'localhost' &&
+      parsedUrl.port !== window.location.port;
+
+    if (isDeadLocalAsset) return '';
+  } catch {
+    // Keep relative paths usable; the replacement below is still safe.
+  }
+
   // Replace all '#' with '%23' using a global regex for compatibility
   return url.replace(/#/g, '%23');
 };

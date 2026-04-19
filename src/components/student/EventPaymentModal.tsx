@@ -18,6 +18,29 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
+const RAZORPAY_CHECKOUT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
+const CHECKOUT_IMAGE_URL = 'https://upes-unify.co.in/unify-mark.svg';
+
+const loadRazorpayCheckout = (): Promise<void> => {
+  if ((window as any).Razorpay) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${RAZORPAY_CHECKOUT_URL}"]`);
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('Unable to load Razorpay checkout')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = RAZORPAY_CHECKOUT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Unable to load Razorpay checkout'));
+    document.body.appendChild(script);
+  });
+};
+
 export const EventPaymentModal: React.FC<EventPaymentModalProps> = ({
   isOpen,
   event,
@@ -45,6 +68,8 @@ export const EventPaymentModal: React.FC<EventPaymentModalProps> = ({
         throw new Error('Failed to create payment order');
       }
 
+      await loadRazorpayCheckout();
+
       // Step 2: Initialize Razorpay payment
       const options = {
         key: orderData.key_id,
@@ -53,10 +78,16 @@ export const EventPaymentModal: React.FC<EventPaymentModalProps> = ({
         currency: orderData.currency,
         name: 'Unify Events',
         description: `Registration for ${event.title}`,
+        image: CHECKOUT_IMAGE_URL,
         prefill: {
           name: user?.name || '',
           email: user?.email || '',
           contact: '+919999999999'
+        },
+        readonly: {
+          name: true,
+          email: true,
+          contact: true
         },
         handler: async (response: RazorpayResponse) => {
           await verifyPayment(response, orderData);
