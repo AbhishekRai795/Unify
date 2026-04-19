@@ -12,6 +12,7 @@ import {
   Eye,
   Filter
 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { paymentAPI } from '../../services/paymentApi';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
@@ -34,8 +35,12 @@ interface Registration {
   paymentStatus: string;
 }
 
+type CertificateType = 'participation' | '1st' | '2nd' | '3rd';
+
 const CertificateIssuance: React.FC = () => {
-  const { fetchMyEvents } = useChapterHead();
+  const { eventId: urlEventId } = useParams();
+  const navigate = useNavigate();
+  const { fetchMyEvents, chapters } = useChapterHead();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -45,21 +50,30 @@ const CertificateIssuance: React.FC = () => {
   
   // Issuance State
   const [issuingFor, setIssuingFor] = useState<Registration | null>(null);
-  const [certType, setCertType] = useState<'participation' | '1st' | '2nd' | '3rd'>('participation');
+  const [certType, setCertType] = useState<CertificateType>('participation');
   const [isIssuing, setIsIssuing] = useState(false);
   const [issuedStatus, setIssuedStatus] = useState<Record<string, boolean>>({});
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadEvents();
-  }, []);
+    if (chapters && chapters.length > 0) {
+      loadEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapters]); // Run only once chapters have populated
 
   const loadEvents = async () => {
     setIsLoading(true);
     try {
       const data = await fetchMyEvents();
-      // Only show past events or currently running ones for certificates?
-      // Actually, standard practice is to allow it anytime, but usually after start.
       setEvents(data);
+      if (urlEventId) {
+        const decodedId = decodeURIComponent(urlEventId);
+        const eventMatch = data.find((e: Event) => e.eventId === urlEventId || e.eventId === decodedId);
+        if (eventMatch) {
+          handleSelectEvent(eventMatch, true);
+        }
+      }
     } catch (err) {
       console.error('Failed to load events');
     } finally {
@@ -67,18 +81,35 @@ const CertificateIssuance: React.FC = () => {
     }
   };
 
-  const handleSelectEvent = async (event: Event) => {
+  const handleSelectEvent = async (event: Event, isInitialLoad: boolean = false) => {
     setSelectedEvent(event);
+    if (!isInitialLoad) {
+      navigate(`/head/certificates/${encodeURIComponent(event.eventId)}`, { replace: true });
+    }
     setIsRegistrationsLoading(true);
+    setSelectedUserIds(new Set());
     try {
-      const resp = await paymentAPI.getEventRegistrationsForEvent(event.eventId);
-      setRegistrations(resp.registrations || []);
+      const [registrationsResp, certificatesResp] = await Promise.all([
+        paymentAPI.getEventRegistrationsForEvent(event.eventId),
+        chapterHeadAPI.getEventCertificates(event.eventId).catch(() => ({ certificates: [] }))
+      ]);
+
+      setRegistrations(registrationsResp.registrations || []);
+      setIssuedStatus((certificatesResp.certificates || []).reduce((acc: Record<string, boolean>, cert: any) => {
+        if (cert.eventId && cert.userId) acc[`${cert.eventId}-${cert.userId}`] = true;
+        return acc;
+      }, {}));
     } catch (err) {
       console.error('Error loading registrations');
     } finally {
       setIsRegistrationsLoading(false);
     }
   };
+
+  const currentChapter = useMemo(() => {
+    if (!selectedEvent || !chapters) return null;
+    return chapters.find(c => c.chapterId === selectedEvent.chapterId);
+  }, [selectedEvent, chapters]);
 
   const handleIssue = async () => {
     if (!selectedEvent || !issuingFor) return;
@@ -89,10 +120,12 @@ const CertificateIssuance: React.FC = () => {
         eventId: selectedEvent.eventId,
         userId: issuingFor.userId,
         studentName: issuingFor.studentName,
+        studentEmail: issuingFor.studentEmail,
         certificateType: certType,
         eventName: selectedEvent.title,
-        chapterName: selectedEvent.chapterName || 'Chapter',
-        date: new Date(selectedEvent.startDateTime).toLocaleDateString()
+        chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter',
+        headName: currentChapter?.headName || 'Chapter Head',
+        date: new Date().toLocaleDateString('en-GB')
       });
 
       setIssuedStatus(prev => ({ ...prev, [`${selectedEvent.eventId}-${issuingFor.userId}`]: true }));
@@ -105,16 +138,90 @@ const CertificateIssuance: React.FC = () => {
     }
   };
 
+  const buildCertificatePayload = (reg: Registration) => {
+    if (!selectedEvent) return null;
+
+    return {
+      eventId: selectedEvent.eventId,
+      userId: reg.userId,
+      studentName: reg.studentName,
+      studentEmail: reg.studentEmail,
+      certificateType: certType,
+      eventName: selectedEvent.title,
+      chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter',
+      headName: currentChapter?.headName || 'Chapter Head',
+      date: new Date().toLocaleDateString('en-GB')
+    };
+  };
+
+  const selectedRegistrations = useMemo(
+    () => registrations.filter((reg) => selectedUserIds.has(reg.userId)),
+    [registrations, selectedUserIds]
+  );
+
+  const handleBulkIssue = async () => {
+    if (!selectedEvent || selectedRegistrations.length === 0) return;
+
+    setIsIssuing(true);
+    try {
+      const certificates = selectedRegistrations
+        .map(buildCertificatePayload)
+        .filter(Boolean) as Array<{
+          eventId: string;
+          userId: string;
+          studentName: string;
+          studentEmail?: string;
+          certificateType: CertificateType;
+          eventName: string;
+          chapterName: string;
+          date: string;
+        }>;
+
+      await chapterHeadAPI.issueCertificates(certificates);
+
+      setIssuedStatus(prev => {
+        const next = { ...prev };
+        for (const reg of selectedRegistrations) {
+          next[`${selectedEvent.eventId}-${reg.userId}`] = true;
+        }
+        return next;
+      });
+      setSelectedUserIds(new Set());
+      alert(`Issued ${certificates.length} certificate${certificates.length === 1 ? '' : 's'} successfully.`);
+    } catch (err) {
+      alert('Failed to issue selected certificates');
+    } finally {
+      setIsIssuing(false);
+    }
+  };
+
   const handleDownloadPreview = async () => {
     const certElement = document.getElementById('certificate-to-download');
     if (!certElement) return;
 
+    // Create a temporal container for high-fidelity capture
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.zIndex = '-1';
+    document.body.appendChild(container);
+
+    // Clone the element and remove viewport-specific scaling transforms
+    const clone = certElement.cloneNode(true) as HTMLElement;
+    clone.style.transform = 'none';
+    clone.style.position = 'relative';
+    clone.style.margin = '0';
+    container.appendChild(clone);
+
     try {
-      const canvas = await html2canvas(certElement, {
+      const canvas = await html2canvas(clone, {
         scale: 2, // Higher quality
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: null,
+        width: 960,
+        height: 540
       });
       
       const link = document.createElement('a');
@@ -123,6 +230,8 @@ const CertificateIssuance: React.FC = () => {
       link.click();
     } catch (err) {
       console.error('Download failed', err);
+    } finally {
+      document.body.removeChild(container);
     }
   };
 
@@ -132,6 +241,34 @@ const CertificateIssuance: React.FC = () => {
       reg.studentEmail.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [registrations, searchTerm]);
+
+  const filteredUserIds = useMemo(
+    () => filteredRegistrations.map((reg) => reg.userId).filter(Boolean),
+    [filteredRegistrations]
+  );
+  const allFilteredSelected = filteredUserIds.length > 0 && filteredUserIds.every((userId) => selectedUserIds.has(userId));
+  const someFilteredSelected = filteredUserIds.some((userId) => selectedUserIds.has(userId));
+
+  const toggleSelectAllFiltered = () => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredSelected) {
+        filteredUserIds.forEach((userId) => next.delete(userId));
+      } else {
+        filteredUserIds.forEach((userId) => next.add(userId));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectedUser = (userId: string) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -146,7 +283,14 @@ const CertificateIssuance: React.FC = () => {
       {/* Header */}
       <div className="mb-0 text-left">
           <button
-            onClick={() => selectedEvent ? setSelectedEvent(null) : window.location.href = '/head/dashboard'}
+            onClick={() => {
+              if (selectedEvent) {
+                setSelectedEvent(null);
+                navigate('/head/certificates', { replace: true });
+              } else {
+                navigate('/head/dashboard');
+              }
+            }}
             className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
           >
             <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
@@ -211,7 +355,26 @@ const CertificateIssuance: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <select
+                value={certType}
+                onChange={(e) => setCertType(e.target.value as CertificateType)}
+                className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                disabled={isIssuing}
+              >
+                <option value="participation">Participation</option>
+                <option value="1st">1st Position</option>
+                <option value="2nd">2nd Position</option>
+                <option value="3rd">3rd Position</option>
+              </select>
+              <button
+                onClick={handleBulkIssue}
+                disabled={isIssuing || selectedRegistrations.length === 0}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-black rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isIssuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Award className="h-4 w-4" />}
+                Issue Selected ({selectedRegistrations.length})
+              </button>
               <span className="text-sm font-medium text-gray-500">
                 {filteredRegistrations.length} Participants Found
               </span>
@@ -222,6 +385,19 @@ const CertificateIssuance: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-white border-b border-gray-100">
+                  <th className="px-6 py-4 text-left w-12">
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = !allFilteredSelected && someFilteredSelected;
+                      }}
+                      onChange={toggleSelectAllFiltered}
+                      disabled={filteredUserIds.length === 0 || isIssuing}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      aria-label="Select all visible participants"
+                    />
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Student</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
@@ -230,13 +406,13 @@ const CertificateIssuance: React.FC = () => {
               <tbody className="divide-y divide-gray-50">
                 {isRegistrationsLoading ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center">
+                    <td colSpan={4} className="px-6 py-12 text-center">
                       <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : filteredRegistrations.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-500 italic">
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 italic">
                       No participants found for this event.
                     </td>
                   </tr>
@@ -245,6 +421,16 @@ const CertificateIssuance: React.FC = () => {
                     const isIssued = issuedStatus[`${selectedEvent.eventId}-${reg.userId}`];
                     return (
                       <tr key={reg.userId} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.has(reg.userId)}
+                            onChange={() => toggleSelectedUser(reg.userId)}
+                            disabled={isIssuing}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            aria-label={`Select ${reg.studentName}`}
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
@@ -298,8 +484,8 @@ const CertificateIssuance: React.FC = () => {
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
             onClick={() => !isIssuing && setIssuingFor(null)} 
           />
-          <div className="relative bg-white rounded-3xl w-full max-w-7xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex justify-between items-center z-10">
+          <div className="relative bg-white rounded-3xl w-full max-w-6xl shadow-2xl animate-scale-in">
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-gray-100 flex justify-between items-center z-10 rounded-t-3xl">
               <div>
                 <h2 className="text-2xl font-black text-gray-900">Preview Certificate</h2>
                 <p className="text-sm text-gray-500 font-medium">Configuring for {issuingFor.studentName}</p>
@@ -313,8 +499,8 @@ const CertificateIssuance: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Configuration Panel */}
                 <div className="space-y-6">
                   <div>
@@ -375,13 +561,14 @@ const CertificateIssuance: React.FC = () => {
                 </div>
 
                 {/* Certificate Preview Surface */}
-                <div className="lg:col-span-2 bg-slate-100 rounded-3xl p-4 md:p-8 flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-200 min-h-[500px]">
-                  <div className="scale-[0.5] sm:scale-[0.7] md:scale-[0.85] lg:scale-[1.0] origin-center shadow-2xl">
+                <div className="lg:col-span-2 bg-slate-100 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 relative aspect-video w-full flex items-center justify-center">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.35] sm:scale-[0.45] md:scale-[0.6] lg:scale-[0.75] origin-center shadow-2xl transition-transform">
                     <CertificateTemplate
                       studentName={issuingFor.studentName}
                       eventName={selectedEvent.title}
-                      chapterName={selectedEvent.chapterName || 'Chapter'}
-                      date={new Date(selectedEvent.startDateTime).toLocaleDateString()}
+                      chapterName={selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter'}
+                      headName={currentChapter?.headName || 'Chapter Head'}
+                      date={new Date().toLocaleDateString('en-GB')}
                       certificateType={certType}
                     />
                   </div>

@@ -5,6 +5,7 @@ interface CertificateTemplateProps {
   studentName: string;
   eventName: string;
   chapterName: string;
+  headName: string;
   date: string;
   certificateType: 'participation' | '1st' | '2nd' | '3rd';
   isDark?: boolean;
@@ -14,6 +15,7 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
   studentName,
   eventName,
   chapterName,
+  headName,
   date,
   certificateType,
   isDark = false
@@ -40,11 +42,16 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
     <div 
       id="certificate-to-download"
       className={`
-        relative w-[800px] h-[580px] p-10 overflow-hidden font-serif
+        relative overflow-hidden font-serif
         ${isDark ? 'bg-slate-900 border-[16px] border-slate-800' : 'bg-white border-[16px] border-slate-100'}
         shadow-2xl flex flex-col items-center justify-between
       `}
-      style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 100%)' }}
+      style={{ 
+        width: '960px', 
+        height: '540px',
+        padding: '24px 48px',
+        backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 100%)' 
+      }}
     >
       {/* Decorative Ornaments */}
       <div className="absolute top-4 left-4 w-20 h-20 border-t-2 border-l-2 border-blue-600/30"></div>
@@ -73,7 +80,7 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
           This is to certify that
         </p>
         
-        <h2 className={`text-4xl font-bold border-b-2 inline-block px-12 pb-2 ${isDark ? 'text-white border-blue-900' : 'text-slate-900 border-slate-200'}`}>
+        <h2 className={`text-4xl font-bold border-b-2 inline-block px-12 pb-2 whitespace-nowrap ${isDark ? 'text-white border-blue-900' : 'text-slate-900 border-slate-200'}`}>
           {studentName || 'Student Name'}
         </h2>
 
@@ -86,28 +93,26 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
         </div>
       </div>
 
-      {/* Footer / Signatures */}
-      <div className="w-full flex justify-between items-end px-12 pb-4">
-        <div className="text-center w-48">
-          <div className={`h-0.5 w-full mb-2 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
-          <p className={`text-xs uppercase tracking-tighter ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Date of Issue</p>
-          <p className={`text-sm font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{date}</p>
-        </div>
+      {/* Footer / Signatures - Absolute positioned to prevent clipping */}
+      <div className="absolute bottom-10 left-16 text-center w-56">
+        <div className={`h-0.5 w-full mb-2 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
+        <p className={`text-[10px] uppercase tracking-tighter ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Date of Issue</p>
+        <p className={`text-sm font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{date || new Date().toLocaleDateString('en-GB')}</p>
+      </div>
 
-        {/* Center Seal */}
-        <div className="relative flex items-center justify-center">
-             <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-full scale-150"></div>
-             <Shield size={40} className="text-blue-600/20" />
-        </div>
+      {/* Center Seal */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 relative flex items-center justify-center">
+           <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-full scale-150"></div>
+           <Shield size={44} className="text-blue-600/20" />
+      </div>
 
-        <div className="text-center w-48">
-          <div className="h-10 flex items-end justify-center mb-2">
-             <span className="font-serif italic text-lg opacity-50">Chapter Head</span>
-          </div>
-          <div className={`h-0.5 w-full mb-2 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
-          <p className={`text-xs uppercase tracking-tighter ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Authorized Signature</p>
-          <p className={`text-sm font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{chapterName}</p>
+      <div className="absolute bottom-10 right-16 text-center w-56">
+        <div className="h-10 flex items-end justify-center mb-1">
+           <span className="font-serif italic text-lg opacity-60 text-slate-700 uppercase tracking-widest">{headName || 'Chapter Head'}</span>
         </div>
+        <div className={`h-0.5 w-full mb-2 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
+        <p className={`text-[10px] uppercase tracking-tighter ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Authorized Signature</p>
+        <p className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{headName || 'Chapter Head'}</p>
       </div>
     </div>
   );

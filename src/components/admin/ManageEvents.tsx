@@ -36,6 +36,7 @@ interface Event {
   currentAttendees: number;
   maxAttendees: number;
   isLive: boolean;
+  registrationDeadline?: string;
 }
 
 interface EventRegistration {
@@ -47,7 +48,7 @@ interface EventRegistration {
 }
 
 const ManageEvents: React.FC = () => {
-  const { fetchMyEvents, updateEvent, deleteEvent } = useChapterHead();
+  const { fetchMyEvents, updateEvent, deleteEvent, chapters } = useChapterHead();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +64,11 @@ const ManageEvents: React.FC = () => {
   const [registrationsError, setRegistrationsError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadEvents();
-  }, []);
+    if (chapters && chapters.length > 0) {
+      loadEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapters]);
 
   const loadEvents = async () => {
     setIsLoading(true);
@@ -289,11 +293,11 @@ const ManageEvents: React.FC = () => {
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleViewRegistrations(event)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                      title="View Registrations"
+                      onClick={() => setEditingEvent(event)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                      title="Edit Event Details"
                     >
-                      <Users className="h-4 w-4" />
+                      <Edit2 className="h-4 w-4" />
                     </button>
                     <Link
                       to={`/head/events/profile/${encodeURIComponent(event.eventId)}`}
@@ -460,8 +464,8 @@ const ManageEvents: React.FC = () => {
             className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
             onClick={() => !isUpdating && setEditingEvent(null)}
           />
-          <div className="relative bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
-            <div className="sticky top-0 bg-white px-8 py-6 border-b border-gray-100 flex justify-between items-center z-10">
+          <div className="relative bg-white rounded-3xl w-full max-w-5xl shadow-2xl animate-scale-in">
+            <div className="sticky top-0 bg-white px-8 py-5 border-b border-gray-100 flex justify-between items-center z-10 rounded-t-3xl">
               <h2 className="text-2xl font-bold text-gray-900">Edit Event</h2>
               <button 
                 onClick={() => setEditingEvent(null)}
@@ -472,27 +476,59 @@ const ManageEvents: React.FC = () => {
               </button>
             </div>
             
-            <form onSubmit={handleUpdate} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Event Title</label>
+            <form onSubmit={handleUpdate} className="p-7 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-3">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Event Title</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
                     value={editingEvent.title || ''}
                     onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <div className="lg:col-span-3">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
                   <textarea
-                    rows={4}
+                    rows={1}
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all resize-none"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all resize-none text-sm"
                     value={editingEvent.description || ''}
                     onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    value={(editingEvent.startDateTime || '').substring(0, 16)}
+                    onChange={(e) => setEditingEvent({...editingEvent, startDateTime: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">End Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    value={(editingEvent.endDateTime || '').substring(0, 16)}
+                    onChange={(e) => setEditingEvent({...editingEvent, endDateTime: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Registration Deadline</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    value={(editingEvent.registrationDeadline || '').substring(0, 16)}
+                    onChange={(e) => setEditingEvent({...editingEvent, registrationDeadline: e.target.value})}
                   />
                 </div>
 
@@ -501,7 +537,7 @@ const ManageEvents: React.FC = () => {
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
                     value={editingEvent.location || ''}
                     onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
                   />
@@ -517,84 +553,58 @@ const ManageEvents: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                    value={(editingEvent.startDateTime || '').substring(0, 16)}
-                    onChange={(e) => setEditingEvent({...editingEvent, startDateTime: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                    value={(editingEvent.endDateTime || '').substring(0, 16)}
-                    onChange={(e) => setEditingEvent({...editingEvent, endDateTime: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-4 cursor-pointer">
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3"
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
                       checked={!!editingEvent.isPaid}
                       onChange={(e) => setEditingEvent({...editingEvent, isPaid: e.target.checked})}
                     />
                     Paid Event?
                   </label>
+                  {editingEvent.isPaid && (
+                    <div className="flex-1 max-w-[200px]">
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="number"
+                          required
+                          placeholder="Fee (₹)"
+                          className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                          value={editingEvent.registrationFee || 0}
+                          onChange={(e) => setEditingEvent({...editingEvent, registrationFee: parseFloat(e.target.value) || 0})}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {editingEvent.isPaid && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Registration Fee (₹)</label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="number"
-                        required
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                        value={editingEvent.registrationFee || 0}
-                        onChange={(e) => setEditingEvent({...editingEvent, registrationFee: parseFloat(e.target.value) || 0})}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="md:col-span-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 cursor-pointer p-4 bg-indigo-50 rounded-2xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                <div className="lg:col-span-2">
+                  <label className="flex items-center text-sm font-semibold text-indigo-900 cursor-pointer p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
                     <input
                       type="checkbox"
-                      className="w-6 h-6 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3"
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3"
                       checked={editingEvent.isLive}
                       onChange={(e) => setEditingEvent({...editingEvent, isLive: e.target.checked})}
                     />
-                    <div>
-                      <p className="text-indigo-900 font-bold text-base">Make Event Live</p>
-                      <p className="text-indigo-700 text-sm">Visible to students on the dashboard</p>
-                    </div>
+                    <span>Make Event Live <span className="ml-2 font-normal text-xs text-indigo-600 opacity-70">(Visible to students)</span></span>
                   </label>
                 </div>
               </div>
 
-              <div className="pt-6 flex gap-4">
+              <div className="pt-2 flex gap-4">
                 <button
                   type="button"
                   onClick={() => setEditingEvent(null)}
-                  className="flex-1 px-6 py-4 border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-all"
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-all text-sm"
                   disabled={isUpdating}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-3 px-12 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transform hover:scale-[1.02] transition-all flex items-center justify-center disabled:opacity-50"
+                  className="flex-2 px-10 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transform hover:scale-[1.01] transition-all flex items-center justify-center disabled:opacity-50 text-sm"
                   disabled={isUpdating}
                 >
                   {isUpdating ? (

@@ -1648,6 +1648,14 @@ Resources:
             Method: GET
             Auth:
               Authorizer: CognitoAuth
+        GetEventCertificatesApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/certificates/event
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
         CertificateOptions:
           Type: HttpApi
           Properties:

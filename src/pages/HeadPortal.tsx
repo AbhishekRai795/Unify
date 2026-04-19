@@ -30,6 +30,7 @@ const HeadPortal: React.FC = () => {
         <Route path="/messages" element={<HeadMessaging />} />
         <Route path="/chapter/:chapterId/stats" element={<PaymentStatsPage />} />
         <Route path="certificates" element={<CertificateIssuance />} />
+        <Route path="certificates/:eventId" element={<CertificateIssuance />} />
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </ChapterHeadProvider>
