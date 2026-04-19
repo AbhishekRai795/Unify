@@ -18,6 +18,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST,OPTIONS"
 };
 
+const normalizeRegisteredChapters = (value) => {
+  if (!value) return [];
+  if (value instanceof Set) return Array.from(value).map(String).filter(Boolean);
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value === "string") return value.trim() ? [value.trim()] : [];
+  return [];
+};
+
 export const handler = async (event) => {
   console.log("Event received:", JSON.stringify(event, null, 2));
 
@@ -137,7 +145,7 @@ export const handler = async (event) => {
     }));
 
     // Update user's registered chapters list (Legacy logic expects chapterName, not chapterId)
-    const updatedRegisteredChapters = user?.registeredChapters ? Array.from(user.registeredChapters) : [];
+    const updatedRegisteredChapters = normalizeRegisteredChapters(user?.registeredChapters);
     if (!updatedRegisteredChapters.includes(chapter.chapterName)) {
       updatedRegisteredChapters.push(chapter.chapterName);
     }

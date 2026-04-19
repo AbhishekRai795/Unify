@@ -10,6 +10,7 @@ const secretsClient = new SecretsManagerClient({ region: "ap-south-1" });
 const CHAPTERS_TABLE = process.env.CHAPTERS_TABLE || "Chapters";
 const EVENTS_TABLE = process.env.EVENTS_TABLE || "ChapterEvents";
 const EVENT_PAYMENTS_TABLE = process.env.EVENT_PAYMENTS_TABLE || "EventPayments";
+const CHAPTER_PAYMENTS_TABLE = "ChapterPayments";
 const USERS_TABLE = process.env.USERS_TABLE || "Unify-Users";
 const REGISTRATION_TABLE = process.env.REGISTRATION_TABLE || "RegistrationRequests";
 const RAZORPAY_SECRET_NAME = process.env.RAZORPAY_SECRET_NAME || "unify/razorpay/credentials";
@@ -56,7 +57,25 @@ const isAuthorizedGroup = (groupName = "") => {
 
 const toAmountRupees = (value) => {
   const n = Number(value || 0);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) ? n / 100 : 0;
+};
+
+const getPaymentPriority = (payment = {}) => {
+  const status = String(payment.paymentStatus || "").toUpperCase();
+  if (status === "COMPLETED") return 4;
+  if (status === "FREE") return 3;
+  if (status === "PENDING") return 2;
+  if (status.startsWith("FAILED")) return 1;
+  return 0;
+};
+
+const getPaymentTimestamp = (payment = {}) => {
+  return new Date(
+    payment.completedAt ||
+    payment.updatedAt ||
+    payment.createdAt ||
+    0
+  ).getTime();
 };
 
 async function getRazorpayClient() {
@@ -189,10 +208,49 @@ export const handler = async (event) => {
     });
     const approvedRegistrations = approvedRegistrationsResponse.Items || [];
 
+    // 6b. Load ChapterPayments records for chapter joining
+    console.log(`Querying ChapterPayments for chapterId: ${chapterId}...`);
+    const chapterPaymentsResponse = await docClient.send(new QueryCommand({
+      TableName: CHAPTER_PAYMENTS_TABLE,
+      KeyConditionExpression: "chapterId = :chapterId",
+      ExpressionAttributeValues: {
+        ":chapterId": chapterId
+      }
+    })).catch((err) => {
+      console.error("Non-critical error querying ChapterPayments:", err.message);
+      return { Items: [] };
+    });
+    
+    // Filter out non-transaction metadata and keep the best payment record per user.
+    const chapterPaymentRecords = (chapterPaymentsResponse.Items || []).filter((item) =>
+      item?.userId &&
+      item?.transactionId &&
+      !String(item.transactionId).startsWith("CONFIG#")
+    );
+
+    const chapterPaymentByUserId = new Map();
+    for (const record of chapterPaymentRecords) {
+      const existing = chapterPaymentByUserId.get(record.userId);
+      if (!existing) {
+        chapterPaymentByUserId.set(record.userId, record);
+        continue;
+      }
+
+      const existingPriority = getPaymentPriority(existing);
+      const recordPriority = getPaymentPriority(record);
+      if (
+        recordPriority > existingPriority ||
+        (recordPriority === existingPriority && getPaymentTimestamp(record) > getPaymentTimestamp(existing))
+      ) {
+        chapterPaymentByUserId.set(record.userId, record);
+      }
+    }
+
     // 7. Resolve Detailed User Information
     const userIds = Array.from(new Set([
       ...paymentRecordsRaw.map((r) => r.userId),
-      ...approvedRegistrations.map((r) => r.userId)
+      ...approvedRegistrations.map((r) => r.userId),
+      ...chapterPaymentRecords.map((r) => r.userId)
     ].filter(Boolean)));
 
     let usersById = new Map();
@@ -219,18 +277,32 @@ export const handler = async (event) => {
       usersById = new Map(allUsers.map((u) => [u.userId, u]));
     }
 
-    // 8. Format Chapter Members Output
+    // 8. Format Chapter Members Output — Merging Registrations with actual Payments
+    console.log(`Formatting members list. Members: ${approvedRegistrations.length}, Payments found: ${chapterPaymentRecords.length}`);
     const enrolledMembers = approvedRegistrations.map((reg) => {
       const user = usersById.get(reg.userId) || {};
+      const payment = chapterPaymentByUserId.get(reg.userId);
+      
+      if (!payment && chapterPaymentRecords.length > 0) {
+        console.log(`[Diagnostic] No payment found for user ${reg.userId} (${reg.studentEmail}). Available payment userIds: ${Array.from(chapterPaymentByUserId.keys()).join(', ')}`);
+      }
+      
+      // Chapter joining value should come directly from ChapterPayments.amount.
+      const amountRaw = Number(payment?.amount || 0);
+      
       return {
         userId: reg.userId,
-        studentName: reg.studentName || user.name || "Unknown",
-        studentEmail: reg.studentEmail || user.email || "",
+        studentName: reg.studentName || user.name || payment?.studentName || "Unknown",
+        studentEmail: reg.studentEmail || user.email || payment?.studentEmail || "",
         sapId: reg.sapId || user.sapId || null,
         year: reg.year || user.year || null,
         approvedAt: reg.processedAt || reg.updatedAt || null,
-        paymentStatus: "COMPLETED", // Chapter joining is implied paid for approved regs
-        amountPaid: Number(reg.paidAmount || chapter.registrationFee || 0)
+        paymentStatus: payment?.paymentStatus || (reg.status === "approved" ? "FREE" : "UNKNOWN"),
+        amountPaid: amountRaw / 100,
+        value: amountRaw / 100,
+        transactionId: payment?.transactionId || null,
+        razorpayPaymentId: payment?.razorpayPaymentId || null,
+        notes: payment?.notes || reg.notes || null
       };
     });
 
@@ -262,12 +334,12 @@ export const handler = async (event) => {
       const rows = paymentRecords.filter((r) => r.eventId === evt.eventId);
       const revenue = rows
         .filter((r) => r.paymentStatus === "COMPLETED")
-        .reduce((sum, r) => sum + toAmountRupees(r.amountInRupees), 0);
+        .reduce((sum, r) => sum + (r.amountInRupees || 0), 0);
       return {
         eventId: evt.eventId,
         title: evt.title,
         isPaid: !!evt.isPaid,
-        registrationFee: Number(evt.registrationFee || 0),
+        registrationFee: Number(evt.registrationFee || 0) / 100,
         enrolledCount: rows.filter((r) => r.paymentStatus === "COMPLETED" || r.paymentStatus === "NA").length,
         completedPaidCount: rows.filter((r) => r.paymentStatus === "COMPLETED").length,
         pendingCount: rows.filter((r) => r.paymentStatus === "PENDING").length,
@@ -277,7 +349,27 @@ export const handler = async (event) => {
     }).sort((a, b) => b.revenueInRupees - a.revenueInRupees);
 
     // 11. Overall Summary
-    const uniqueEnrolled = new Set(paymentRecords.filter(r => r.paymentStatus === "COMPLETED" || r.paymentStatus === "NA").map(r => r.userId));
+    const uniqueEnrolled = new Set([
+      ...paymentRecords.filter(r => r.paymentStatus === "COMPLETED" || r.paymentStatus === "NA").map(r => r.userId),
+      ...enrolledMembers.filter(r => r.paymentStatus === "COMPLETED" || r.paymentStatus === "FREE").map(r => r.userId)
+    ]);
+    
+    const chapterRevenue = enrolledMembers
+      .filter(r => r.paymentStatus === "COMPLETED")
+      .reduce((sum, r) => sum + (r.value || 0), 0);
+    
+    const eventRevenue = paymentRecords
+      .filter(r => r.paymentStatus === "COMPLETED")
+      .reduce((sum, r) => sum + (r.amountInRupees || 0), 0);
+
+    const successfulChapterRows = enrolledMembers.filter(
+      (r) => r.paymentStatus === "COMPLETED" || r.paymentStatus === "FREE"
+    ).length;
+    const successfulEventRows = paymentRecords.filter(
+      (r) => r.paymentStatus === "COMPLETED" || r.paymentStatus === "NA"
+    ).length;
+    const totalRegistrationRows = enrolledMembers.length + paymentRecords.length;
+
     const overallStats = {
       chapterId,
       chapterName: chapter.chapterName,
@@ -285,12 +377,9 @@ export const handler = async (event) => {
       chapterEnrolledMembersCountFromRegistrations: enrolledMembers.length,
       uniqueStudentsWithEventRegistrations: uniqueEnrolled.size,
       totalEvents: events.length,
-      totalRevenueInRupees: Number(
-        paymentRecords
-          .filter((r) => r.paymentStatus === "COMPLETED")
-          .reduce((sum, r) => sum + toAmountRupees(r.amountInRupees), 0)
-          .toFixed(2)
-      )
+      totalCompletedPayments: successfulChapterRows + successfulEventRows,
+      totalEventRegistrationRows: totalRegistrationRows,
+      totalRevenueInRupees: Number((chapterRevenue + eventRevenue).toFixed(2))
     };
 
     // 12. Razorpay Insights

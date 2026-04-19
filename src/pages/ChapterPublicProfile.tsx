@@ -166,6 +166,16 @@ const ChapterPublicProfile: React.FC = () => {
         <>
           <span className="flex items-center gap-2.5 text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {chapter?.city || chapter?.state || 'Unify Network'}</span>
           <span className="flex items-center gap-2.5 text-lg"><Users className="h-5 w-5 text-indigo-500" /> {chapter?.memberCount ? `${chapter.memberCount}+ members` : 'Open student community'}</span>
+          {chapter?.isPaid ? (
+            <span className="flex items-center gap-2.5 text-lg text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              <span className="text-sm">₹</span>
+              {chapter.registrationFee > 0 ? `Paid (₹${chapter.registrationFee / 100})` : 'Free'}
+            </span>
+          ) : (
+            <span className="flex items-center gap-2.5 text-lg text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              <span className="text-sm">₹</span> Free
+            </span>
+          )}
         </>
       )}
       ctaLabel="Join Our Network"

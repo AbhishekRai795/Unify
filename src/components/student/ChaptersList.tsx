@@ -187,6 +187,19 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               <span className="truncate">{chapter.contactEmail}</span>
             </div>
           )}
+
+          <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+            <div className={`flex items-center justify-center h-5 w-5 mr-1.5 rounded bg-blue-100 text-blue-700`}>
+                <span className="font-bold text-xs">₹</span>
+            </div>
+            {chapter.isPaid ? (
+              <span className="font-medium text-blue-600">
+                Paid (₹{((chapter.registrationFee || 0) / 100).toLocaleString()})
+              </span>
+            ) : (
+              <span className="font-medium text-green-600">Free</span>
+            )}
+          </div>
         </div>
 
         {/* Action Button */}
@@ -355,12 +368,20 @@ const ChaptersList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch fresh registration data first
-      const [chaptersResponse, myChaptersData, pendingData] = await Promise.all([
+      // Use allSettled so a single API failure doesn't blank the whole page
+      const [chaptersResult, myChaptersResult, pendingResult] = await Promise.allSettled([
         studentAPI.getAllChapters(),
         studentAPI.getMyChapters(),
         studentAPI.getPendingRegistrations()
       ]);
+      
+      const chaptersResponse = chaptersResult.status === 'fulfilled' ? chaptersResult.value : { chapters: [] };
+      const myChaptersData = myChaptersResult.status === 'fulfilled' ? myChaptersResult.value : { chapters: [] };
+      const pendingData = pendingResult.status === 'fulfilled' ? pendingResult.value : { registrations: [] };
+
+      if (chaptersResult.status === 'rejected') console.error('getAllChapters failed:', chaptersResult.reason);
+      if (myChaptersResult.status === 'rejected') console.error('getMyChapters failed:', myChaptersResult.reason);
+      if (pendingResult.status === 'rejected') console.error('getPendingRegistrations failed:', pendingResult.reason);
       
       console.log('=== API RESPONSE DEBUG ===');
       console.log('Chapters response:', chaptersResponse);
@@ -408,7 +429,9 @@ const ChaptersList: React.FC = () => {
           isRegistrationOpen: chapter.isRegistrationOpen !== undefined ? chapter.isRegistrationOpen : (chapter.registrationOpen !== undefined ? chapter.registrationOpen : false),
           memberCount: chapter.memberCount || 0,
           contactEmail: chapter.contactEmail,
-          category: chapter.category || 'General'
+          category: chapter.category || 'General',
+          isPaid: chapter.isPaid || false,
+          registrationFee: chapter.registrationFee || 0
         };
       });
       
@@ -437,17 +460,11 @@ const ChaptersList: React.FC = () => {
     }
 
     // Check if chapter requires payment
-    try {
-      const feeInfo = await paymentAPI.getChapterFees(chapterId);
-      
-      if (feeInfo.feeInfo?.isPaid) {
-        // Show payment modal for paid chapters
-        setSelectedChapterForPayment(chapter);
-        setShowPaymentModal(true);
-        return;
-      }
-    } catch (err) {
-      console.warn('Could not fetch fee info, proceeding with free registration:', err);
+    if (chapter.isPaid) {
+      // Show payment modal for paid chapters
+      setSelectedChapterForPayment(chapter);
+      setShowPaymentModal(true);
+      return;
     }
     
     // Free registration flow
@@ -878,6 +895,7 @@ const ChaptersList: React.FC = () => {
           isOpen={showPaymentModal}
           chapterId={selectedChapterForPayment.id}
           chapterName={selectedChapterForPayment.name}
+          registrationFee={selectedChapterForPayment.registrationFee}
           onClose={() => {
             setShowPaymentModal(false);
             setSelectedChapterForPayment(null);

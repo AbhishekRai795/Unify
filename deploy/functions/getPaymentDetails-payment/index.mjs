@@ -165,29 +165,33 @@ export const handler = async (event) => {
         TableName: PAYMENTS_TABLE,
         IndexName: "UserIdIndex",
         KeyConditionExpression: "userId = :userId",
-        FilterExpression: "recordType = :recordType",
-        ExpressionAttributeValues: {
-          ":userId": userId,
-          ":recordType": "TRANSACTION"
-        },
+        // Removed FilterExpression to be more inclusive, we'll filter in JS if needed
         ScanIndexForward: false, // Most recent first
-        Limit: 50
+        Limit: 50,
+        ExpressionAttributeValues: {
+          ":userId": userId
+        }
       }));
 
-      const chapterTransactions = await Promise.all((response.Items || []).map(async (tx) => ({
-        transactionId: tx.transactionId,
-        chapterId: tx.chapterId,
-        amount: tx.amount,
-        amountInRupees: (tx.amount || 0) / 100,
-        displayAmount: `₹${(tx.amount / 100).toFixed(2)}`,
-        transactionType: "CHAPTER",
-        paymentStatus: tx.paymentStatus,
-        razorpayPaymentId: tx.razorpayPaymentId,
-        receiptUrl: await toSignedReceiptUrl(tx),
-        receiptId: tx.receiptId,
-        createdAt: tx.createdAt,
-        completedAt: tx.completedAt
-      })));
+      const chapterTransactions = await Promise.all((response.Items || [])
+        .filter(item => item.recordType === "TRANSACTION" || !item.recordType)
+        .map(async (tx) => {
+        const amount = Number(tx.amount || 0);
+        return {
+          transactionId: tx.transactionId,
+          chapterId: tx.chapterId,
+          amount: amount,
+          amountInRupees: amount / 100,
+          displayAmount: amount > 0 ? `₹${(amount / 100).toFixed(2)}` : "₹0.00",
+          transactionType: "CHAPTER",
+          paymentStatus: tx.paymentStatus || (amount === 0 ? "FREE" : "COMPLETED"),
+          razorpayPaymentId: tx.razorpayPaymentId || null,
+          receiptUrl: await toSignedReceiptUrl(tx),
+          receiptId: tx.receiptId || null,
+          createdAt: tx.createdAt,
+          completedAt: tx.completedAt
+        };
+      }));
 
       // Query event payment transactions/registrations by userId
       const eventResponse = await docClient.send(new QueryCommand({

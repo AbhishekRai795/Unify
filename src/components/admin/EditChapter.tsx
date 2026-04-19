@@ -122,20 +122,13 @@ const EditChapter: React.FC = () => {
           return;
         }
         
-        
-        // Load payment config
-        let feeData = { feeInfo: { isPaid: false, registrationFee: 0 } };
-        if (isAdminUser()) {
-           feeData = await paymentAPI.getChapterFees(chapterId);
-        }
-
         setChapter(chapterData);
         setFormData({
           chapterName: chapterData.chapterName || '',
           headEmail: chapterData.headEmail || '',
           headName: chapterData.headName || '',
-          isPaid: feeData?.feeInfo?.isPaid || false,
-          registrationFee: feeData?.feeInfo?.registrationFee ? feeData.feeInfo.registrationFee / 100 : 0
+          isPaid: chapterData.isPaid || false,
+          registrationFee: chapterData.registrationFee ? chapterData.registrationFee / 100 : 0
         });
         setLoading(false);
       } catch (error: any) {
@@ -193,16 +186,12 @@ const EditChapter: React.FC = () => {
       // Call the edit API (only works for admins)
       // Try using updateChapter directly instead of editChapterHead
       console.log('Trying updateChapter directly...');
-      await Promise.all([
-        adminApi.updateChapter(chapterId, {
-          headEmail: formData.headEmail.trim(),
-          headName: formData.headName.trim() || undefined
-        }),
-        paymentAPI.updateChapterPaymentConfig(chapterId, {
-          isPaid: formData.isPaid,
-          registrationFee: formData.isPaid ? formData.registrationFee * 100 : 0
-        })
-      ]);
+      await adminApi.updateChapter(chapterId, {
+        headEmail: formData.headEmail.trim(),
+        headName: formData.headName.trim() || undefined,
+        isPaid: formData.isPaid,
+        registrationFee: formData.isPaid ? formData.registrationFee * 100 : 0
+      });
 
       setNotification({
         type: 'success',

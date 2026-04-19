@@ -84,13 +84,18 @@ export const handler = async (event) => {
                      item.Status?.S || 
                      item.state?.S ||
                      'active';
+
+      const isPaid = item.isPaid?.BOOL || false;
+      const registrationFee = item.registrationFee?.N ? parseInt(item.registrationFee.N, 10) : 0;
       
       const transformedItem = {
         id,
         name,
         chapterHead,
         description,
-        status
+        status,
+        isPaid,
+        registrationFee
       };
       
       console.log(`Transformed item ${index}:`, transformedItem);

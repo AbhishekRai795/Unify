@@ -37,6 +37,9 @@ interface TransparencyData {
     approvedAt?: string;
     paymentStatus?: string;
     amountPaid?: number;
+    value?: number;
+    transactionId?: string;
+    razorpayPaymentId?: string;
   }>;
   paymentRecords: Array<{
     eventId: string;
@@ -136,7 +139,7 @@ const PaymentStatsModal: React.FC<PaymentStatsModalProps> = ({ chapterId, chapte
       const headers = ['Student Name', 'Email', 'SAP ID', 'Year', 'Status', 'Amount Paid', 'Approved At'];
       const rows = data.enrolledMembers.map(m => [
         m.studentName, m.studentEmail, m.sapId || '', m.year || '', 
-        'COMPLETED', m.amountPaid || 0, m.approvedAt || ''
+        m.paymentStatus || 'UNKNOWN', m.value ?? m.amountPaid ?? 0, m.approvedAt || ''
       ]);
       downloadCsv(`chapter-members-${chapterId}-${dateStr}.csv`, [headers, ...rows]);
     } else {
@@ -317,21 +320,24 @@ const PaymentStatsModal: React.FC<PaymentStatsModalProps> = ({ chapterId, chapte
                             )}
                             <td className="px-6 py-4 text-center">
                               <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase inline-block ${
-                                row.paymentStatus === 'COMPLETED' || row.paymentStatus === 'NA' 
-                                  ? 'bg-green-100 text-green-700' 
+                                row.paymentStatus === 'COMPLETED' || row.paymentStatus === 'NA' || row.paymentStatus === 'FREE'
+                                  ? row.paymentStatus === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-emerald-50 text-emerald-600'
                                   : row.paymentStatus === 'PENDING' 
                                     ? 'bg-amber-100 text-amber-700' 
                                     : 'bg-red-100 text-red-700'
                               }`}>
-                                {row.paymentStatus === 'NA' ? 'FREE' : row.paymentStatus}
+                                {row.paymentStatus === 'NA' || row.paymentStatus === 'FREE' ? 'Free' : row.paymentStatus}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="text-sm font-black text-gray-900">
-                                ₹{Number(row.amountInRupees || row.amountPaid || 0).toLocaleString()}
+                                ₹{Number(row.value ?? row.amountInRupees ?? row.amountPaid ?? 0).toLocaleString('en-IN', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}
                               </div>
-                              <div className="text-[9px] font-mono text-gray-400 mt-1 uppercase">
-                                {row.razorpayPaymentId || row.transactionId?.substring(0, 10) || 'InternalRef'}
+                              <div className="text-[9px] font-mono text-gray-400 mt-1 break-all normal-case">
+                                {row.razorpayPaymentId || row.transactionId || 'InternalRef'}
                               </div>
                             </td>
                           </tr>

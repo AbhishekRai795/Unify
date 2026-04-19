@@ -3,13 +3,13 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  PutCommand
+  UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const PAYMENTS_TABLE = "ChapterPayments";
+const CHAPTERS_TABLE = "Chapters";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,21 +88,21 @@ export const handler = async (event) => {
     const { isPaid, registrationFee } = body;
     const now = new Date().toISOString();
 
-    const configItem = {
-      chapterId: chapterId,
-      transactionId: `CONFIG#${chapterId}`,
-      recordType: "FEE_CONFIG",
-      isPaid: Boolean(isPaid),
-      registrationFee: isPaid ? Math.round(Number(registrationFee)) : 0,
-      updatedAt: now,
-      updatedBy: claims.email || "admin"
-    };
+    const isPaidValue = Boolean(isPaid);
+    const registrationFeeValue = isPaid ? Math.round(Number(registrationFee)) : 0;
 
-    console.log("Saving new chapter payment config:", configItem);
+    console.log("Saving new chapter payment config:", { isPaid: isPaidValue, registrationFee: registrationFeeValue, chapterId });
 
-    await docClient.send(new PutCommand({
-      TableName: PAYMENTS_TABLE,
-      Item: configItem
+    await docClient.send(new UpdateCommand({
+      TableName: CHAPTERS_TABLE,
+      Key: { chapterId },
+      UpdateExpression: "set isPaid = :isPaid, registrationFee = :fee, updatedAt = :updatedAt, updatedBy = :updatedBy",
+      ExpressionAttributeValues: {
+        ":isPaid": isPaidValue,
+        ":fee": registrationFeeValue,
+        ":updatedAt": now,
+        ":updatedBy": claims.email || "admin"
+      }
     }));
 
     return {
@@ -111,7 +111,11 @@ export const handler = async (event) => {
       body: JSON.stringify({
         success: true,
         message: "Chapter payment configuration updated",
-        config: configItem
+        config: {
+          chapterId,
+          isPaid: isPaidValue,
+          registrationFee: registrationFeeValue
+        }
       })
     };
   } catch (error) {
