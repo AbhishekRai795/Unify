@@ -358,6 +358,38 @@ Resources:
         Value: Unify
       - Key: Component
         Value: Chat
+  CertificatesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: Certificates
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: eventId
+        AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: eventId
+        KeyType: HASH
+      - AttributeName: userId
+        KeyType: RANGE
+      GlobalSecondaryIndexes:
+      - IndexName: UserIdIndex
+        KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: eventId
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+      - Key: Application
+        Value: Unify
+      - Key: Component
+        Value: Certificates
   UnifyPaymentReceiptsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -1570,6 +1602,53 @@ Resources:
       FunctionName:
         Ref: WebSocketSendMessageFunction
       Principal: apigateway.amazonaws.com
+  CertificateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: unify-certificates-${Environment}
+      Handler: index.handler
+      CodeUri: CertificateFunction
+      Description: Manages certificate issuance and retrieval
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: CertificatesTable
+      - DynamoDBReadPolicy:
+          TableName: ChapterEvents
+      - DynamoDBReadPolicy:
+          TableName: EventPayments
+      Events:
+        IssueCertificateApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/certificates/issue
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+        GetMyCertificatesApi:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/certificates/my
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        CertificateOptions:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PaymentHttpApi
+            Path: /api/certificates/{proxy+}
+            Method: OPTIONS
+      Tags:
+        Application: Unify
+        Component: Certificates
+    Metadata:
+      SamResourceId: CertificateFunction
 Outputs:
   PaymentApiUrl:
     Description: "Payment API Gateway URL \u2014 add this to VITE_PAYMENT_API_BASE_URL\

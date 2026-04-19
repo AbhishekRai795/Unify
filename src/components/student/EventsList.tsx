@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle, Sparkles, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Tag, ExternalLink, Video, CheckCircle, Sparkles, ArrowLeft, Award, Download, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useData } from '../../contexts/DataContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
 import { EventPaymentModal } from './EventPaymentModal';
 import { encodeS3Url } from '../../utils/s3Utils';
+import CertificateTemplate from '../admin/CertificateTemplate';
+import html2canvas from 'html2canvas';
+import { paymentAPI } from '../../services/paymentApi';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 const EventsList: React.FC = () => {
@@ -22,6 +26,10 @@ const EventsList: React.FC = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [activeTab, setActiveTab] = useState<'live' | 'ended'>('live');
   const [registering, setRegistering] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [issuedCertificates, setIssuedCertificates] = useState<any[]>([]);
+  const [downloadingCert, setDownloadingCert] = useState<string | null>(null);
+  const [showCertPreview, setShowCertPreview] = useState<any | null>(null);
   const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; event: any }>({
     isOpen: false,
     event: null
@@ -29,7 +37,17 @@ const EventsList: React.FC = () => {
 
   React.useEffect(() => {
     fetchEvents();
+    loadMyCertificates();
   }, []);
+
+  const loadMyCertificates = async () => {
+    try {
+      const resp = await paymentAPI.getMyCertificates();
+      setIssuedCertificates(resp.certificates || []);
+    } catch (err) {
+      console.error('Failed to load certificates');
+    }
+  };
 
   const eventTypes = ['all', 'workshop', 'seminar', 'competition', 'meeting', 'social'];
   
@@ -404,6 +422,23 @@ const EventsList: React.FC = () => {
                             <Sparkles className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
                             Explore
                           </button>
+
+                          {/* Download Certificate Button */}
+                          {(() => {
+                            const issuedCert = issuedCertificates.find(c => c.eventId === eventId);
+                            if (issuedCert) {
+                              return (
+                                <button
+                                  onClick={() => setShowCertPreview({ event, cert: issuedCert })}
+                                  className="px-4 py-2.5 rounded-xl font-bold transition-all duration-300 bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20 flex items-center gap-2"
+                                >
+                                  <Award className="h-4 w-4" />
+                                  Download Certificate
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                         
                         {event.registrationDeadline && (
@@ -451,6 +486,60 @@ const EventsList: React.FC = () => {
             setPaymentModal({ isOpen: false, event: null });
           }}
         />
+
+        {/* Certificate Preview & Download Modal */}
+        {showCertPreview && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setShowCertPreview(null)} />
+            <div className="relative bg-white rounded-3xl p-8 shadow-2xl max-w-6xl w-full animate-scale-in">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Your Certificate</h2>
+                  <p className="text-slate-500">Congratulations on your achievement!</p>
+                </div>
+                <button onClick={() => setShowCertPreview(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="h-6 w-6 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="flex justify-center mb-8 bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200 overflow-hidden min-h-[400px]">
+                <div className="scale-[0.6] sm:scale-[0.7] md:scale-[0.9] lg:scale-[1.0] origin-center shadow-xl">
+                  <CertificateTemplate
+                    studentName={showCertPreview.cert.studentName}
+                    eventName={showCertPreview.cert.eventName}
+                    chapterName={showCertPreview.cert.chapterName}
+                    date={showCertPreview.cert.date}
+                    certificateType={showCertPreview.cert.certificateType}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  setDownloadingCert(showCertPreview.cert.eventId);
+                  const certElement = document.getElementById('certificate-to-download');
+                  if (certElement) {
+                    const canvas = await html2canvas(certElement, { scale: 2, useCORS: true });
+                    const link = document.createElement('a');
+                    link.download = `Certificate-${showCertPreview.event.title}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                  }
+                  setDownloadingCert(null);
+                }}
+                disabled={downloadingCert === showCertPreview.cert.eventId}
+                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2"
+              >
+                {downloadingCert === showCertPreview.cert.eventId ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Download className="h-5 w-5" />
+                )}
+                {downloadingCert === showCertPreview.cert.eventId ? 'Generating...' : 'Download Certificate (PNG)'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
