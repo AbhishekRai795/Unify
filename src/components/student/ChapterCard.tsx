@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Clock, Mail, Tag, CheckCircle, XCircle } from 'lucide-react';
-import { Chapter } from '../../types/chapter';
+import { Users, Clock, Mail, Tag, CheckCircle, XCircle, Sparkles } from 'lucide-react';
+import { Chapter, ChapterProfile } from '../../types/chapter';
 import Modal from '../common/Modal';
+import { studentAPI } from '../../services/api';
+import { encodeS3Url } from '../../utils/s3Utils';
 
 interface ChapterCardProps {
   chapter: Chapter;
@@ -11,6 +13,28 @@ interface ChapterCardProps {
 const ChapterCard: React.FC<ChapterCardProps> = ({ chapter }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profile, setProfile] = useState<ChapterProfile | null>(null);
+  const [isProfileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  const openProfile = async () => {
+    setShowProfileModal(true);
+    setProfileError(null);
+
+    if (profile) return; // already loaded
+
+    try {
+      setProfileLoading(true);
+      const result = await studentAPI.getChapterProfile(chapter.id);
+      setProfile(result.profile || null);
+    } catch (err: any) {
+      console.error('Failed to load chapter profile:', err);
+      setProfileError(err?.message || 'Unable to load chapter information.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const handleRegister = () => {
     if (!chapter.isRegistrationOpen) {
@@ -28,7 +52,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter }) => {
         {chapter.imageUrl && (
           <div className="relative overflow-hidden">
             <img
-              src={chapter.imageUrl}
+              src={encodeS3Url(chapter.imageUrl)}
               alt={chapter.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -108,6 +132,14 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter }) => {
           >
             {chapter.isRegistrationOpen ? 'Register Now' : 'Registration Closed'}
           </button>
+
+          <button
+            onClick={openProfile}
+            className="mt-3 w-full py-2.5 px-4 rounded-xl border border-blue-200 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-sm"
+          >
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            Explore
+          </button>
         </div>
       </div>
 
@@ -140,6 +172,83 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter }) => {
           >
             Got it
           </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        title={`About ${chapter.name}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {isProfileLoading ? (
+            <div className="text-center py-8">Loading chapter data...</div>
+          ) : profileError ? (
+            <div className="text-center text-red-600 py-6">{profileError}</div>
+          ) : profile ? (
+            <div className="space-y-3">
+              {profile.posterImageUrl && (
+                <img src={encodeS3Url(profile.posterImageUrl)} alt={`${chapter.name} poster`} className="w-full h-56 object-cover rounded-lg" />
+              )}
+              <h3 className="text-lg font-semibold">About</h3>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{profile.about || chapter.description || 'No additional details yet.'}</p>
+
+              {(profile.mission || profile.vision) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.mission && (<div><h4 className="font-semibold">Mission</h4><p className="text-sm text-gray-700">{profile.mission}</p></div>)}
+                  {profile.vision && (<div><h4 className="font-semibold">Vision</h4><p className="text-sm text-gray-700">{profile.vision}</p></div>)}
+                </div>
+              )}
+
+              {profile.highlights && profile.highlights.length > 0 && (
+                <div>
+                  <h4 className="font-semibold">Highlights</h4>
+                  <ul className="list-disc ml-5 text-sm text-gray-700">
+                    {profile.highlights.map((item, idx) => (<li key={idx}>{item}</li>))}
+                  </ul>
+                </div>
+              )}
+
+              {profile.achievements && profile.achievements.length > 0 && (
+                <div>
+                  <h4 className="font-semibold">Achievements</h4>
+                  <ul className="list-disc ml-5 text-sm text-gray-700">
+                    {profile.achievements.map((item, idx) => (<li key={idx}>{item}</li>))}
+                  </ul>
+                </div>
+              )}
+
+              {profile.galleryImageUrls && profile.galleryImageUrls.length > 0 && (
+                <div>
+                  <h4 className="font-semibold">Gallery</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {profile.galleryImageUrls.map((url, idx) => (
+                      <img key={idx} src={encodeS3Url(url)} alt={`Gallery ${idx + 1}`} className="h-24 w-full object-cover rounded" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.contact && (
+                <div className="text-sm text-gray-700">
+                  <strong>Contact:</strong> {profile.contact}
+                </div>
+              )}
+
+              {profile.socialLinks && Object.keys(profile.socialLinks).length > 0 && (
+                <div className="text-sm text-gray-700">
+                  <strong>Links:</strong> {Object.entries(profile.socialLinks).map(([key, val]) => (
+                    <div key={key}><a href={val} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">{key}</a></div>
+                  ))}
+                </div>
+              )}
+
+              <div className="text-xs text-gray-500">Last updated: {profile.updatedAt || 'N/A'}</div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-6">No chapter profile has been configured yet.</div>
+          )}
         </div>
       </Modal>
     </>

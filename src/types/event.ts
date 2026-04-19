@@ -18,6 +18,10 @@ export interface Event {
   tags: string[];
   imageUrl?: string;
   isLive: boolean;
+  isPaid: boolean;
+  registrationFee: number;
+  announcements?: Array<{ message: string; timestamp: string }>;
+  eventId?: string; // Optional field for consistency with some backend records
   createdAt: string;
   updatedAt: string;
 }

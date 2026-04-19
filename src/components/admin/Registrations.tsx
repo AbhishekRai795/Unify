@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useChat } from '../../contexts/ChatContext';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
-import { Filter, Search, Calendar, Mail, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, MessageSquare, Download, User, Hash, UserMinus } from 'lucide-react';
+import { Filter, Search, Calendar, Mail, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, MessageSquare, Download, User, Hash, UserMinus, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Modal from '../common/Modal';
 import Loader from '../common/Loader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Registrations: React.FC = () => {
+  const { isDark } = useTheme();
   const { 
     registrations, 
     updateRegistrationStatus, 
@@ -16,6 +19,7 @@ const Registrations: React.FC = () => {
     error, 
     refreshData 
   } = useChapterHead();
+  const { setActiveConversation, setIsWidgetOpen, refreshConversations } = useChat();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'kicked' | 'left'>('all');
@@ -94,6 +98,19 @@ const Registrations: React.FC = () => {
     setShowActionModal(true);
   };
 
+  const startChatWithStudent = async (registration: any) => {
+    const recipientId = registration.userId || registration.studentEmail;
+    if (!recipientId || !registration.chapterId) return;
+
+    setActiveConversation({
+      chapterId: registration.chapterId,
+      recipientId,
+      recipientName: registration.studentName || 'Student'
+    });
+    setIsWidgetOpen(true);
+    await refreshConversations(registration.chapterId);
+  };
+
   const filteredRegistrations = registrations.filter(reg => {
     const matchesSearch = reg.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reg.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,33 +185,39 @@ const Registrations: React.FC = () => {
 
   if (isLoading && registrations.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Registrations</h1>
-              <p className="text-gray-600">
-                View and manage student chapter registrations.
-              </p>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <div className="mb-6 text-left">
+          <button
+            onClick={() => window.location.href = '/head/dashboard'}
+            className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            <div className={`p-2 mr-2 rounded-lg border transition-all ${isDark ? 'bg-dark-surface border-dark-border group-hover:border-accent-500/50 group-hover:bg-accent-600/10' : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'}`}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export CSV</span>
-            </button>
-          </div>
+            Back to Dashboard
+          </button>
         </div>
+
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 text-center"
+        >
+          <h1 className={`text-4xl font-black mb-2 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Student Registrations</h1>
+          <p className={`max-w-2xl mx-auto font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
+            View and manage student chapter registrations.
+          </p>
+        </motion.div>
 
         {/* Notification */}
         {notification && (
@@ -244,9 +267,9 @@ const Registrations: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 mb-8"
+          className={`backdrop-blur-md rounded-xl p-6 border mb-8 transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -284,11 +307,20 @@ const Registrations: React.FC = () => {
               <option value="status">Sort by Status</option>
             </select>
 
-            {/* Results Count */}
-            <div className="flex items-center text-sm text-gray-600">
-              <Filter className="h-4 w-4 mr-2" />
-              <span>{sortedRegistrations.length} registrations</span>
+            {/* Results Count (4th Item) */}
+            <div className="flex items-center text-sm text-gray-600 bg-gray-50/50 px-4 py-2 rounded-lg border border-gray-100 h-full">
+              <Filter className="h-4 w-4 mr-2 text-blue-500" />
+              <span className="font-medium">{sortedRegistrations.length} found</span>
             </div>
+
+            {/* Export Action (5th Item) */}
+            <button
+              onClick={handleExport}
+              className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] text-sm font-bold w-full h-full"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export CSV</span>
+            </button>
           </div>
         </motion.div>
 
@@ -384,6 +416,16 @@ const Registrations: React.FC = () => {
                     
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
+                        {(registration.userId || registration.studentEmail) && (
+                          <button
+                            onClick={() => startChatWithStudent(registration)}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 flex items-center"
+                            title="Start or continue chat with this student"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Chat
+                          </button>
+                        )}
                         {registration.status === 'pending' && (
                           <>
                             <button 

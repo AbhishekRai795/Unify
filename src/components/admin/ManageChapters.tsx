@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2 } from 'lucide-react';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import Modal from '../common/Modal';
 import Loader from '../common/Loader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ManageChapters: React.FC = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const { 
     chapters, 
     toggleChapterRegistration, 
@@ -63,15 +65,15 @@ const ManageChapters: React.FC = () => {
 
   if (isLoading && chapters.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Notification */}
         {notification && (
           <motion.div
@@ -116,14 +118,27 @@ const ManageChapters: React.FC = () => {
           </motion.div>
         )}
 
+        {/* Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/head/dashboard')}
+            className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            <div className={`p-2 mr-2 rounded-lg border transition-all ${isDark ? 'bg-dark-surface border-dark-border group-hover:border-accent-500/50 group-hover:bg-accent-600/10' : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'}`}>
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            Back to Dashboard
+          </button>
+        </div>
+
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 text-center"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Chapters</h1>
-          <p className="text-gray-600">
+          <h1 className={`text-4xl font-black mb-2 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Manage Chapters</h1>
+          <p className={`max-w-2xl mx-auto font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
             Control registration status and view chapter details for your assigned chapters.
           </p>
         </motion.div>
@@ -132,7 +147,7 @@ const ManageChapters: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden"
+          className={`backdrop-blur-md rounded-xl border overflow-hidden transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           {chapters.length === 0 ? (
             <div className="text-center py-12">
@@ -227,6 +242,16 @@ const ManageChapters: React.FC = () => {
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              navigate(`/head/chapters/profile/${chapter.chapterId}`);
+                            }}
+                            className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+                            title="Edit Chapter Profile"
+                          >
+                            <BookOpen className="h-4 w-4" />
                           </button>
 
                           <button

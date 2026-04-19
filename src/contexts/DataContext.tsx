@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Chapter, ChapterRegistration } from '../types/chapter';
 import { Event, EventRegistration } from '../types/event';
 import { studentAPI } from '../services/api';
+import { paymentAPI } from '../services/paymentApi';
 import { useAuth } from './AuthContext';
 
 interface RegistrationRequest {
@@ -30,9 +31,10 @@ interface DataContextType {
   fetchMyChapters: () => Promise<void>;
   fetchPendingRegistrations: () => Promise<void>;
   fetchDashboard: () => Promise<void>;
+  fetchEventRegistrations: () => Promise<void>;
   registerForChapter: (chapterId: string, formData?: any) => Promise<boolean>;
   leaveChapter: (chapterId: string) => Promise<boolean>;
-  registerForEvent: (eventId: string) => Promise<boolean>;
+  registerForEvent: (eventId: string, chapterId: string, isPaid: boolean) => Promise<boolean | any>;
   updateChapterRegistration: (chapterId: string, isOpen: boolean) => Promise<boolean>;
   createEvent: (eventData: Partial<Event>) => Promise<boolean>;
 }
@@ -55,7 +57,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [chapterRegistrations, setChapterRegistrations] = useState<ChapterRegistration[]>([]);
+  const [chapterRegistrations] = useState<ChapterRegistration[]>([]);
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>([]);
   const [myChapters, setMyChapters] = useState<any[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<RegistrationRequest[]>([]);
@@ -70,6 +72,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       fetchMyChapters();
       fetchPendingRegistrations();
       fetchDashboard();
+      fetchEvents();
+      fetchEventRegistrations();
     }
   }, [isAuthenticated, user?.activeRole]);
 
@@ -125,10 +129,56 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      // Placeholder for events API - add when you implement events
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await paymentAPI.listEvents();
+      if (data.success) {
+        setEvents(data.events);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchEventRegistrations = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await paymentAPI.getMyEventRegistrations();
+      if (data.success) {
+        setEventRegistrations(data.registrations);
+      }
+    } catch (error) {
+      console.error('Error fetching event registrations:', error);
+    }
+  };
+
+  const registerForEvent = async (eventId: string, chapterId: string, isPaid: boolean): Promise<boolean | any> => {
+    if (!user) return false;
+    
+    try {
+      if (!isPaid) {
+        // Free event - join directly
+        await paymentAPI.joinFreeEvent({
+          eventId,
+          studentName: user.name || user.email,
+          studentEmail: user.email,
+          chapterId
+        });
+        await fetchEvents();
+        await fetchEventRegistrations();
+        return true;
+      } else {
+        // Paid event - initiate Razorpay order
+        const orderData = await paymentAPI.createEventOrder({
+          eventId,
+          studentName: user.name || user.email,
+          studentEmail: user.email
+        });
+        return orderData; // Return order details for checkout
+      }
+    } catch (error) {
+      console.error('Error registering for event:', error);
+      throw error;
     }
   };
 
@@ -178,16 +228,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   };
 
-  const registerForEvent = async (eventId: string): Promise<boolean> => {
-    try {
-      // Placeholder for event registration
-      console.log('Event registration for:', eventId);
-      return true;
-    } catch (error) {
-      console.error('Event registration error:', error);
-      return false;
-    }
-  };
 
   const updateChapterRegistration = async (chapterId: string, isOpen: boolean): Promise<boolean> => {
     try {
@@ -223,6 +263,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     error,
     fetchChapters,
     fetchEvents,
+    fetchEventRegistrations,
     fetchMyChapters,
     fetchPendingRegistrations,
     fetchDashboard,

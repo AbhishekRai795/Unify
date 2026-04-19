@@ -14,6 +14,7 @@
     
     if (!CognitoUserPool) {
         console.error(' CognitoUserPool not found. Make sure you\'re on the auth page.');
+
         return;
     }
 

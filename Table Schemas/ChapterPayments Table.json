@@ -1,0 +1,118 @@
+{
+  "tableName": "ChapterPayments",
+  "primaryKey": {
+    "partitionKey": "chapterId"
+  },
+  "sortKey": "transactionId",
+  "description": "Stores chapter payment transaction records",
+  "attributes": {
+    "chapterId": {
+      "type": "String",
+      "description": "Partition key - unique chapter identifier"
+    },
+    "transactionId": {
+      "type": "String",
+      "description": "Sort key - unique transaction identifier (format: TRANSACTION#{timestamp}#{orderId} for transactions)"
+    },
+    "recordType": {
+      "type": "String",
+      "enum": ["TRANSACTION"],
+      "description": "Type of record: TRANSACTION for payment records"
+    },
+
+    "currencyCode": {
+      "type": "String",
+      "default": "INR",
+      "description": "Currency code for the payment"
+    },
+    "userId": {
+      "type": "String",
+      "description": "Student user ID (only in TRANSACTION records)"
+    },
+    "studentEmail": {
+      "type": "String",
+      "description": "Student email (only in TRANSACTION records)"
+    },
+    "studentName": {
+      "type": "String",
+      "description": "Student name (only in TRANSACTION records)"
+    },
+    "amount": {
+      "type": "Number",
+      "description": "Payment amount in paise (only in TRANSACTION records)"
+    },
+    "paymentStatus": {
+      "type": "String",
+      "enum": ["PENDING", "COMPLETED", "FAILED", "REFUNDED"],
+      "description": "Status of the payment transaction"
+    },
+    "razorpayOrderId": {
+      "type": "String",
+      "description": "Razorpay order ID for the transaction"
+    },
+    "razorpayPaymentId": {
+      "type": "String",
+      "description": "Razorpay payment ID after successful payment"
+    },
+    "razorpaySignature": {
+      "type": "String",
+      "description": "Razorpay signature for verification"
+    },
+    "receiptUrl": {
+      "type": "String",
+      "description": "URL to download the payment receipt (stored in S3)"
+    },
+    "receiptId": {
+      "type": "String",
+      "description": "Razorpay receipt ID"
+    },
+    "errorMessage": {
+      "type": "String",
+      "description": "Error message if payment failed"
+    },
+    "retryCount": {
+      "type": "Number",
+      "default": 0,
+      "description": "Number of retry attempts"
+    },
+    "notes": {
+      "type": "String",
+      "description": "Additional notes or comments"
+    },
+    "createdAt": {
+      "type": "String",
+      "format": "ISO 8601",
+      "description": "Timestamp when the record was created"
+    },
+    "updatedAt": {
+      "type": "String",
+      "format": "ISO 8601",
+      "description": "Timestamp when the record was last updated"
+    },
+    "completedAt": {
+      "type": "String",
+      "format": "ISO 8601",
+      "description": "Timestamp when payment was completed"
+    }
+  },
+  "indexes": [
+    {
+      "name": "UserIdIndex",
+      "partitionKey": "userId",
+      "sortKey": "createdAt",
+      "description": "Query payments by student user ID"
+    },
+    {
+      "name": "PaymentStatusIndex",
+      "partitionKey": "paymentStatus",
+      "sortKey": "createdAt",
+      "description": "Query payments by status"
+    },
+    {
+      "name": "RecordTypeIndex",
+      "partitionKey": "recordType",
+      "sortKey": "createdAt",
+      "description": "Query records by type (TRANSACTION)"
+    }
+  ]
+}

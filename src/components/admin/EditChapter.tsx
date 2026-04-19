@@ -5,11 +5,14 @@ import { motion } from 'framer-motion';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../services/adminApi';
+import { paymentAPI } from '../../services/paymentApi';
 import Loader from '../common/Loader';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const EditChapter: React.FC = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const { chapters, refreshData } = useChapterHead();
   const { user } = useAuth();
   
@@ -30,7 +33,9 @@ const EditChapter: React.FC = () => {
   const [formData, setFormData] = useState({
     chapterName: '',
     headEmail: '',
-    headName: ''
+    headName: '',
+    isPaid: false,
+    registrationFee: 0
   });
 
   // Check user permissions
@@ -76,30 +81,31 @@ const EditChapter: React.FC = () => {
       try {
         let chapterData;
         
-        // First try to find in chapters array from context
-        if (chapters.length > 0) {
-          const foundChapter = chapters.find(c => c.chapterId === chapterId);
-          if (foundChapter) {
-            chapterData = foundChapter;
+        if (isAdminUser()) {
+          // For admins: use listChapters which returns full data including headEmail/headName.
+          // The old getChapter lambda only returns a legacy `chapterHead` field, not headEmail/headName.
+          try {
+            const listResult = await adminApi.listChapters({ limit: 200 });
+            const allChapters = listResult.chapters || [];
+            chapterData = allChapters.find((c: any) => c.chapterId === chapterId);
+          } catch (listError) {
+            console.warn('listChapters failed, falling back to getChapter:', listError);
           }
-        }
 
-        // If not found in context or context is empty, fetch directly from API
-        if (!chapterData) {
-          console.log('Fetching chapter data directly from API for:', chapterId);
-          
-          if (isAdminUser()) {
-            // Admin can use the admin API
+          // Fallback: try the old getChapter endpoint
+          if (!chapterData) {
+            console.log('Fetching chapter data directly from API for:', chapterId);
             chapterData = await adminApi.getChapter(chapterId);
-          } else {
-            // For chapter heads, we need to find another way to get chapter data
-            // Since there's no direct chapter head API for getting chapter details,
-            // we'll try the admin API and handle the 403 gracefully
+          }
+        } else {
+          // For chapter heads: look in context first (their own chapters)
+          if (chapters.length > 0) {
+            chapterData = chapters.find(c => c.chapterId === chapterId);
+          }
+          if (!chapterData) {
             try {
               chapterData = await adminApi.getChapter(chapterId);
             } catch (apiError: any) {
-              // If 403, it means chapter head can't access admin API
-              // In this case, we'll use the context data or show an error
               if (apiError.message?.includes('403') || apiError.message?.includes('Forbidden')) {
                 setError('Chapter heads cannot modify chapter head assignments. Please contact an administrator.');
                 setLoading(false);
@@ -109,12 +115,20 @@ const EditChapter: React.FC = () => {
             }
           }
         }
+
+        if (!chapterData) {
+          setError('Chapter not found');
+          setLoading(false);
+          return;
+        }
         
         setChapter(chapterData);
         setFormData({
           chapterName: chapterData.chapterName || '',
           headEmail: chapterData.headEmail || '',
-          headName: chapterData.headName || ''
+          headName: chapterData.headName || '',
+          isPaid: chapterData.isPaid || false,
+          registrationFee: chapterData.registrationFee ? chapterData.registrationFee / 100 : 0
         });
         setLoading(false);
       } catch (error: any) {
@@ -130,7 +144,7 @@ const EditChapter: React.FC = () => {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: field === 'registrationFee' ? Number(value) : value
     }));
   };
 
@@ -174,7 +188,9 @@ const EditChapter: React.FC = () => {
       console.log('Trying updateChapter directly...');
       await adminApi.updateChapter(chapterId, {
         headEmail: formData.headEmail.trim(),
-        headName: formData.headName.trim() || undefined
+        headName: formData.headName.trim() || undefined,
+        isPaid: formData.isPaid,
+        registrationFee: formData.isPaid ? formData.registrationFee * 100 : 0
       });
 
       setNotification({
@@ -219,7 +235,7 @@ const EditChapter: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
       </div>
     );
@@ -227,16 +243,16 @@ const EditChapter: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 p-8 max-w-md w-full mx-4"
+          className={`backdrop-blur-md rounded-xl border p-8 max-w-md w-full mx-4 transition-colors duration-300 ${isDark ? 'bg-dark-surface/90 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Error</h2>
+            <p className={`mb-6 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>{error}</p>
             <button
               onClick={handleCancel}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -250,7 +266,7 @@ const EditChapter: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Notification */}
         {notification && (
@@ -294,8 +310,8 @@ const EditChapter: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Chapter Head</h1>
-              <p className="text-gray-600">{chapter?.chapterName}</p>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit Chapter Head</h1>
+              <p className={isDark ? 'text-dark-text-secondary' : 'text-gray-600'}>{chapter?.chapterName}</p>
             </div>
           </div>
         </motion.div>
@@ -304,7 +320,7 @@ const EditChapter: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden"
+          className={`backdrop-blur-md rounded-xl border overflow-hidden transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           <div className="p-8">
             <div className="mb-6">
@@ -374,6 +390,55 @@ const EditChapter: React.FC = () => {
                   Display name for the chapter head (can be updated later)
                 </p>
               </div>
+
+              {/* Payment Configuration Options */}
+              {isAdminUser() && (
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Configuration</h3>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-medium text-gray-700">Paid Chapter</p>
+                      <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPaid}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
+                        className="sr-only peer"
+                        disabled={!isAdminUser()}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  {formData.isPaid && (
+                    <div className="mt-4">
+                      <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
+                        Registration Fee (₹)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                        <input
+                          type="number"
+                          id="registrationFee"
+                          min="0"
+                          step="0.01"
+                          disabled={!isAdminUser()}
+                          value={formData.registrationFee}
+                          onChange={(e) => handleInputChange('registrationFee', e.target.value)}
+                          className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                          }`}
+                          placeholder="e.g. 100"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Warning Message - Different for admin vs chapter head */}
               {isAdminUser() ? (

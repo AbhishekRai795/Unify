@@ -1,5 +1,6 @@
 // src/services/chapterHeadApi.ts
-const API_BASE_URL = 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const NEW_FEATURES_API_BASE_URL = import.meta.env.VITE_PAYMENT_API_BASE_URL || API_BASE_URL;
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -120,8 +121,10 @@ export const chapterHeadAPI = {
     maxAttendees?: number;
     registrationRequired: boolean;
     registrationDeadline?: string;
+    isPaid: boolean;
+    registrationFee: number;
   }) => {
-    const response = await fetch(`${API_BASE_URL}/chapterhead/events`, {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/events`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(eventData),
@@ -129,10 +132,104 @@ export const chapterHeadAPI = {
     return handleResponse(response);
   },
 
-  // Get events for managed chapters
-  getMyEvents: async () => {
-    const response = await fetch(`${API_BASE_URL}/chapterhead/events`, {
+  // Get events managed by the chapter head
+  getMyEvents: async (chapterId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapter-events/${encodeURIComponent(chapterId)}`, {
       method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Fetch chapter profile for display (students and heads)
+  getChapterProfile: async (chapterId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapters/${encodeURIComponent(chapterId)}/profile`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Update chapter profile (chapter head only)
+  updateChapterProfile: async (chapterId: string, profileData: any) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/chapters/${encodeURIComponent(chapterId)}/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    return handleResponse(response);
+  },
+
+  // Get signed URL for profile image upload
+  getProfileUploadUrl: async (chapterId: string, fileName: string, contentType: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/chapters/${encodeURIComponent(chapterId)}/profile/upload-url`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ fileName, contentType }),
+    });
+    return handleResponse(response);
+  },
+
+  // Fetch event profile for display (students and heads)
+  getEventProfile: async (eventId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/events/${encodeURIComponent(eventId)}/profile`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Update event profile (chapter head only)
+  updateEventProfile: async (eventId: string, profileData: any) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/events/${encodeURIComponent(eventId)}/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    return handleResponse(response);
+  },
+
+  // Get signed URL for event profile image upload
+  getEventProfileUploadUrl: async (eventId: string, fileName: string, contentType: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/events/${encodeURIComponent(eventId)}/profile/upload-url`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ fileName, contentType }),
+    });
+    return handleResponse(response);
+  },
+
+  // Update existing event
+  updateEvent: async (chapterId: string, eventId: string, eventData: Partial<{
+    title: string;
+    description: string;
+    eventType: string;
+    startDateTime: string;
+    endDateTime: string;
+    location: string;
+    isOnline: boolean;
+    meetingLink?: string;
+    maxAttendees?: number;
+    registrationRequired: boolean;
+    registrationDeadline?: string;
+    isPaid: boolean;
+    registrationFee: number;
+    isLive: boolean;
+    imageUrl?: string;
+    tags?: string[];
+  }>) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/events/${encodeURIComponent(chapterId)}/${encodeURIComponent(eventId)}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(eventData),
+    });
+    return handleResponse(response);
+  },
+
+  // Delete/Soft-delete event
+  deleteEvent: async (chapterId: string, eventId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/events/${encodeURIComponent(chapterId)}/${encodeURIComponent(eventId)}`, {
+      method: 'DELETE',
       headers: getAuthHeaders(),
     });
     return handleResponse(response);

@@ -5,6 +5,8 @@ import { useAuth } from './AuthContext';
 interface ChapterHeadProfile {
   email: string;
   chapterId: string;
+  chapterID?: string; // legacy alias from some API payloads
+  chapterld?: string; // typo/legacy alias compatibility
   chapterName: string;
   headName: string;
   linkedAt: string;
@@ -12,7 +14,11 @@ interface ChapterHeadProfile {
 
 interface ChapterDetails {
   chapterId: string;
+  chapterID?: string; // legacy alias from some API payloads
+  chapterld?: string; // typo/legacy alias compatibility
+  id?: string; // UI fallback compatibility
   chapterName: string;
+  name?: string; // UI fallback compatibility
   createdAt: string;
   headEmail: string;
   headName: string;
@@ -71,6 +77,10 @@ interface ChapterHeadContextType {
   toggleChapterRegistration: (chapterId: string, isOpen: boolean) => Promise<boolean>;
   updateRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected', notes?: string) => Promise<boolean>;
   refreshData: () => Promise<void>;
+  createEvent: (eventData: any) => Promise<boolean>;
+  updateEvent: (chapterId: string, eventId: string, eventData: any) => Promise<boolean>;
+  deleteEvent: (chapterId: string, eventId: string) => Promise<boolean>;
+  fetchMyEvents: () => Promise<any[]>;
 }
 
 const ChapterHeadContext = createContext<ChapterHeadContextType | undefined>(undefined);
@@ -118,7 +128,7 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
       setChapters(response.chapters || []);
     } catch (error) {
       console.error('Error fetching chapters:', error);
-      setError('Failed to feetch chapters');
+      setError('Failed to fetch chapters');
     }
   };
 
@@ -204,6 +214,62 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     }
   };
 
+  const createEvent = async (eventData: any): Promise<boolean> => {
+    try {
+      const sanitizedData = {
+        ...eventData,
+        registrationFee: eventData.isPaid ? parseFloat(eventData.registrationFee || 0) : 0
+      };
+      await chapterHeadAPI.createEvent(sanitizedData);
+      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      return true;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      setError('Failed to create event');
+      return false;
+    }
+  };
+
+  const updateEvent = async (chapterId: string, eventId: string, eventData: any): Promise<boolean> => {
+    try {
+      await chapterHeadAPI.updateEvent(chapterId, eventId, eventData);
+      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      return true;
+    } catch (error) {
+      console.error('Error updating event:', error);
+      setError('Failed to update event');
+      return false;
+    }
+  };
+
+  const deleteEvent = async (chapterId: string, eventId: string): Promise<boolean> => {
+    try {
+      await chapterHeadAPI.deleteEvent(chapterId, eventId);
+      // Refresh stats and activities
+      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      return true;
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      setError('Failed to delete event');
+      return false;
+    }
+  };
+
+  const fetchMyEvents = async (): Promise<any[]> => {
+    if (!chapters || chapters.length === 0) return [];
+    
+    try {
+      // Use the first chapter's ID for now, or we could support multiple
+      const chapterId = chapters[0].chapterId;
+      const response = await chapterHeadAPI.getMyEvents(chapterId);
+      return response.events || [];
+    } catch (error) {
+      console.error('Error fetching my events:', error);
+      setError('Failed to fetch events');
+      return [];
+    }
+  };
+
   const refreshData = async () => {
     setIsLoading(true);
     setError(null);
@@ -239,7 +305,11 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     fetchRecentActivities,
     toggleChapterRegistration,
     updateRegistrationStatus,
-    refreshData
+    refreshData,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    fetchMyEvents
   };
 
   return (

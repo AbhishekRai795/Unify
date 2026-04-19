@@ -1,0 +1,30 @@
+version = 0.1
+
+[default]
+[default.global]
+[default.global.parameters]
+stack_name = "unify-payment-stack"
+region = "ap-south-1"
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND"]
+
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "unify-payment-stack"
+region = "ap-south-1"
+resolve_s3 = true
+s3_prefix = "unify-payment"
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND"]
+confirm_changeset = true
+no_fail_on_empty_changeset = true
+parameter_overrides = [
+  "Environment=dev",
+  "FrontendOrigin=http://localhost:5173",
+  "CognitoUserPoolId=ap-south-1_ueutDQExM",
+  "CognitoUserPoolAppClientId=6uac5t9b0oub9b1cjoot94uplc",
+  "RazorpayKeyId=rzp_test_SWAh58F3yse7lJ",
+  "RazorpayKeySecret=llIrsgJJLG8NaIQsUPUPCYs1"
+]
+
+[default.build]
+[default.build.parameters]
+use_container = false

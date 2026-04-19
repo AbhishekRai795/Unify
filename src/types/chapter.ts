@@ -13,9 +13,11 @@ export interface Chapter {
   meetingSchedule: string;
   contactEmail: string;
   imageUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  isPaid?: boolean;
+  registrationFee?: number;
 }
 
 export interface ChapterRegistration {
@@ -26,4 +28,20 @@ export interface ChapterRegistration {
   appliedAt: string;
   approvedAt?: string;
   notes?: string;
+}
+
+export interface ChapterProfile {
+  chapterId: string;
+  about?: string;
+  mission?: string;
+  vision?: string;
+  posterImageUrl?: string;
+  galleryImageUrls?: string[];
+  highlights?: string[];
+  achievements?: string[];
+  socialLinks?: { [key: string]: string };
+  contact?: string;
+  activeFrom?: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }

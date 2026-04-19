@@ -13,15 +13,47 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Loader from '../components/common/Loader';
 import ThemeToggle from '../components/common/ThemeToggle';
-import { Eye, EyeOff, Mail, Lock, User, Users, Hash, Calendar, Library } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Users, Hash, Calendar, Library, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 
 const poolData = {
     // Replace with your Cognito User Pool data
-    UserPoolId: 'ap-south-1_ueutDQExM',
-    ClientId: '6uac5t9b0oub9b1cjoot94uplc',
+    UserPoolId: import.meta.env.VITE_USER_POOL_ID || 'ap-south-1_ueutDQExM',
+    ClientId: import.meta.env.VITE_USER_POOL_WEB_CLIENT_ID || '6uac5t9b0oub9b1cjoot94uplc',
 };
 
 const userPool = new CognitoUserPool(poolData);
+
+// Password Requirements Component
+const PasswordRequirements: React.FC<{ password: string }> = ({ password }) => {
+    const requirements = [
+        { label: 'At least 8 characters', met: password.length >= 8 },
+        { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
+        { label: 'One lowercase letter', met: /[a-z]/.test(password) },
+        { label: 'One number', met: /\d/.test(password) },
+        { label: 'One special character (@$!%*?&)', met: /[@$!%*?&]/.test(password) },
+    ];
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-2 space-y-1.5 px-1 py-2 bg-gray-50/50 rounded-lg border border-gray-100"
+        >
+            {requirements.map((req, index) => (
+                <div key={index} className="flex items-center gap-2 text-[11px] leading-tight transition-all">
+                    {req.met ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                        <Circle className="h-3.5 w-3.5 text-gray-300" />
+                    )}
+                    <span className={req.met ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                        {req.label}
+                    </span>
+                </div>
+            ))}
+        </motion.div>
+    );
+};
 
 // Reusable Form Input Component
 const FormInput: React.FC<{icon: React.ElementType, type?: string, placeholder: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, children?: React.ReactNode}> = ({ icon: Icon, type = 'text', placeholder, value, onChange, children }) => (
@@ -74,7 +106,8 @@ const AuthForm: React.FC<{
     setIsLoginView: (isLogin: boolean) => void;
     sapId: string; setSapId: (id: string) => void;
     year: string; setYear: (year: string) => void;
-}> = ({ isLogin, handleAuthAction, name, setName, email, setEmail, password, setPassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, setIsLoginView, sapId, setSapId, year, setYear }) => {
+    error: string;
+}> = ({ isLogin, handleAuthAction, name, setName, email, setEmail, password, setPassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, setIsLoginView, sapId, setSapId, year, setYear, error }) => {
     
     return (
     <div className="w-full max-w-sm">
@@ -94,11 +127,15 @@ const AuthForm: React.FC<{
                 </>
             )}
             <FormInput icon={Mail} type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <FormInput icon={Lock} type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}>
-                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-            </FormInput>
+            
+            <div className="space-y-1">
+                <FormInput icon={Lock} type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}>
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </FormInput>
+                {!isLogin && password.length > 0 && <PasswordRequirements password={password} />}
+            </div>
             
             {!isLogin && (
                 <FormInput icon={Lock} type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}>
@@ -113,6 +150,20 @@ const AuthForm: React.FC<{
                     <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-700">Forgot password?</a>
                 </div>
             )}
+
+            <AnimatePresence>
+                {error && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100"
+                    >
+                        <AlertCircle className="h-5 w-5 shrink-0" />
+                        <span>{error}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
                 {isLogin ? 'Sign In' : 'Create Account'}
@@ -152,11 +203,14 @@ const NewPasswordForm: React.FC<{
         <form onSubmit={handleNewPasswordSubmit} className="space-y-4">
             <FormInput icon={User} placeholder="Full Name" value={newPasswordName} onChange={(e) => setNewPasswordName(e.target.value)} />
             <FormInput icon={Library} placeholder="Chapter Name" value={newPasswordChapterName} onChange={(e) => setNewPasswordChapterName(e.target.value)} />
-            <FormInput icon={Lock} type={showNewPassword ? 'text' : 'password'} placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}>
-                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-            </FormInput>
+            <div className="space-y-1">
+                <FormInput icon={Lock} type={showNewPassword ? 'text' : 'password'} placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}>
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </FormInput>
+                {newPassword.length > 0 && <PasswordRequirements password={newPassword} />}
+            </div>
             <FormInput icon={Lock} type={showConfirmNewPassword ? 'text' : 'password'} placeholder="Confirm New Password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}>
                 <button type="button" onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -179,7 +233,7 @@ const QuotePanel: React.FC<{ isLoginView: boolean; setIsLoginView: (isLogin: boo
             <h3 className="text-3xl font-bold">
                 "Connecting students, one chapter at a time. Your community awaits."
             </h3>
-            <p className="mt-4 opacity-80">- The Unify Team</p>
+            <p className="mt-4 opacity-80"> Team Unify </p>
             <button onClick={() => setIsLoginView(!isLoginView)} className="mt-8 bg-white/20 border-2 border-white/50 rounded-full font-semibold uppercase px-12 py-3 hover:bg-white/30 transition-colors duration-300">
                 {isLoginView ? 'Sign Up' : 'Sign In'}
             </button>
@@ -210,13 +264,13 @@ const AuthPage: React.FC = () => {
             
             userPool.signUp(testEmail, testPassword, attributeList, [], (err: any, result: any) => {
                 if (err) {
-                    console.error('❌ DEBUG SIGNUP FAILED:');
+                    console.error('  DEBUG SIGNUP FAILED:');
                     console.error('Code:', err.code || err.name);
                     console.error('Message:', err.message);
                     console.error('Status:', err.statusCode);
                     console.error('Full Error:', err);
                 } else {
-                    console.log('✅ DEBUG SIGNUP SUCCESS:', result);
+                    console.log('   DEBUG SIGNUP SUCCESS:', result);
                 }
             });
         };
@@ -259,8 +313,16 @@ const AuthPage: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            if (password.length < 8) {
-                setError('Password must be at least 8 characters long');
+            
+            // Comprehensive password validation
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /\d/.test(password);
+            const hasSpecial = /[@$!%*?&]/.test(password);
+            const isLongEnough = password.length >= 8;
+
+            if (!isLongEnough || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+                setError('Password does not meet the required complexity format.');
                 setLoading(false);
                 return;
             }
@@ -412,7 +474,7 @@ const AuthPage: React.FC = () => {
                 setNewPasswordError(""); // Clear old errors
                 try {
                     const apiRes = await fetch(
-                        "https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev/chapterhead-profile",
+                        `${import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev'}/chapterhead-profile`,
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -573,6 +635,7 @@ const AuthPage: React.FC = () => {
                                     setIsLoginView={setIsLoginView}
                                     sapId={sapId} setSapId={setSapId}
                                     year={year} setYear={setYear}
+                                    error={error}
                                 />
                             </motion.div>
                         )}
@@ -611,6 +674,7 @@ const AuthPage: React.FC = () => {
                         setIsLoginView={setIsLoginView}
                         sapId={sapId} setSapId={setSapId}
                         year={year} setYear={setYear}
+                        error={error}
                     />
                  )}
             </div>

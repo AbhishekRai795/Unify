@@ -26,11 +26,22 @@ export const handler = async (event) => {
   console.log('Raw groups from claims:', claims['cognito:groups']);
   
   const rawGroups = claims['cognito:groups'];
-  const groups = Array.isArray(rawGroups) 
-    ? rawGroups 
-    : typeof rawGroups === 'string' 
-      ? rawGroups.split(',').map(s => s.trim()).filter(Boolean)
-      : [];
+  let groups = [];
+  if (Array.isArray(rawGroups)) {
+    groups = rawGroups;
+  } else if (typeof rawGroups === 'string') {
+    const trimmed = rawGroups.trim();
+    if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || trimmed.includes('"')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        groups = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        groups = trimmed.replace(/^\[|\]$/g, '').split(',').map(g => g.trim().replace(/^"|"$/g, '')).filter(Boolean);
+      }
+    } else {
+      groups = trimmed.split(',').map(g => g.trim()).filter(Boolean);
+    }
+  }
 
   console.log('Processed groups:', groups);
   console.log('Groups includes admin?', groups.includes('admin'));
@@ -57,7 +68,7 @@ export const handler = async (event) => {
     };
   }
 
-  const { chapterName, headEmail, headName } = body;
+  const { chapterName, headEmail, headName, isPaid, registrationFee } = body;
   const now = new Date().toISOString();
 
   try {
@@ -98,6 +109,16 @@ export const handler = async (event) => {
     if (headName !== undefined) {
       updateParams.UpdateExpression += ", headName = :headName";
       updateParams.ExpressionAttributeValues[":headName"] = headName;
+    }
+
+    if (isPaid !== undefined) {
+      updateParams.UpdateExpression += ", isPaid = :isPaid";
+      updateParams.ExpressionAttributeValues[":isPaid"] = Boolean(isPaid);
+    }
+
+    if (registrationFee !== undefined) {
+      updateParams.UpdateExpression += ", registrationFee = :registrationFee";
+      updateParams.ExpressionAttributeValues[":registrationFee"] = Number(registrationFee);
     }
 
     await docClient.send(new UpdateCommand(updateParams));
