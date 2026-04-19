@@ -256,5 +256,23 @@ export const chapterHeadAPI = {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
+  },
+
+  // Certificates
+  issueCertificate: async (data: {
+    eventId: string;
+    userId: string;
+    studentName: string;
+    certificateType: 'participation' | '1st' | '2nd' | '3rd';
+    eventName: string;
+    chapterName: string;
+    date: string;
+  }) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/certificates/issue`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
   }
 };

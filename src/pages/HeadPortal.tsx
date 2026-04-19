@@ -12,6 +12,7 @@ import HeadMessaging from './HeadMessaging';
 import ManageEvents from '../components/admin/ManageEvents';
 import EditEventProfile from '../components/admin/EditEventProfile';
 import PaymentStatsPage from './PaymentStatsPage';
+import CertificateIssuance from '../components/admin/CertificateIssuance';
 
 const HeadPortal: React.FC = () => {
   return (
@@ -28,7 +29,8 @@ const HeadPortal: React.FC = () => {
         <Route path="/events/profile/:eventId" element={<EditEventProfile />} />
         <Route path="/messages" element={<HeadMessaging />} />
         <Route path="/chapter/:chapterId/stats" element={<PaymentStatsPage />} />
-        <Route path="*" element={<Navigate to="/head/dashboard" replace />} />
+        <Route path="certificates" element={<CertificateIssuance />} />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </ChapterHeadProvider>
   );

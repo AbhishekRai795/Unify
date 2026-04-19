@@ -227,6 +227,15 @@ export const paymentAPI = {
       }
     );
     return handleResponse(response);
+  },
+
+  // Certificates
+  getMyCertificates: async () => {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/certificates/my`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 
