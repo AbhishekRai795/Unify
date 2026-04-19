@@ -66,11 +66,33 @@ export const studentAPI = {
   // Health check
   healthCheck: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/health`, {
+      // First try the dedicated health endpoint (if deployed).
+      const healthResponse = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
       });
-      return handleResponse(response);
+
+      if (healthResponse.ok) {
+        return healthResponse.json();
+      }
+
+      // Some deployments do not expose /health. In that case, verify connectivity
+      // against a known API route and treat 401/403 as "reachable but unauthenticated".
+      if (healthResponse.status === 404) {
+        const fallbackResponse = await fetch(`${API_BASE_URL}/get-chapters`, {
+          method: 'GET',
+        });
+
+        if (fallbackResponse.ok || fallbackResponse.status === 401 || fallbackResponse.status === 403) {
+          return {
+            status: 'ok',
+            message: 'API reachable',
+            endpoint: '/get-chapters',
+            httpStatus: fallbackResponse.status,
+          };
+        }
+      }
+
+      throw new Error(`Health check failed with status ${healthResponse.status}`);
     } catch (error) {
       console.error('Health check failed:', error);
       throw error;

@@ -2,7 +2,7 @@
 // Copy this entire code into your browser console and run it
 
 (function() {
-    console.log('🔧 COGNITO DIAGNOSTIC TOOL LOADED');
+    console.log(' COGNITO DIAGNOSTIC TOOL LOADED');
     console.log('Available commands:');
     console.log('- testBasicSignup()     // Test signup with just email + name');
     console.log('- testCustomSignup()    // Test signup with custom attributes');
@@ -13,7 +13,7 @@
     const { CognitoUserPool, CognitoUserAttribute } = window.AmazonCognitoIdentity || {};
     
     if (!CognitoUserPool) {
-        console.error('❌ CognitoUserPool not found. Make sure you\'re on the auth page.');
+        console.error(' CognitoUserPool not found. Make sure you\'re on the auth page.');
         return;
     }
 
@@ -34,13 +34,13 @@
 
         userPool.signUp('consoletest1@example.com', 'TestPass123!@#', attributeList, [], (err, result) => {
             if (err) {
-                console.error('❌ BASIC SIGNUP FAILED:');
+                console.error(' BASIC SIGNUP FAILED:');
                 console.error('Error Code:', err.code || err.name);
                 console.error('Error Message:', err.message);
                 console.error('Status Code:', err.statusCode);
                 console.error('Full Error:', err);
             } else {
-                console.log('✅ BASIC SIGNUP SUCCEEDED:');
+                console.log(' BASIC SIGNUP SUCCEEDED:');
                 console.log('User Sub:', result?.userSub);
                 console.log('User Confirmed:', result?.userConfirmed);
             }
@@ -49,7 +49,7 @@
 
     // Test custom attribute signup
     window.testCustomSignup = function() {
-        console.log('🧪 Testing custom attribute signup...');
+        console.log(' Testing custom attribute signup...');
         const attributeList = [
             new CognitoUserAttribute({ Name: 'email', Value: 'consoletest2@example.com' }),
             new CognitoUserAttribute({ Name: 'name', Value: 'Console Test User 2' }),
@@ -57,17 +57,17 @@
             new CognitoUserAttribute({ Name: 'custom:year', Value: '2024' }),
         ];
 
-        console.log('📤 Sending attributes:', attributeList.map(attr => ({name: attr.Name, value: attr.Value})));
+        console.log(' Sending attributes:', attributeList.map(attr => ({name: attr.Name, value: attr.Value})));
 
         userPool.signUp('consoletest2@example.com', 'TestPass123!@#', attributeList, [], (err, result) => {
             if (err) {
-                console.error('❌ CUSTOM SIGNUP FAILED:');
+                console.error(' CUSTOM SIGNUP FAILED:');
                 console.error('Error Code:', err.code || err.name);
                 console.error('Error Message:', err.message);
                 console.error('Status Code:', err.statusCode);
                 console.error('Full Error:', err);
             } else {
-                console.log('✅ CUSTOM SIGNUP SUCCEEDED:');
+                console.log(' CUSTOM SIGNUP SUCCEEDED:');
                 console.log('User Sub:', result?.userSub);
                 console.log('User Confirmed:', result?.userConfirmed);
             }
@@ -76,20 +76,20 @@
 
     // Test pool connection
     window.testPoolConnection = function() {
-        console.log('🧪 Testing pool connection...');
+        console.log(' Testing pool connection...');
         try {
             const currentUser = userPool.getCurrentUser();
-            console.log('📡 Pool Connection: OK');
+            console.log(' Pool Connection: OK');
             console.log('Current User:', currentUser ? 'Found' : 'None (normal for new signup)');
             console.log('Pool Config:', poolData);
         } catch (err) {
-            console.error('❌ Pool Connection Error:', err);
+            console.error(' Pool Connection Error:', err);
         }
     };
 
     // Run all tests
     window.runAllTests = function() {
-        console.log('🚀 Running all Cognito tests...');
+        console.log(' Running all Cognito tests...');
         console.log('=====================================');
         
         testPoolConnection();
@@ -105,5 +105,5 @@
         }, 2000);
     };
 
-    console.log('✅ Diagnostic tool ready! Try: runAllTests()');
+    console.log(' Diagnostic tool ready! Try: runAllTests()');
 })();
