@@ -57,7 +57,7 @@ const isAuthorizedGroup = (groupName = "") => {
 
 const toAmountRupees = (value) => {
   const n = Number(value || 0);
-  return Number.isFinite(n) ? n / 100 : 0;
+  return Number.isFinite(n) ? n : 0;
 };
 
 const getPaymentPriority = (payment = {}) => {
@@ -339,7 +339,7 @@ export const handler = async (event) => {
         eventId: evt.eventId,
         title: evt.title,
         isPaid: !!evt.isPaid,
-        registrationFee: Number(evt.registrationFee || 0) / 100,
+        registrationFee: Number(evt.registrationFee || 0),
         enrolledCount: rows.filter((r) => r.paymentStatus === "COMPLETED" || r.paymentStatus === "NA").length,
         completedPaidCount: rows.filter((r) => r.paymentStatus === "COMPLETED").length,
         pendingCount: rows.filter((r) => r.paymentStatus === "PENDING").length,

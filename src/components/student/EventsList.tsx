@@ -20,6 +20,7 @@ const EventsList: React.FC = () => {
   } = useData();
   const { isDark } = useTheme();
   const [selectedType, setSelectedType] = useState('all');
+  const [activeTab, setActiveTab] = useState<'live' | 'ended'>('live');
   const [registering, setRegistering] = useState<string | null>(null);
   const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; event: any }>({
     isOpen: false,
@@ -31,9 +32,18 @@ const EventsList: React.FC = () => {
   }, []);
 
   const eventTypes = ['all', 'workshop', 'seminar', 'competition', 'meeting', 'social'];
-  const liveEvents = events.filter(event => event.isLive);
+  
+  const liveEvents = events.filter(event => 
+    event.isLive && new Date() <= new Date(event.endDateTime || event.startDateTime)
+  );
+  
+  const endedEvents = events.filter(event => 
+    !event.isLive || new Date() > new Date(event.endDateTime || event.startDateTime)
+  );
 
-  const filteredEvents = liveEvents.filter(event => 
+  const displayEvents = activeTab === 'live' ? liveEvents : endedEvents;
+
+  const filteredEvents = displayEvents.filter(event => 
     selectedType === 'all' || event.eventType === selectedType
   );
 
@@ -118,13 +128,55 @@ const EventsList: React.FC = () => {
               ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
               : 'text-slate-900'
             }
-          `}>Live Events</h1>
+          `}>
+            {activeTab === 'live' ? 'Live Events' : 'Past Events'}
+          </h1>
           <p className={`
             text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
           `}>
-            Stay updated with all the exciting events happening across chapters.
+            {activeTab === 'live' 
+              ? 'Stay updated with all the exciting events happening across chapters.' 
+              : 'View successfully concluded events and their highlights.'
+            }
           </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex justify-center mb-8">
+          <div className={`
+            inline-flex p-1.5 rounded-2xl border backdrop-blur-md transition-all duration-300
+            ${isDark 
+              ? 'bg-dark-surface/40 border-accent-500/20 shadow-2xl shadow-accent-500/10' 
+              : 'bg-white/80 border-slate-200/50 shadow-xl'
+            }
+          `}>
+            {[
+              { id: 'live', label: 'Live Events', icon: Sparkles },
+              { id: 'ended', label: 'Ended Events', icon: Clock }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'live' | 'ended')}
+                className={`
+                  flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300
+                  ${activeTab === tab.id
+                    ? (isDark 
+                        ? 'bg-gradient-to-r from-accent-600 to-primary-600 text-white shadow-lg shadow-accent-500/30' 
+                        : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                      )
+                    : (isDark 
+                        ? 'text-dark-text-secondary hover:text-dark-text-primary hover:bg-white/5' 
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      )
+                  }
+                `}
+              >
+                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'animate-pulse' : ''}`} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Filter */}
@@ -161,7 +213,7 @@ const EventsList: React.FC = () => {
           </div>
           
           <div className={`mt-4 text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-            Showing {filteredEvents.length} live events
+            Showing {filteredEvents.length} {activeTab} events
           </div>
         </div>
 
@@ -375,9 +427,14 @@ const EventsList: React.FC = () => {
             }
           `}>
             <Calendar className={`h-16 w-16 mx-auto mb-4 ${isDark ? 'text-dark-text-muted' : 'text-gray-300'}`} />
-            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>No live events</h3>
+            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+              No {activeTab} events
+            </h3>
             <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-              There are no live events at the moment. Check back later for updates!
+              {activeTab === 'live' 
+                ? 'There are no live events at the moment. Check back later for updates!' 
+                : 'No ended events found in the records.'
+              }
             </p>
           </div>
         )}
