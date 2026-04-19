@@ -263,6 +263,7 @@ export const chapterHeadAPI = {
     eventId: string;
     userId: string;
     studentName: string;
+    studentEmail?: string;
     certificateType: 'participation' | '1st' | '2nd' | '3rd';
     eventName: string;
     chapterName: string;
@@ -272,6 +273,32 @@ export const chapterHeadAPI = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  issueCertificates: async (certificates: Array<{
+    eventId: string;
+    userId: string;
+    studentName: string;
+    studentEmail?: string;
+    certificateType: 'participation' | '1st' | '2nd' | '3rd';
+    eventName: string;
+    chapterName: string;
+    date: string;
+  }>) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/certificates/issue`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ certificates }),
+    });
+    return handleResponse(response);
+  },
+
+  getEventCertificates: async (eventId: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/certificates/event?eventId=${encodeURIComponent(eventId)}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   }

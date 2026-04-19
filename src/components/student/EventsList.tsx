@@ -491,7 +491,7 @@ const EventsList: React.FC = () => {
         {showCertPreview && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setShowCertPreview(null)} />
-            <div className="relative bg-white rounded-3xl p-8 shadow-2xl max-w-6xl w-full animate-scale-in">
+            <div className="relative bg-white rounded-3xl p-6 shadow-2xl max-w-4xl w-full animate-scale-in">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">Your Certificate</h2>
@@ -502,12 +502,13 @@ const EventsList: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex justify-center mb-8 bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200 overflow-hidden min-h-[400px]">
-                <div className="scale-[0.6] sm:scale-[0.7] md:scale-[0.9] lg:scale-[1.0] origin-center shadow-xl">
+              <div className="relative aspect-video w-full mb-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.35] sm:scale-[0.45] md:scale-[0.6] lg:scale-[0.7] xl:scale-[0.8] origin-center shadow-xl transition-transform">
                   <CertificateTemplate
                     studentName={showCertPreview.cert.studentName}
                     eventName={showCertPreview.cert.eventName}
                     chapterName={showCertPreview.cert.chapterName}
+                    headName={showCertPreview.cert.headName || 'Chapter Head'}
                     date={showCertPreview.cert.date}
                     certificateType={showCertPreview.cert.certificateType}
                   />
@@ -519,11 +520,39 @@ const EventsList: React.FC = () => {
                   setDownloadingCert(showCertPreview.cert.eventId);
                   const certElement = document.getElementById('certificate-to-download');
                   if (certElement) {
-                    const canvas = await html2canvas(certElement, { scale: 2, useCORS: true });
-                    const link = document.createElement('a');
-                    link.download = `Certificate-${showCertPreview.event.title}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
+                    // Create a temporal container for high-fidelity capture
+                    const container = document.createElement('div');
+                    container.style.position = 'fixed';
+                    container.style.left = '-9999px';
+                    container.style.top = '0';
+                    container.style.zIndex = '-1';
+                    document.body.appendChild(container);
+
+                    // Clone the element and remove viewport-specific scaling transforms
+                    const clone = certElement.cloneNode(true) as HTMLElement;
+                    clone.style.transform = 'none';
+                    clone.style.position = 'relative';
+                    clone.style.margin = '0';
+                    container.appendChild(clone);
+
+                    try {
+                      const canvas = await html2canvas(clone, { 
+                        scale: 2, 
+                        useCORS: true,
+                        backgroundColor: null,
+                        logging: false,
+                        width: 960,
+                        height: 540
+                      });
+                      const link = document.createElement('a');
+                      link.download = `Certificate-${showCertPreview.event.title}.png`;
+                      link.href = canvas.toDataURL('image/png');
+                      link.click();
+                    } catch (err) {
+                      console.error('Download failed:', err);
+                    } finally {
+                      document.body.removeChild(container);
+                    }
                   }
                   setDownloadingCert(null);
                 }}

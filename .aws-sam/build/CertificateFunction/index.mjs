@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
@@ -10,6 +10,53 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
+};
+
+const cleanItem = (item) => Object.fromEntries(
+  Object.entries(item).filter(([, value]) => value !== undefined && value !== null && value !== "")
+);
+
+const uniqueByCertificateKey = (items = []) => {
+  const map = new Map();
+  for (const item of items) {
+    if (!item?.eventId || !item?.userId) continue;
+    map.set(`${item.eventId}-${item.userId}`, item);
+  }
+  return Array.from(map.values());
+};
+
+const listCertificatesForUserIds = async (userIds) => {
+  const ids = Array.from(new Set((userIds || []).filter(Boolean)));
+  if (ids.length === 0) return [];
+
+  const items = [];
+  for (const userId of ids) {
+    try {
+      const response = await docClient.send(new QueryCommand({
+        TableName: CERTIFICATES_TABLE,
+        IndexName: "UserIdIndex",
+        KeyConditionExpression: "userId = :uid",
+        ExpressionAttributeValues: {
+          ":uid": userId
+        }
+      }));
+      items.push(...(response.Items || []));
+    } catch (error) {
+      if (error?.name !== "ValidationException") throw error;
+
+      console.warn("UserIdIndex unavailable; falling back to scan for certificates:", error.message);
+      const response = await docClient.send(new ScanCommand({
+        TableName: CERTIFICATES_TABLE,
+        FilterExpression: "userId = :uid",
+        ExpressionAttributeValues: {
+          ":uid": userId
+        }
+      }));
+      items.push(...(response.Items || []));
+    }
+  }
+
+  return uniqueByCertificateKey(items);
 };
 
 export const handler = async (event) => {
@@ -35,36 +82,76 @@ export const handler = async (event) => {
     // POST /api/certificates/issue
     if (method === "POST" && path === "/api/certificates/issue") {
       const body = JSON.parse(event.body || "{}");
-      const { eventId, userId, studentName, certificateType, eventName, chapterName, date } = body;
+      const certificates = Array.isArray(body.certificates) ? body.certificates : [body];
+      const issuedAt = new Date().toISOString();
+      const issued = [];
 
-      if (!eventId || !userId || !certificateType) {
+      for (const certificate of certificates) {
+        const { eventId, userId, studentName, studentEmail, certificateType, eventName, chapterName, date } = certificate;
+
+        if (!eventId || !userId || !certificateType) {
+          return {
+            statusCode: 400,
+            headers: corsHeaders,
+            body: JSON.stringify({ error: "Missing required fields: eventId, userId, certificateType" })
+          };
+        }
+
+        const item = cleanItem({
+          eventId,
+          userId,
+          studentName,
+          studentEmail,
+          certificateType,
+          eventName,
+          chapterName,
+          date,
+          issuedAt
+        });
+
+        await docClient.send(new PutCommand({
+          TableName: CERTIFICATES_TABLE,
+          Item: item
+        }));
+
+        issued.push(item);
+      }
+
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          success: true,
+          certificate: issued[0],
+          certificates: issued,
+          count: issued.length
+        })
+      };
+    }
+
+    // GET /api/certificates/event?eventId=...
+    if (method === "GET" && path === "/api/certificates/event") {
+      const eventId = event.queryStringParameters?.eventId;
+      if (!eventId) {
         return {
           statusCode: 400,
           headers: corsHeaders,
-          body: JSON.stringify({ error: "Missing required fields: eventId, userId, certificateType" })
+          body: JSON.stringify({ error: "eventId is required" })
         };
       }
 
-      const item = {
-        eventId,
-        userId,
-        studentName,
-        certificateType,
-        eventName,
-        chapterName,
-        date,
-        issuedAt: new Date().toISOString()
-      };
-
-      await docClient.send(new PutCommand({
+      const response = await docClient.send(new QueryCommand({
         TableName: CERTIFICATES_TABLE,
-        Item: item
+        KeyConditionExpression: "eventId = :eid",
+        ExpressionAttributeValues: {
+          ":eid": eventId
+        }
       }));
 
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ success: true, certificate: item })
+        body: JSON.stringify({ certificates: response.Items || [] })
       };
     }
 
@@ -81,9 +168,10 @@ export const handler = async (event) => {
 
       // Extract userId from Cognito JWT claims
       // In HTTP API with Cognito Authorizer, the context has the claims
-      const userId = event.requestContext.authorizer?.jwt?.claims?.sub;
+      const claims = event.requestContext.authorizer?.jwt?.claims || {};
+      const userIds = [claims.sub, claims.email, claims.username, claims["cognito:username"]];
       
-      if (!userId) {
+      if (!userIds.some(Boolean)) {
         return {
           statusCode: 400,
           headers: corsHeaders,
@@ -91,19 +179,12 @@ export const handler = async (event) => {
         };
       }
 
-      const response = await docClient.send(new QueryCommand({
-        TableName: CERTIFICATES_TABLE,
-        IndexName: "UserIdIndex",
-        KeyConditionExpression: "userId = :uid",
-        ExpressionAttributeValues: {
-          ":uid": userId
-        }
-      }));
+      const certificates = await listCertificatesForUserIds(userIds);
 
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ certificates: response.Items || [] })
+        body: JSON.stringify({ certificates })
       };
     }
 
