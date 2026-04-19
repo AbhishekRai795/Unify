@@ -132,6 +132,8 @@ export const handler = async (event) => {
       headName: headName || null,
       status: 'active',
       memberCount: 0,
+      isPaid: Boolean(isPaid),
+      registrationFee: isPaid ? Math.round(Number(registrationFee)) : 0,
       createdAt: now,
       updatedAt: now
     };
@@ -146,25 +148,8 @@ export const handler = async (event) => {
 
     console.log('   Chapter created successfully');
 
-    // Create payment configuration if chapter is paid
     if (isPaid) {
-      const paymentConfigItem = {
-        chapterId,
-        transactionId: `CONFIG#${chapterId}`,
-        recordType: "CONFIG",
-        isPaid: true,
-        registrationFee,
-        currencyCode: "INR",
-        createdAt: now,
-        updatedAt: now
-      };
-
-      await docClient.send(new PutCommand({
-        TableName: PAYMENTS_TABLE,
-        Item: paymentConfigItem
-      }));
-
-      console.log('   Payment configuration created:', {
+      console.log('   Payment configuration initialized for paid chapter:', {
         chapterId,
         isPaid: true,
         fee: registrationFee,

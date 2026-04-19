@@ -309,6 +309,7 @@ const getAvailableChapters = async (userEmail, headers) => {
       category: 'General',
       adminId: chapter.chapterId,
       adminName: chapter.headName,
+      headName: chapter.headName,
       isRegistrationOpen: chapter.registrationOpen || false,
       memberCount: chapter.memberCount || 0,
       requirements: ['Active participation', 'Regular attendance'],
@@ -317,7 +318,9 @@ const getAvailableChapters = async (userEmail, headers) => {
       contactEmail: chapter.headEmail,
       tags: ['student-organization'],
       createdAt: chapter.createdAt,
-      updatedAt: chapter.updatedAt
+      updatedAt: chapter.updatedAt,
+      isPaid: chapter.isPaid || false,
+      registrationFee: chapter.registrationFee ? Number(chapter.registrationFee) : 0
     }));
 
     return { statusCode: 200, headers, body: JSON.stringify({ chapters }) };
@@ -397,7 +400,9 @@ const getMyChapters = async (userEmail, headers) => {
       headId: chapter.headId || headIdByEmail.get(String(chapter.headEmail || '').trim().toLowerCase()) || null,
       status: chapter.status,
       joinedAt: chapter.joinedAt,
-      approvedAt: chapter.approvedAt
+      approvedAt: chapter.approvedAt,
+      isPaid: chapter.isPaid || false,
+      registrationFee: chapter.registrationFee ? Number(chapter.registrationFee) : 0
     }));
 
     return { statusCode: 200, headers, body: JSON.stringify({ chapters: formattedChapters }) };

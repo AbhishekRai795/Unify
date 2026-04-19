@@ -93,7 +93,7 @@ export const handler = async (event) => {
         : "REMOVE registeredChapters",
       ...(updatedChapters.length > 0 && {
         ExpressionAttributeValues: {
-          ":chapters": { SS: updatedChapters }
+          ":chapters": { L: updatedChapters.map(s => ({ S: s })) }
         }
       })
     };

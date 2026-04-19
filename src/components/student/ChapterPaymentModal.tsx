@@ -8,6 +8,7 @@ interface ChapterPaymentModalProps {
   isOpen: boolean;
   chapterId: string;
   chapterName: string;
+  registrationFee: number;
   onClose: () => void;
   onPaymentSuccess: (paymentData: PaymentSuccessData) => void;
   onPaymentFailed: (error: string) => void;
@@ -31,36 +32,16 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
   isOpen,
   chapterId,
   chapterName,
+  registrationFee,
   onClose,
   onPaymentSuccess,
   onPaymentFailed
 }) => {
   const [loading, setLoading] = useState(false);
-  const [feeInfo, setFeeInfo] = useState<any>(null);
   const [error, setError] = useState<string>('');
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchChapterFees();
-    }
-  }, [isOpen, chapterId]);
 
-  const fetchChapterFees = async () => {
-    try {
-      setLoading(true);
-      const data = await paymentAPI.getChapterFees(chapterId);
-      
-      setFeeInfo(data.feeInfo);
-      setError('');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch fees';
-      setError(errorMsg);
-      onPaymentFailed(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handlePayment = async () => {
     try {
@@ -192,8 +173,7 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
           </div>
         )}
 
-        {feeInfo && (
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="mb-4">
               <p className="text-gray-600 text-sm mb-1">Chapter</p>
               <p className="text-lg font-semibold text-gray-800">{chapterName}</p>
@@ -201,7 +181,7 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
 
             <div className="border-t border-gray-300 pt-4">
               <p className="text-gray-600 text-sm mb-1">Registration Fee</p>
-              <p className="text-3xl font-bold text-blue-600">{feeInfo.displayFee}</p>
+              <p className="text-3xl font-bold text-blue-600">₹{registrationFee / 100}</p>
             </div>
 
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded p-3">
@@ -210,11 +190,10 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
               </p>
             </div>
           </div>
-        )}
 
         <button
           onClick={handlePayment}
-          disabled={loading || !feeInfo}
+          disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center justify-center"
         >
           {loading ? (

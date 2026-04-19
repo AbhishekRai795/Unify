@@ -80,33 +80,26 @@ export const handler = async (event) => {
       };
     }
 
-    // Get chapter fee configuration
-    const feeConfigKey = `CONFIG#${chapterId}`;
-    const configResponse = await docClient.send(new GetCommand({
-      TableName: PAYMENTS_TABLE,
-      Key: {
-        chapterId,
-        transactionId: feeConfigKey
-      }
-    }));
+    const chapter = chapterResponse.Item;
 
-    if (!configResponse.Item || !configResponse.Item.isPaid) {
+    // Check if chapter is paid – fee is stored directly on the Chapters table
+    if (!chapter.isPaid) {
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: "This is a free chapter or fee configuration not found",
-          isPaid: configResponse.Item?.isPaid || false
+          error: "This is a free chapter – no payment required",
+          isPaid: false
         })
       };
     }
 
-    const fee = configResponse.Item.registrationFee;
+    const fee = chapter.registrationFee;
     if (!fee || fee <= 0) {
       return {
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ error: "Invalid fee amount" })
+        body: JSON.stringify({ error: "Invalid fee amount configured for this chapter" })
       };
     }
 

@@ -12,11 +12,11 @@ interface PaymentTransaction {
   amount: number;
   amountInRupees?: number;
   displayAmount: string;
-  paymentStatus: 'COMPLETED' | 'FAILED' | 'PENDING' | 'NA';
+  paymentStatus: 'COMPLETED' | 'FAILED' | 'PENDING' | 'NA' | 'FREE';
   transactionType?: 'CHAPTER' | 'EVENT';
-  razorpayPaymentId: string;
-  receiptUrl: string;
-  receiptId: string;
+  razorpayPaymentId?: string | null;
+  receiptUrl?: string | null;
+  receiptId?: string | null;
   createdAt: string;
   completedAt?: string;
 }
@@ -52,14 +52,15 @@ export const PaymentHistory: React.FC = () => {
       COMPLETED: { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
       FAILED: { bg: 'bg-red-100', text: 'text-red-800', icon: '✗' },
       PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳' },
-      NA: { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✓' }
+      NA: { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✓' },
+      FREE: { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✓' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
 
     return (
       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
-        {config.icon} {status === 'NA' ? 'REGISTERED' : status}
+        {config.icon} {status === 'NA' || status === 'FREE' ? 'REGISTERED' : status}
       </span>
     );
   };
@@ -140,7 +141,7 @@ export const PaymentHistory: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <p className="text-gray-600 text-lg">No payment transactions found</p>
-          <p className="text-gray-500 text-sm mt-2">Join a paid chapter to see your payment history here</p>
+          <p className="text-gray-500 text-sm mt-2">Join a chapter to see your registration history here</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -166,7 +167,7 @@ export const PaymentHistory: React.FC = () => {
                     {tx.transactionType || 'CHAPTER'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 font-mono">
-                    {tx.transactionId.substring(0, 20)}...
+                    {tx.transactionId || '-'}
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                     {tx.displayAmount}
@@ -192,7 +193,7 @@ export const PaymentHistory: React.FC = () => {
                     <button
                       onClick={() => {
                         // Could show modal with full details
-                        alert(`Payment ID: ${tx.razorpayPaymentId}\nReceipt ID: ${tx.receiptId}`);
+                        alert(`Payment ID: ${tx.razorpayPaymentId || 'N/A'}\nReceipt ID: ${tx.receiptId || 'N/A'}`);
                       }}
                       className="text-blue-600 hover:text-blue-800 font-semibold"
                     >

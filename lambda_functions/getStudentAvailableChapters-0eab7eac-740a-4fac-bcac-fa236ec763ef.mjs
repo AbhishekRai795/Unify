@@ -85,6 +85,8 @@ export const handler = async (event) => {
         description: "", // Not available in your schema
         status: chapter.status?.S || "active",
         memberCount: chapter.memberCount?.N || "0",
+        isPaid: chapter.isPaid?.BOOL || false,
+        registrationFee: chapter.registrationFee?.N ? parseInt(chapter.registrationFee.N, 10) : 0,
         isRegistered: false
       }));
 

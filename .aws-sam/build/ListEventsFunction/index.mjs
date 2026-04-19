@@ -52,9 +52,14 @@ export const handler = async (event) => {
     }));
 
     const user = userResponse.Items?.[0];
-    const registeredChapters = Array.isArray(user?.registeredChapters)
-      ? user.registeredChapters
-      : [];
+    const registeredChaptersRaw = user?.registeredChapters;
+    let registeredChapters = [];
+    if (Array.isArray(registeredChaptersRaw)) {
+      registeredChapters = registeredChaptersRaw;
+    } else if (registeredChaptersRaw instanceof Set) {
+      registeredChapters = Array.from(registeredChaptersRaw);
+    }
+
     const registeredChapterSet = new Set(
       registeredChapters
         .map((chapterName) => String(chapterName || "").trim().toLowerCase())

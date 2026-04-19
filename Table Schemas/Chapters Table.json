@@ -11,6 +11,8 @@
     "headName": "String",
     "memberCount": "Number",
     "registrationOpen": "Boolean",
+    "isPaid": "Boolean",
+    "registrationFee": "Number",
     "status": "String",
     "updatedAt": "String (ISO Date)"
   }

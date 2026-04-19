@@ -4,7 +4,7 @@
     "partitionKey": "chapterId"
   },
   "sortKey": "transactionId",
-  "description": "Stores chapter payment configuration and payment transaction records",
+  "description": "Stores chapter payment transaction records",
   "attributes": {
     "chapterId": {
       "type": "String",
@@ -12,21 +12,14 @@
     },
     "transactionId": {
       "type": "String",
-      "description": "Sort key - unique transaction identifier (format: TRANSACTION#{timestamp}#{orderId} for transactions, CONFIG#{chapterId} for config)"
+      "description": "Sort key - unique transaction identifier (format: TRANSACTION#{timestamp}#{orderId} for transactions)"
     },
     "recordType": {
       "type": "String",
-      "enum": ["CONFIG", "TRANSACTION"],
-      "description": "Type of record: CONFIG for chapter fee configuration, TRANSACTION for payment records"
+      "enum": ["TRANSACTION"],
+      "description": "Type of record: TRANSACTION for payment records"
     },
-    "isPaid": {
-      "type": "Boolean",
-      "description": "Whether the chapter requires payment (only in CONFIG records)"
-    },
-    "registrationFee": {
-      "type": "Number",
-      "description": "Registration fee in paise (e.g., 50000 = ₹500) (only in CONFIG records)"
-    },
+
     "currencyCode": {
       "type": "String",
       "default": "INR",
@@ -119,7 +112,7 @@
       "name": "RecordTypeIndex",
       "partitionKey": "recordType",
       "sortKey": "createdAt",
-      "description": "Query records by type (CONFIG or TRANSACTION)"
+      "description": "Query records by type (TRANSACTION)"
     }
   ]
 }

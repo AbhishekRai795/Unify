@@ -38,6 +38,8 @@ export const handler = async (event) => {
       description: item.description?.S || '',        // This field doesn't exist in your data
       status: item.status?.S || 'active',
       memberCount: item.memberCount?.N || '0',       // Added: memberCount (Number type)
+      isPaid: item.isPaid?.BOOL || false,            // Added: payment indicator
+      registrationFee: item.registrationFee?.N ? parseInt(item.registrationFee.N, 10) : 0, // Added: registration fee
       createdAt: item.createdAt?.S || '',            // Added: createdAt
       updatedAt: item.updatedAt?.S || ''             // Added: updatedAt
     }));

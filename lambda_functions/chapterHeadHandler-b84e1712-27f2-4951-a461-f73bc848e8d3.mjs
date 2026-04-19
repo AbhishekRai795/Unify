@@ -118,13 +118,27 @@ const getMyChapters = async (chapterHead, headers) => {
     if (!chapter) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: 'Chapter not found' }) };
     }
+
+    let approvedMemberCount = chapter.memberCount || 0;
+    try {
+      const approvedResult = await dynamoDB.send(new ScanCommand({
+        TableName: 'RegistrationRequests',
+        FilterExpression: 'chapterId = :c AND #status = :s',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':c': chapterHead.chapterId, ':s': 'approved' }
+      }));
+      approvedMemberCount = approvedResult.Items ? approvedResult.Items.length : 0;
+    } catch (err) {
+      console.log('Approved registrations scan issue:', err.message);
+    }
+
     const responseChapter = {
       chapterId: chapter.chapterId,
       chapterName: chapter.chapterName,
       createdAt: chapter.createdAt || null,
       headEmail: chapter.headEmail,
       headName: chapter.headName,
-      memberCount: chapter.memberCount || 0,
+      memberCount: approvedMemberCount,
       status: chapter.status || 'active',
       updatedAt: chapter.updatedAt || null,
       registrationStatus: chapter.registrationOpen ? 'open' : 'closed'
@@ -142,6 +156,7 @@ const getDashboardStats = async (chapterHead, headers) => {
     const chapterResult = await dynamoDB.send(new GetCommand({ TableName: 'Chapters', Key: { chapterId: chapterHead.chapterId } }));
     const chapter = chapterResult.Item || {};
     let pendingCount = 0;
+    let approvedCount = 0;
     try {
       const pendingResult = await dynamoDB.send(new ScanCommand({
         TableName: 'RegistrationRequests',
@@ -161,6 +176,7 @@ const getDashboardStats = async (chapterHead, headers) => {
       ExpressionAttributeValues: { ':c': chapterHead.chapterId, ':s': 'approved' }
     }));
 
+    approvedCount = recentApprovedResult.Items ? recentApprovedResult.Items.length : 0;
     const recentRegistrations = (recentApprovedResult.Items || []).filter(r => !!r.processedAt).length;
 
     // Fetch active events count
@@ -178,7 +194,7 @@ const getDashboardStats = async (chapterHead, headers) => {
 
     const stats = {
       totalChapters: 1,
-      totalMembers: chapter.memberCount || 0,
+      totalMembers: approvedCount,
       pendingRegistrations: pendingCount,
       activeEvents,
       recentRegistrations
@@ -266,15 +282,38 @@ const updateRegistrationStatus = async (chapterHead, registrationId, body, heade
     const result = await dynamoDB.send(new UpdateCommand(params));
     if (status === 'approved' && result.Attributes && result.Attributes.userId) {
       try {
+        // Read existing registeredChapters first (handles both List and StringSet types)
+        const userRecord = await dynamoDB.send(new GetCommand({
+          TableName: 'Unify-Users',
+          Key: { userId: result.Attributes.userId }
+        }));
+        const existingUser = userRecord.Item || {};
+        let existingChapters = [];
+        if (existingUser.registeredChapters) {
+          if (existingUser.registeredChapters instanceof Set) {
+            existingChapters = Array.from(existingUser.registeredChapters);
+          } else if (Array.isArray(existingUser.registeredChapters)) {
+            existingChapters = existingUser.registeredChapters;
+          }
+        }
+        const chapterName = result.Attributes.chapterName;
+        if (!existingChapters.includes(chapterName)) {
+          existingChapters.push(chapterName);
+        }
+        // Write back as a StringSet (DocumentClient sends as SS in DynamoDB)
         await dynamoDB.send(new UpdateCommand({
           TableName: 'Unify-Users',
           Key: { userId: result.Attributes.userId },
-          UpdateExpression: 'ADD registeredChapters :c SET updatedAt = :u',
-          ExpressionAttributeValues: { ':c': new Set([result.Attributes.chapterName]), ':u': new Date().toISOString() },
+          UpdateExpression: 'SET registeredChapters = :chapters, updatedAt = :u',
+          ExpressionAttributeValues: {
+            ':chapters': existingChapters,  // plain array → L (List) in DynamoDB
+            ':u': new Date().toISOString()
+          },
           ReturnValues: 'NONE'
         }));
+        console.log(`Updated registeredChapters for userId ${result.Attributes.userId}:`, existingChapters);
       } catch (e) {
-        console.log('User membership update issue (non-fatal):', e.message);
+        console.error('User membership update error:', e.message);
       }
       try {
         await dynamoDB.send(new UpdateCommand({
@@ -286,6 +325,29 @@ const updateRegistrationStatus = async (chapterHead, registrationId, body, heade
         }));
       } catch (e) {
         console.log('Chapter member count increment issue (non-fatal):', e.message);
+      }
+      try {
+        const timestamp = Date.now();
+        const transactionRecord = {
+          chapterId: result.Attributes.chapterId,
+          transactionId: `TRANSACTION#${timestamp}#MANUAL_${result.Attributes.userId}`,
+          recordType: 'TRANSACTION',
+          paymentStatus: 'COMPLETED',
+          amount: 0,
+          currencyCode: 'INR',
+          userId: result.Attributes.userId,
+          studentName: result.Attributes.studentName || 'Unknown',
+          studentEmail: result.Attributes.studentEmail || 'Unknown',
+          notes: 'Manually approved by chapter head or free chapter joining',
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString()
+        };
+        await dynamoDB.send(new PutCommand({
+          TableName: 'ChapterPayments',
+          Item: transactionRecord
+        }));
+      } catch (e) {
+        console.log('Chapter payment transaction record issue (non-fatal):', e.message);
       }
     }
     return { statusCode: 200, headers, body: JSON.stringify({ message: `Registration ${status} successfully`, registrationId, updatedRegistration: result.Attributes }) };

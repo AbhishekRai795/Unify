@@ -55,20 +55,11 @@ export const handler = async (event) => {
 
     const chapter = chapterResponse.Item;
 
-    // Get fee configuration for this chapter
-    const configKey = `CONFIG#${chapterId}`;
-    const feeConfigResponse = await docClient.send(new GetCommand({
-      TableName: PAYMENTS_TABLE,
-      Key: {
-        chapterId,
-        transactionId: configKey
-      }
-    }));
-
-    const feeConfig = feeConfigResponse.Item || {
+    // Get fee configuration from chapter directly
+    const feeConfig = {
       chapterId,
-      isPaid: false,
-      registrationFee: 0,
+      isPaid: Boolean(chapter.isPaid),
+      registrationFee: Number(chapter.registrationFee) || 0,
       currencyCode: "INR"
     };
 

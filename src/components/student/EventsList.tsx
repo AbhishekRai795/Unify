@@ -175,6 +175,7 @@ const EventsList: React.FC = () => {
                 eventRegistrations.some((reg: any) => reg.eventId === eventId) ||
                 (Array.isArray(attendedList) && attendedList.includes(eventId));
               const isRegistrationClosed = !!(event.registrationDeadline && new Date() > new Date(event.registrationDeadline));
+              const isPastEvent = new Date() > new Date(event.endDateTime || event.startDateTime);
                 
               return (
                 <div key={event.id} className={`
@@ -202,10 +203,17 @@ const EventsList: React.FC = () => {
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.eventType)}`}>
                               {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}
                             </span>
-                            <div className="flex items-center space-x-1 text-green-600">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-xs font-medium">Live</span>
-                            </div>
+                            {isPastEvent ? (
+                              <div className="flex items-center space-x-1 text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                <span className="text-xs font-medium">Ended</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-1 text-green-600">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-xs font-medium">Live</span>
+                              </div>
+                            )}
                             {isRegistered && (
                               <div className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                                 <CheckCircle className="h-3 w-3" />
@@ -292,24 +300,28 @@ const EventsList: React.FC = () => {
                           {event.registrationRequired && (
                             <button
                               onClick={() => handleRegister(event)}
-                              disabled={registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
+                              disabled={isPastEvent || registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
                               className={`
                                 px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm
-                                ${isDark 
-                                  ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25' 
-                                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                                ${isPastEvent
+                                  ? 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed'
+                                  : isDark 
+                                    ? 'bg-gradient-to-r from-accent-600/80 to-primary-600/80 text-white border border-accent-500/30 hover:from-accent-500/90 hover:to-primary-500/90 shadow-lg shadow-accent-500/25' 
+                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
                                 }
                               `}
                             >
-                              {isRegistered
-                                ? 'Registered'
-                                : registering === eventId 
-                                  ? 'Registering...' 
-                                  : isRegistrationClosed
-                                    ? 'Registration Closed'
-                                    : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
-                                      ? 'Full'
-                                      : 'Register'
+                              {isPastEvent
+                                ? 'Event Ended'
+                                : isRegistered
+                                  ? 'Registered'
+                                  : registering === eventId 
+                                    ? 'Registering...' 
+                                    : isRegistrationClosed
+                                      ? 'Registration Closed'
+                                      : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
+                                        ? 'Full'
+                                        : 'Register'
                               }
                             </button>
                           )}

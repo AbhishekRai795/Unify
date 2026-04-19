@@ -720,6 +720,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ChapterPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: Chapters
       Events:
         EditChapterPaymentApi:
           Type: HttpApi
@@ -1370,6 +1372,8 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: Chapters
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
         - DynamoDBReadPolicy:
             TableName: !Ref ChapterEventsTable
         - DynamoDBReadPolicy:

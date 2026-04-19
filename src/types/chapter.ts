@@ -13,9 +13,11 @@ export interface Chapter {
   meetingSchedule: string;
   contactEmail: string;
   imageUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  isPaid?: boolean;
+  registrationFee?: number;
 }
 
 export interface ChapterRegistration {
