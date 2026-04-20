@@ -52,7 +52,7 @@ const CertificateIssuance: React.FC = () => {
   const [issuingFor, setIssuingFor] = useState<Registration | null>(null);
   const [certType, setCertType] = useState<CertificateType>('participation');
   const [isIssuing, setIsIssuing] = useState(false);
-  const [issuedStatus, setIssuedStatus] = useState<Record<string, boolean>>({});
+  const [issuedStatus, setIssuedStatus] = useState<Record<string, any>>({});
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -95,8 +95,8 @@ const CertificateIssuance: React.FC = () => {
       ]);
 
       setRegistrations(registrationsResp.registrations || []);
-      setIssuedStatus((certificatesResp.certificates || []).reduce((acc: Record<string, boolean>, cert: any) => {
-        if (cert.eventId && cert.userId) acc[`${cert.eventId}-${cert.userId}`] = true;
+      setIssuedStatus((certificatesResp.certificates || []).reduce((acc: Record<string, any>, cert: any) => {
+        if (cert.eventId && cert.userId) acc[`${cert.eventId}-${cert.userId}`] = cert;
         return acc;
       }, {}));
     } catch (err) {
@@ -128,7 +128,15 @@ const CertificateIssuance: React.FC = () => {
         date: new Date().toLocaleDateString('en-GB')
       });
 
-      setIssuedStatus(prev => ({ ...prev, [`${selectedEvent.eventId}-${issuingFor.userId}`]: true }));
+      setIssuedStatus(prev => ({ 
+        ...prev, 
+        [`${selectedEvent.eventId}-${issuingFor.userId}`]: { 
+          certificateType: certType,
+          studentName: issuingFor.studentName,
+          eventId: selectedEvent.eventId,
+          userId: issuingFor.userId
+        } 
+      }));
       setIssuingFor(null);
       alert('Certificate issued successfully! The student can now download it from their dashboard.');
     } catch (err) {
@@ -182,7 +190,12 @@ const CertificateIssuance: React.FC = () => {
       setIssuedStatus(prev => {
         const next = { ...prev };
         for (const reg of selectedRegistrations) {
-          next[`${selectedEvent.eventId}-${reg.userId}`] = true;
+          next[`${selectedEvent.eventId}-${reg.userId}`] = {
+            certificateType: certType,
+            studentName: reg.studentName,
+            eventId: selectedEvent.eventId,
+            userId: reg.userId
+          };
         }
         return next;
       });
@@ -399,6 +412,7 @@ const CertificateIssuance: React.FC = () => {
                     />
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Student</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Achievement Type</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
                 </tr>
@@ -441,6 +455,20 @@ const CertificateIssuance: React.FC = () => {
                               <div className="text-xs text-gray-500">{reg.studentEmail}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {isIssued?.certificateType ? (
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              isIssued.certificateType === '1st' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                              isIssued.certificateType === '2nd' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                              isIssued.certificateType === '3rd' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                              'bg-blue-50 text-blue-700 border border-blue-100'
+                            }`}>
+                              {isIssued.certificateType === 'participation' ? 'Participation' : `${isIssued.certificateType} Position`}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">Not Assigned</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           {isIssued ? (
