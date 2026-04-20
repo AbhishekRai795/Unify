@@ -85,7 +85,7 @@ export const handler = async (event) => {
     }
 
     const now = new Date().toISOString();
-    const transactionId = `WLT-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
+    const transactionId = `TRANSACTION#WLT-${Date.now()}#${crypto.randomUUID().split('-')[0].toUpperCase()}`;
 
     // 2. Perform Transactional update: Deduct balance and Log transaction
     console.log(`Executing transaction ${transactionId} for user ${userId}: -${amount} pts`);
@@ -191,7 +191,7 @@ async function handleChapterRegistration(userId, chapterId, amount, transactionI
     }));
 
     // Log in ChapterPayments for history/transparency
-    console.log("Creating payment record in ChapterPayments");
+    console.log("Creating payment record in ChapterPayments:", transactionId);
     await docClient.send(new PutCommand({
       TableName: PAYMENTS_TABLE,
       Item: {
@@ -200,14 +200,16 @@ async function handleChapterRegistration(userId, chapterId, amount, transactionI
         userId,
         studentName,
         studentEmail,
-        amount,
+        amount: amount * 100, // Convert to paise for ChapterPayments table
         paymentStatus: "COMPLETED",
         paymentMethod: "WALLET",
+        paymentType: "WALLET",
         chapterName: chapter.chapterName,
-        recordType: "PAYMENT",
+        recordType: "TRANSACTION",
         registrationId,
         createdAt: now,
         updatedAt: now,
+        completedAt: now,
         notes: "Registered using reward points"
       }
     }));
