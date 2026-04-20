@@ -7,6 +7,7 @@ const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const EVENT_PAYMENTS_TABLE = process.env.EVENT_PAYMENTS_TABLE || "EventPayments";
+const EVENT_REG_TABLE = process.env.EVENT_REG_TABLE || "EventRegistrationRequests";
 const EVENTS_TABLE = process.env.EVENTS_TABLE || "ChapterEvents";
 const USERS_TABLE = process.env.USERS_TABLE || "Unify-Users";
 
@@ -116,6 +117,28 @@ export const handler = async (event) => {
     await docClient.send(new PutCommand({
       TableName: EVENT_PAYMENTS_TABLE,
       Item: registration
+    }));
+
+    // Create Registration Request in the new independent table
+    const registrationId = `REG-FREE-EVT-${eventId}-${userId.substring(0,8)}-${Date.now()}`;
+    const now = new Date().toISOString();
+    await docClient.send(new PutCommand({
+      TableName: EVENT_REG_TABLE,
+      Item: {
+        registrationId,
+        chapterId: eventItem.chapterId,
+        chapterName: eventItem.chapterName,
+        userId,
+        studentName: studentName || "Unknown",
+        studentEmail,
+        eventId,
+        eventTitle: eventItem.title,
+        status: "approved", // Free events are auto-approved in this flow
+        appliedAt: now,
+        processedAt: now,
+        processedBy: "SYSTEM_FREE_JOIN",
+        notes: "Free Event Registration"
+      }
     }));
 
     // Update event attendee count with retry logic

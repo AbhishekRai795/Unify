@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const dynamoClient = new DynamoDBClient({ region: "ap-south-1" });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
@@ -109,10 +109,52 @@ export const handler = async (event) => {
           issuedAt
         });
 
+        // CHECK IF CERTIFICATE ALREADY EXISTS to avoid duplicate points
+        const checkExisting = await docClient.send(new GetCommand({
+          TableName: CERTIFICATES_TABLE,
+          Key: { eventId, userId }
+        }));
+
+        const isNewCertificate = !checkExisting.Item;
+
         await docClient.send(new PutCommand({
           TableName: CERTIFICATES_TABLE,
           Item: item
         }));
+
+        // If it's a new certificate (not a reissue), credit 20 reward points
+        if (isNewCertificate) {
+          console.log(`New certificate for user ${userId} in event ${eventId}. Crediting 20 points.`);
+          
+          // Credit 20 reward points to student's wallet
+          await docClient.send(new UpdateCommand({
+            TableName: "Wallet",
+            Key: { userId },
+            UpdateExpression: "SET balance = if_not_exists(balance, :zero) + :inc, lastUpdated = :now",
+            ExpressionAttributeValues: {
+              ":inc": 20,
+              ":zero": 0,
+              ":now": new Date().toISOString()
+            }
+          }));
+
+          // Record transaction in WalletTransactionsTable
+          const transactionId = `TX-${Date.now()}-${userId}`;
+          await docClient.send(new PutCommand({
+            TableName: "WalletTransactions",
+            Item: {
+              userId,
+              transactionId,
+              type: "CREDIT",
+              amount: 20,
+              description: `Reward points for ${eventName || 'certificate'}`,
+              timestamp: new Date().toISOString(),
+              referenceId: eventId
+            }
+          }));
+        } else {
+          console.log(`Certificate already exists for user ${userId} in event ${eventId}. Skipping points credit.`);
+        }
 
         issued.push(item);
       }

@@ -9,7 +9,6 @@ import { encodeS3Url } from '../../utils/s3Utils';
 import CertificateTemplate from '../admin/CertificateTemplate';
 import html2canvas from 'html2canvas';
 import { paymentAPI } from '../../services/paymentApi';
-import { useAuth } from '../../contexts/AuthContext';
 
 
 const EventsList: React.FC = () => {
@@ -26,7 +25,6 @@ const EventsList: React.FC = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [activeTab, setActiveTab] = useState<'live' | 'ended'>('live');
   const [registering, setRegistering] = useState<string | null>(null);
-  const { user } = useAuth();
   const [issuedCertificates, setIssuedCertificates] = useState<any[]>([]);
   const [downloadingCert, setDownloadingCert] = useState<string | null>(null);
   const [showCertPreview, setShowCertPreview] = useState<any | null>(null);
@@ -160,78 +158,88 @@ const EventsList: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex justify-center mb-8">
-          <div className={`
-            inline-flex p-1.5 rounded-2xl border backdrop-blur-md transition-all duration-300
-            ${isDark 
-              ? 'bg-dark-surface/40 border-accent-500/20 shadow-2xl shadow-accent-500/10' 
-              : 'bg-white/80 border-slate-200/50 shadow-xl'
-            }
-          `}>
-            {[
-              { id: 'live', label: 'Live Events', icon: Sparkles },
-              { id: 'ended', label: 'Ended Events', icon: Clock }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'live' | 'ended')}
-                className={`
-                  flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300
-                  ${activeTab === tab.id
-                    ? (isDark 
-                        ? 'bg-gradient-to-r from-accent-600 to-primary-600 text-white shadow-lg shadow-accent-500/30' 
-                        : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                      )
-                    : (isDark 
-                        ? 'text-dark-text-secondary hover:text-dark-text-primary hover:bg-white/5' 
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                      )
-                  }
-                `}
-              >
-                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'animate-pulse' : ''}`} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Filter */}
+        {/* Filter Section */}
         <div className={`
-          rounded-xl p-6 backdrop-blur-md border mb-8 transition-all duration-300
+          rounded-2xl p-6 backdrop-blur-md border mb-8 transition-all duration-300
           ${isDark 
             ? 'bg-gradient-to-br from-dark-surface/80 to-dark-card/60 border-accent-500/20 shadow-2xl shadow-accent-500/10' 
-            : 'bg-white/80 border-white/20'
+            : 'bg-white/80 border-white/20 shadow-xl shadow-blue-500/5'
           }
         `}>
-          <div className="flex flex-wrap items-center gap-4">
-            <span className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-700'}`}>Filter by type:</span>
-            {eventTypes.map(type => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type)}
-                className={`
-                  px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 backdrop-blur-sm
-                  ${selectedType === type
-                    ? (isDark 
-                        ? 'bg-gradient-to-r from-accent-600/20 to-primary-600/20 border border-accent-500/50 text-accent-200 shadow-lg shadow-accent-500/20' 
-                        : 'bg-blue-600 text-white'
-                      )
-                    : (isDark 
-                        ? 'bg-dark-card/40 hover:bg-dark-surface/60 text-gray-300 hover:text-accent-200 border border-dark-border/30 hover:border-accent-500/40' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      )
-                  }
-                `}
-              >
-                {type === 'all' ? 'All Events' : type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            {/* Left side: Type filters */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>Filter by type:</span>
+              <div className="flex flex-wrap gap-2">
+                {eventTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedType(type)}
+                    className={`
+                      px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300
+                      ${selectedType === type
+                        ? (isDark 
+                            ? 'bg-accent-600 text-white shadow-lg shadow-accent-500/30' 
+                            : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                          )
+                        : (isDark 
+                            ? 'bg-dark-card/40 hover:bg-dark-surface/60 text-dark-text-secondary border border-dark-border/30' 
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          )
+                      }
+                    `}
+                  >
+                    {type === 'all' ? 'All Events' : type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side: Status card (Live/Ended) */}
+            <div className={`
+              p-1.5 rounded-[1.25rem] border backdrop-blur-sm flex items-center gap-1
+              ${isDark 
+                ? 'bg-dark-bg/40 border-dark-border/50' 
+                : 'bg-slate-50/50 border-slate-200/50'
+              }
+            `}>
+              {[
+                { id: 'live', label: 'Live', icon: Sparkles },
+                { id: 'ended', label: 'Past', icon: Clock }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as 'live' | 'ended')}
+                  className={`
+                    flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300
+                    ${activeTab === tab.id
+                      ? (isDark 
+                          ? 'bg-dark-surface text-accent-400 shadow-lg border border-accent-500/30' 
+                          : 'bg-white text-blue-600 shadow-md border border-blue-100'
+                        )
+                      : (isDark 
+                          ? 'text-dark-text-muted hover:text-dark-text-secondary' 
+                          : 'text-slate-400 hover:text-slate-600'
+                        )
+                    }
+                  `}
+                >
+                  <tab.icon size={14} className={activeTab === tab.id ? 'animate-pulse' : ''} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
           
-          <div className={`mt-4 text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-            Showing {filteredEvents.length} {activeTab} events
+          <div className="mt-6 flex items-center justify-between">
+             <div className={`text-sm font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>
+                Showing <span className={isDark ? 'text-accent-400' : 'text-blue-600'}>{filteredEvents.length}</span> {activeTab} events
+             </div>
+             {activeTab === 'ended' && (
+                <div className={`text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-full ${isDark ? 'bg-white/5 text-dark-text-muted' : 'bg-slate-100 text-slate-400'}`}>
+                   Archive Access
+                </div>
+             )}
           </div>
         </div>
 

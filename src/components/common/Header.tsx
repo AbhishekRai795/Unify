@@ -1,15 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, User, Users, Menu, X } from 'lucide-react';
+import { LogOut, User, Users, Menu, X, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 import RoleToggle from './RoleToggle';
+import { getWalletBalance } from '../../services/walletApi';
+import { WalletModal } from './WalletModal';
 
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isDark } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchBalance = async () => {
+        try {
+          const balance = await getWalletBalance();
+          setWalletBalance(balance);
+        } catch (error) {
+          console.error('Failed to fetch wallet balance:', error);
+        }
+      };
+      fetchBalance();
+    }
+  }, [isAuthenticated, user]);
 
   const handleLogout = () => {
     logout();
@@ -116,6 +134,23 @@ const Header: React.FC = () => {
                   `}>
                     {user.activeRole.replace('-', ' ')}
                   </span>
+                  {user.activeRole === 'student' && (
+                    <button
+                      onClick={() => setIsWalletOpen(true)}
+                      className={`
+                        flex items-center space-x-2 px-3 py-1.5 rounded-lg border transition-all duration-300
+                        ${isDark 
+                          ? 'bg-dark-card/80 border-dark-border text-dark-text-primary hover:bg-dark-surface' 
+                          : 'bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200'
+                        }
+                      `}
+                    >
+                      <Wallet className={`h-4 w-4 ${isDark ? 'text-accent-400' : 'text-gray-600'}`} />
+                      <span className="text-sm font-medium">
+                        {walletBalance !== null ? `${walletBalance} pts` : '...'}
+                      </span>
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={handleLogout}
@@ -296,6 +331,8 @@ const Header: React.FC = () => {
           )}
         </div>
       </div>
+      {/* Wallet Modal */}
+      {isWalletOpen && <WalletModal isOpen={isWalletOpen} onClose={() => setIsWalletOpen(false)} />}
     </>
   );
 };

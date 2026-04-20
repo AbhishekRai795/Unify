@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { paymentAPI } from '../../services/paymentApi';
+import { getWalletBalance, payWithWallet } from '../../services/walletApi';
+import { Wallet, CreditCard, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ChapterPaymentModalProps {
   isOpen: boolean;
@@ -16,10 +18,10 @@ interface ChapterPaymentModalProps {
 
 interface PaymentSuccessData {
   transactionId: string;
-  razorpayPaymentId: string;
-  razorpayOrderId: string;
-  receiptId: string;
-  receiptUrl: string;
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  receiptId?: string;
+  receiptUrl?: string;
 }
 
 interface RazorpayResponse {
@@ -62,11 +64,52 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [paymentMode, setPaymentMode] = useState<'razorpay' | 'wallet' | null>(null);
   const { user } = useAuth();
 
+  useEffect(() => {
+    if (isOpen && user) {
+      const fetchBalance = async () => {
+        try {
+          const balance = await getWalletBalance();
+          setWalletBalance(balance);
+        } catch (err) {
+          console.error("Failed to fetch wallet balance:", err);
+        }
+      };
+      fetchBalance();
+    }
+  }, [isOpen, user]);
 
+  const pointsRequired = Math.ceil(registrationFee / 100);
 
-  const handlePayment = async () => {
+  const handleWalletPayment = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const result = await payWithWallet({
+        amount: pointsRequired,
+        chapterId,
+        eventId: undefined
+      });
+
+      if (result.success) {
+        onPaymentSuccess({
+          transactionId: result.transactionId
+        });
+        onClose();
+      } else {
+        throw new Error(result.error || 'Wallet payment failed');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Payment failed');
+      setLoading(false);
+    }
+  };
+
+  const handleRazorpayPayment = async () => {
     try {
       setLoading(true);
       setError('');
@@ -92,7 +135,7 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         prefill: {
           name: orderData.studentName || user?.name || '',
           email: orderData.studentEmail || user?.email || '',
-          contact: '+919999999999' // Razorpay recommends country-code formatted phone numbers.
+          contact: '+919999999999'
         },
         readonly: {
           name: true,
@@ -111,14 +154,12 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         }
       };
 
-      // Initialize Razorpay
       const razorpay = new (window as any).Razorpay(options);
       
       razorpay.on('payment.failed', function (response: any) {
         console.error('Payment failed details:', JSON.stringify(response.error, null, 2));
         setLoading(false);
-        setError(`Payment declined: ${response.error?.description || 'Please try again'} (Reason: ${response.error?.reason || 'Unknown'})`);
-        // Optional: you can choose not to call onPaymentFailed here if you want to let the user retry in the modal
+        setError(`Payment declined: ${response.error?.description || 'Please try again'}`);
       });
       
       razorpay.open();
@@ -137,7 +178,6 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
     try {
       setLoading(true);
 
-      // Step 3: Verify payment signature via paymentAPI service
       const verifyData = await paymentAPI.verifyPayment({
         razorpayOrderId: response.razorpay_order_id,
         razorpayPaymentId: response.razorpay_payment_id,
@@ -151,7 +191,6 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         throw new Error(verifyData.error || 'Payment verification failed');
       }
 
-      // Step 4: Complete registration via paymentAPI service
       const registrationData = await paymentAPI.completePaymentRegistration({
         transactionId: orderData.transactionId,
         chapterId,
@@ -162,7 +201,6 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         throw new Error(registrationData.error || 'Failed to complete registration');
       }
 
-      // Success!
       onPaymentSuccess({
         transactionId: orderData.transactionId,
         razorpayPaymentId: response.razorpay_payment_id,
@@ -184,71 +222,123 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">Payment Required</h2>
-          <button
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white relative">
+          <button 
             onClick={onClose}
             disabled={loading}
-            className="text-gray-500 hover:text-gray-700 text-2xl leading-none disabled:opacity-50"
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
           >
-            ×
+            <ChevronRight className="rotate-90" />
           </button>
+          <div className="flex items-center space-x-3 mb-2">
+            <CheckCircle2 className="h-6 w-6" />
+            <h2 className="text-xl font-bold">Complete Registration</h2>
+          </div>
+          <p className="text-blue-100 text-sm opacity-90">Securely join {chapterName}</p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="mb-4">
-              <p className="text-gray-600 text-sm mb-1">Chapter</p>
-              <p className="text-lg font-semibold text-gray-800">{chapterName}</p>
+        <div className="p-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start space-x-3 text-red-700 animate-in slide-in-from-top-2">
+              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <p className="text-sm font-medium">{error}</p>
             </div>
-
-            <div className="border-t border-gray-300 pt-4">
-              <p className="text-gray-600 text-sm mb-1">Registration Fee</p>
-              <p className="text-3xl font-bold text-blue-600">₹{registrationFee / 100}</p>
-            </div>
-
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded p-3">
-              <p className="text-xs text-gray-600">
-                <span className="font-semibold">Note:</span> Once payment is complete, you will be automatically registered for this chapter.
-              </p>
-            </div>
-          </div>
-
-        <button
-          onClick={handlePayment}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center justify-center"
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </>
-          ) : (
-            'Pay Now'
           )}
-        </button>
 
-        <button
-          onClick={onClose}
-          disabled={loading}
-          className="w-full mt-3 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-800 font-semibold py-2 px-4 rounded transition duration-200"
-        >
-          Cancel
-        </button>
+          <div className="space-y-6 mb-8">
+            <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registration Fee</p>
+                <p className="text-3xl font-black text-gray-900">₹{registrationFee / 100}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Required Points</p>
+                <p className="text-xl font-bold text-orange-600">{pointsRequired} pts</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select Payment Method</p>
+              
+              {/* Wallet Option */}
+              <button
+                onClick={() => setPaymentMode('wallet')}
+                disabled={loading || (walletBalance !== null && walletBalance < pointsRequired)}
+                className={`w-full group relative flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                  paymentMode === 'wallet' 
+                    ? 'border-orange-500 bg-orange-50' 
+                    : 'border-gray-100 hover:border-orange-200 bg-white'
+                } ${(walletBalance !== null && walletBalance < pointsRequired) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-lg ${paymentMode === 'wallet' ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-600'}`}>
+                    <Wallet size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Pay with Wallet</p>
+                    <p className="text-xs text-gray-500">
+                      Balance: {walletBalance !== null ? `${walletBalance} pts` : 'Loading...'}
+                    </p>
+                  </div>
+                </div>
+                {paymentMode === 'wallet' && <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />}
+              </button>
+
+              {/* Razorpay Option */}
+              <button
+                onClick={() => setPaymentMode('razorpay')}
+                disabled={loading}
+                className={`w-full group relative flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                  paymentMode === 'razorpay' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-100 hover:border-blue-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-lg ${paymentMode === 'razorpay' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'}`}>
+                    <CreditCard size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-900">Razorpay Secured</p>
+                    <p className="text-xs text-gray-500">Cards, UPI, Netbanking</p>
+                  </div>
+                </div>
+                {paymentMode === 'razorpay' && <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={paymentMode === 'wallet' ? handleWalletPayment : handleRazorpayPayment}
+            disabled={loading || !paymentMode}
+            className={`w-full py-4 px-6 rounded-xl font-bold text-white transition-all duration-300 shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              paymentMode === 'wallet' 
+                ? 'bg-gradient-to-r from-orange-500 to-amber-600 shadow-orange-500/25' 
+                : 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-blue-500/25'
+            }`}
+          >
+            {loading ? (
+              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <span>{paymentMode === 'wallet' ? 'Confirm Points Payment' : 'Pay via Razorpay'}</span>
+                <ChevronRight size={18} />
+              </>
+            )}
+          </button>
+          
+          <p className="mt-4 text-center text-[10px] text-gray-400">
+            By proceeding, you agree to the Membership Terms. 
+            Points payments are non-refundable.
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
 export default ChapterPaymentModal;
+

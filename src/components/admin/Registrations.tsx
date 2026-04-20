@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { useChat } from '../../contexts/ChatContext';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
-import { Filter, Search, Calendar, Mail, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, MessageSquare, Download, User, Hash, UserMinus, ArrowLeft } from 'lucide-react';
+import { Filter, Search, Calendar, Mail, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, MessageSquare, Download, User, Hash, UserMinus, ArrowLeft, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import Modal from '../common/Modal';
@@ -11,22 +12,31 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const Registrations: React.FC = () => {
   const { isDark } = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { 
-    registrations, 
+    registrations: chapterRegistrations, 
     updateRegistrationStatus, 
     fetchRegistrations, 
-    isLoading, 
-    error, 
+    isLoading: isChapterLoading, 
+    error: chapterError, 
     refreshData 
   } = useChapterHead();
   const { setActiveConversation, setIsWidgetOpen, refreshConversations } = useChat();
   
+  // Consolidation State - Persisted via Search Params
+  const viewMode = (searchParams.get('type') as 'chapters' | 'events') || 'chapters';
+  const setViewMode = (mode: 'chapters' | 'events') => setSearchParams({ type: mode }, { replace: true });
+
+  const [eventRegistrations, setEventRegistrations] = useState<any[]>([]);
+  const [isEventLoading, setIsEventLoading] = useState(false);
+  const [eventError, setEventError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'kicked' | 'left'>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
-  const [selectedRegistration, setSelectedRegistration] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'kicked' | 'left' | 'removed'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'status' | 'event'>('date');
+  const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [showActionModal, setShowActionModal] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'kick'>('approve');
+  const [actionType, setActionType] = useState<'approve' | 'reject' | 'kick' | 'remove'>('approve');
   const [actionNotes, setActionNotes] = useState('');
   const [processingAction, setProcessingAction] = useState(false);
   const [notification, setNotification] = useState<{
@@ -34,34 +44,49 @@ const Registrations: React.FC = () => {
     message: string;
   } | null>(null);
 
-  useEffect(() => {
-    fetchRegistrations();
-  }, []);
+  const fetchEventRegistrations = async () => {
+    setIsEventLoading(true);
+    try {
+      const data = await chapterHeadAPI.getEventRegistrations();
+      setEventRegistrations(data.registrations || []);
+      setEventError(null);
+    } catch (err: any) {
+      setEventError(err.message || 'Failed to fetch event registrations');
+    } finally {
+      setIsEventLoading(false);
+    }
+  };
 
-  const handleStatusUpdate = async (registrationId: string, newStatus: 'approved' | 'rejected') => {
+  useEffect(() => {
+    if (viewMode === 'chapters') {
+      fetchRegistrations();
+    } else {
+      fetchEventRegistrations();
+    }
+  }, [viewMode]);
+
+  const handleStatusUpdate = async (registrationId: string, newStatus: 'approved' | 'rejected' | 'removed') => {
     setProcessingAction(true);
     try {
-      const success = await updateRegistrationStatus(registrationId, newStatus, actionNotes);
-      if (success) {
-        setNotification({
-          type: 'success',
-          message: `Registration ${newStatus} successfully`
-        });
+      if (viewMode === 'chapters') {
+        const success = await updateRegistrationStatus(registrationId, newStatus as any, actionNotes);
+        if (success) {
+          setNotification({ type: 'success', message: `Registration ${newStatus} successfully` });
+          setShowActionModal(false);
+          setActionNotes('');
+        } else {
+          setNotification({ type: 'error', message: 'Failed to update registration status' });
+        }
+      } else {
+        await chapterHeadAPI.updateEventRegistrationStatus(registrationId, newStatus, actionNotes);
+        setNotification({ type: 'success', message: `Event registration ${newStatus} successfully` });
         setShowActionModal(false);
         setActionNotes('');
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          type: 'error',
-          message: 'Failed to update registration status'
-        });
-        setTimeout(() => setNotification(null), 3000);
+        fetchEventRegistrations(); // Refresh list
       }
-    } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'An error occurred while updating'
-      });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'An error occurred while updating' });
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setProcessingAction(false);
@@ -72,28 +97,21 @@ const Registrations: React.FC = () => {
     setProcessingAction(true);
     try {
       await chapterHeadAPI.kickStudent(studentEmail, actionNotes);
-      setNotification({
-        type: 'success',
-        message: 'Student removed from chapter successfully'
-      });
+      setNotification({ type: 'success', message: 'Student removed from chapter successfully' });
       setShowActionModal(false);
       setActionNotes('');
-      // Refresh registrations to update the UI
       fetchRegistrations();
       setTimeout(() => setNotification(null), 3000);
-    } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Failed to remove student from chapter'
-      });
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'Failed to remove student from chapter' });
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setProcessingAction(false);
     }
   };
 
-  const openActionModal = (registrationId: string, action: 'approve' | 'reject' | 'kick') => {
-    setSelectedRegistration(registrationId);
+  const openActionModal = (registration: any, action: 'approve' | 'reject' | 'kick' | 'remove') => {
+    setSelectedRegistration(registration);
     setActionType(action);
     setShowActionModal(true);
   };
@@ -111,10 +129,17 @@ const Registrations: React.FC = () => {
     await refreshConversations(registration.chapterId);
   };
 
-  const filteredRegistrations = registrations.filter(reg => {
-    const matchesSearch = reg.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reg.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reg.chapterName.toLowerCase().includes(searchTerm.toLowerCase());
+  const currentData = viewMode === 'chapters' ? chapterRegistrations : eventRegistrations;
+  const currentLoading = viewMode === 'chapters' ? isChapterLoading : isEventLoading;
+  const currentError = viewMode === 'chapters' ? chapterError : eventError;
+
+  const filteredRegistrations = currentData.filter(reg => {
+    const matchesSearch = 
+      reg.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reg.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.chapterName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.eventTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
     const matchesStatus = statusFilter === 'all' || reg.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -125,9 +150,11 @@ const Registrations: React.FC = () => {
         return a.studentName.localeCompare(b.studentName);
       case 'status':
         return a.status.localeCompare(b.status);
+      case 'event':
+        return (a.eventTitle || '').localeCompare(b.eventTitle || '');
       case 'date':
       default:
-        return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+        return new Date(b.appliedAt || b.createdAt).getTime() - new Date(a.appliedAt || a.createdAt).getTime();
     }
   });
 
@@ -138,7 +165,8 @@ const Registrations: React.FC = () => {
       case 'rejected':
         return <XCircle className="h-4 w-4 text-red-600" />;
       case 'kicked':
-        return <UserMinus className="h-4 w-4 text-red-600" />;
+      case 'removed':
+        return <UserMinus className="h-4 w-4 text-orange-600" />;
       case 'left':
         return <UserMinus className="h-4 w-4 text-gray-600" />;
       default:
@@ -153,37 +181,52 @@ const Registrations: React.FC = () => {
       case 'rejected':
         return 'text-red-600 bg-red-50';
       case 'kicked':
-        return 'text-red-600 bg-red-50';
+      case 'removed':
+        return 'text-orange-600 bg-orange-50';
       case 'left':
         return 'text-gray-600 bg-gray-50';
       default:
         return 'text-yellow-600 bg-yellow-50';
     }
-  };  const handleExport = () => {
-    const csvContent = [
-      ['Student Name', 'Email', 'SAP ID', 'Year', 'Chapter', 'Status', 'Applied Date', 'Notes'],
-      ...sortedRegistrations.map(reg => [
-        reg.studentName || '',
-        reg.studentEmail || '',
-        reg.sapId || '',
-        reg.year || '',
-        reg.chapterName || '',
-        reg.status,
-        new Date(reg.appliedAt).toLocaleDateString(),
-        reg.notes || ''
-      ])
-    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  };
 
+  const handleExport = () => {
+    const headers = viewMode === 'chapters' 
+      ? ['Student Name', 'Email', 'SAP ID', 'Year', 'Chapter', 'Status', 'Applied Date', 'Notes']
+      : ['Student Name', 'Email', 'Event Title', 'Status', 'Applied Date', 'Notes'];
+
+    const rows = sortedRegistrations.map(reg => viewMode === 'chapters' 
+      ? [
+          reg.studentName || '',
+          reg.studentEmail || '',
+          reg.sapId || '',
+          reg.year || '',
+          reg.chapterName || '',
+          reg.status,
+          new Date(reg.appliedAt).toLocaleDateString(),
+          reg.notes || ''
+        ]
+      : [
+          reg.studentName || '',
+          reg.studentEmail || '',
+          reg.eventTitle || '',
+          reg.status,
+          new Date(reg.appliedAt || reg.createdAt).toLocaleDateString(),
+          reg.notes || ''
+        ]
+    );
+
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `registrations-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${viewMode}-registrations-export-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
 
-  if (isLoading && registrations.length === 0) {
+  if (currentLoading && currentData.length === 0) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
         <Loader />
@@ -195,7 +238,7 @@ const Registrations: React.FC = () => {
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation */}
-        <div className="mb-6 text-left">
+        <div className="mb-6">
           <button
             onClick={() => window.location.href = '/head/dashboard'}
             className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
@@ -209,13 +252,18 @@ const Registrations: React.FC = () => {
 
         {/* Header */}
         <motion.div 
+          key={viewMode}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <h1 className={`text-4xl font-black mb-2 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Student Registrations</h1>
+          <h1 className={`text-4xl font-black mb-2 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>
+            {viewMode === 'chapters' ? 'Student Registrations' : 'Event Registrations'}
+          </h1>
           <p className={`max-w-2xl mx-auto font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
-            View and manage student chapter registrations.
+            {viewMode === 'chapters' 
+              ? 'View and manage student chapter registrations.' 
+              : 'View and manage student entries for specific chapter events.'}
           </p>
         </motion.div>
 
@@ -224,24 +272,19 @@ const Registrations: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
             className={`mb-6 p-4 rounded-lg flex items-center ${
               notification.type === 'success'
                 ? 'bg-green-50 border border-green-200 text-green-800'
                 : 'bg-red-50 border border-red-200 text-red-800'
             }`}
           >
-            {notification.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 mr-2" />
-            ) : (
-              <AlertCircle className="h-5 w-5 mr-2" />
-            )}
+            {notification.type === 'success' ? <CheckCircle className="h-5 w-5 mr-2" /> : <AlertCircle className="h-5 w-5 mr-2" />}
             {notification.message}
           </motion.div>
         )}
 
         {/* Error Display */}
-        {error && (
+        {currentError && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -250,14 +293,14 @@ const Registrations: React.FC = () => {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
-                <p className="text-red-800">{error}</p>
+                <p className="text-red-800">{currentError}</p>
               </div>
               <button
-                onClick={refreshData}
+                onClick={viewMode === 'chapters' ? refreshData : fetchEventRegistrations}
                 className="ml-3 text-red-600 hover:text-red-700"
-                disabled={isLoading}
+                disabled={currentLoading}
               >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 ${currentLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </motion.div>
@@ -269,7 +312,7 @@ const Registrations: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className={`backdrop-blur-md rounded-xl p-6 border mb-8 transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -285,7 +328,7 @@ const Registrations: React.FC = () => {
             {/* Status Filter */}
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected' | 'kicked' | 'left')}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Statuses</option>
@@ -294,12 +337,13 @@ const Registrations: React.FC = () => {
               <option value="rejected">Rejected</option>
               <option value="kicked">Kicked</option>
               <option value="left">Left</option>
+              {viewMode === 'events' && <option value="removed">Removed</option>}
             </select>
 
             {/* Sort By */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'status')}
+              onChange={(e) => setSortBy(e.target.value as any)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="date">Sort by Date</option>
@@ -307,13 +351,42 @@ const Registrations: React.FC = () => {
               <option value="status">Sort by Status</option>
             </select>
 
-            {/* Results Count (4th Item) */}
+            {/* Results Count */}
             <div className="flex items-center text-sm text-gray-600 bg-gray-50/50 px-4 py-2 rounded-lg border border-gray-100 h-full">
               <Filter className="h-4 w-4 mr-2 text-blue-500" />
               <span className="font-medium">{sortedRegistrations.length} found</span>
             </div>
 
-            {/* Export Action (5th Item) */}
+            {/* View Mode Switcher - REPLACED DROPDOWN WITH TOGGLE */}
+            <div className={`
+              lg:col-span-1 p-1 rounded-xl border backdrop-blur-sm flex items-center gap-1
+              ${isDark ? 'bg-dark-bg/40 border-dark-border/50' : 'bg-slate-50/50 border-slate-200/50'}
+            `}>
+              {(['chapters', 'events'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`
+                    flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300
+                    ${viewMode === mode
+                      ? (isDark 
+                          ? 'bg-dark-surface text-accent-400 shadow-lg border border-accent-500/30' 
+                          : 'bg-white text-blue-600 shadow-md border border-blue-100'
+                        )
+                      : (isDark 
+                          ? 'text-dark-text-muted hover:text-dark-text-secondary' 
+                          : 'text-slate-400 hover:text-slate-500'
+                        )
+                    }
+                  `}
+                >
+                  <Layers size={12} className={viewMode === mode ? 'animate-pulse text-current' : 'text-current'} />
+                  {mode}
+                </button>
+              ))}
+            </div>
+
+            {/* Export Action */}
             <button
               onClick={handleExport}
               className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] text-sm font-bold w-full h-full"
@@ -324,7 +397,7 @@ const Registrations: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Registrations Table */}
+        {/* Table */}
         <div className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -334,7 +407,7 @@ const Registrations: React.FC = () => {
                     Student
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Chapter
+                    {viewMode === 'chapters' ? 'Chapter' : 'Event'}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -362,36 +435,34 @@ const Registrations: React.FC = () => {
                           <User className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                             {registration.studentName}
                           </div>
                           <div className="text-sm text-gray-500 flex items-center">
                             <Mail className="h-3 w-3 mr-1" />
                             {registration.studentEmail}
                           </div>
-                          <div className="flex items-center space-x-4">
-                            {registration.year && (
-                              <div className="text-xs text-gray-400 flex items-center">
-                                <span>Year: {registration.year}</span>
-                              </div>
-                            )}
-                            {registration.sapId && (
-                              <div className="text-xs text-gray-400 flex items-center">
-                                <Hash className="h-3 w-3 mr-1" />
-                                <span>SAP: {registration.sapId}</span>
-                              </div>
-                            )}
-                          </div>
+                          {viewMode === 'chapters' && (
+                            <div className="flex items-center space-x-4">
+                              {registration.year && <div className="text-xs text-gray-400">Year: {registration.year}</div>}
+                              {registration.sapId && (
+                                <div className="text-xs text-gray-400 flex items-center">
+                                  <Hash className="h-3 w-3 mr-1" />
+                                  SAP: {registration.sapId}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
                     
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {registration.chapterName}
+                      <div className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+                        {viewMode === 'chapters' ? registration.chapterName : (registration.eventTitle || 'Untitled Event')}
                       </div>
                       <div className="text-xs text-gray-500">
-                        ID: {registration.chapterId}
+                        ID: {(viewMode === 'chapters' ? registration.chapterId : registration.eventId)?.substring(0, 8)}
                       </div>
                     </td>
                     
@@ -404,77 +475,51 @@ const Registrations: React.FC = () => {
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="flex items-center">
+                    <td className="px-6 py-4 text-sm">
+                      <div className={`flex items-center ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                         <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                        {new Date(registration.appliedAt).toLocaleDateString()}
+                        {new Date(registration.appliedAt || registration.createdAt).toLocaleDateString()}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(registration.appliedAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(registration.appliedAt || registration.createdAt), { addSuffix: true })}
                       </div>
                     </td>
                     
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        {(registration.userId || registration.studentEmail) && (
-                          <button
-                            onClick={() => startChatWithStudent(registration)}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 flex items-center"
-                            title="Start or continue chat with this student"
-                          >
-                            <MessageSquare className="h-4 w-4 mr-1" />
-                            Chat
-                          </button>
-                        )}
-                        {registration.status === 'pending' && (
+                        <button
+                          onClick={() => startChatWithStudent(registration)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 flex items-center"
+                          title="Chat with Student"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Chat
+                        </button>
+                        {registration.status === 'pending' ? (
                           <>
                             <button 
-                              onClick={() => openActionModal(registration.registrationId, 'approve')}
-                              className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors duration-200"
-                              disabled={processingAction}
+                              onClick={() => openActionModal(registration, 'approve')}
+                              className="text-green-600 hover:text-green-700 text-sm font-medium"
                             >
                               Approve
                             </button>
                             <button 
-                              onClick={() => openActionModal(registration.registrationId, 'reject')}
-                              className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors duration-200"
-                              disabled={processingAction}
+                              onClick={() => openActionModal(registration, 'reject')}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium"
                             >
                               Reject
                             </button>
                           </>
-                        )}
-                        {registration.status === 'approved' && (
-                          <>
-                            <span className="text-green-600 text-sm flex items-center">
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approved
-                            </span>
+                        ) : (
+                          registration.status === 'approved' && (
                             <button 
-                              onClick={() => openActionModal(registration.registrationId, 'kick')}
-                              className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors duration-200 flex items-center"
-                              disabled={processingAction}
-                              title="Remove student from chapter"
+                              onClick={() => openActionModal(registration, viewMode === 'chapters' ? 'kick' : 'remove')}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center"
                             >
                               <UserMinus className="h-4 w-4 mr-1" />
-                              Remove
+                              {viewMode === 'chapters' ? 'Remove' : 'Remove'}
                             </button>
-                          </>
-                        )}
-                        {registration.status === 'rejected' && (
-                          <span className="text-red-600 text-sm flex items-center">
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejected
-                          </span>
-                        )}
-                        {registration.notes && (
-                          <button
-                            onClick={() => alert(registration.notes)}
-                            className="text-blue-600 hover:text-blue-700 text-sm"
-                            title="View notes"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </button>
+                          )
                         )}
                       </div>
                     </td>
@@ -486,11 +531,9 @@ const Registrations: React.FC = () => {
 
           {sortedRegistrations.length === 0 && (
             <div className="text-center py-12">
-              <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <Layers className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No registrations found</h3>
-              <p className="text-gray-600">
-                No student registrations match your current filters.
-              </p>
+              <p className="text-gray-600">No results match your current filters.</p>
             </div>
           )}
         </div>
@@ -503,17 +546,11 @@ const Registrations: React.FC = () => {
             setActionNotes('');
             setSelectedRegistration(null);
           }}
-          title={`${actionType === 'approve' ? 'Approve' : actionType === 'reject' ? 'Reject' : 'Remove Student from'} Registration`}
+          title={`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Registration`}
         >
           <div className="space-y-4">
             <p className="text-gray-600">
-              Are you sure you want to {actionType === 'kick' ? 'remove this student from the chapter' : `${actionType} this registration`}? 
-              {actionType === 'approve' 
-                ? ' The student will receive access to the chapter.' 
-                : actionType === 'reject'
-                  ? ' The student will be notified of the rejection.'
-                  : ' The student will be removed from the chapter and their status will be updated.'
-              }
+              Are you sure you want to {actionType === 'kick' || actionType === 'remove' ? 'remove this entry' : actionType}? 
             </p>
 
             <div>
@@ -525,50 +562,34 @@ const Registrations: React.FC = () => {
                 value={actionNotes}
                 onChange={(e) => setActionNotes(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={actionType === 'approve' 
-                  ? "Welcome message or additional instructions..."
-                  : actionType === 'reject'
-                    ? "Reason for rejection or feedback..."
-                    : "Reason for removal..."}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="Reason or instructions..."
               />
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <button
-                onClick={() => {
-                  setShowActionModal(false);
-                  setActionNotes('');
-                  setSelectedRegistration(null);
-                }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
-                disabled={processingAction}
+                onClick={() => { setShowActionModal(false); setActionNotes(''); }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={() => {
                   if (selectedRegistration) {
-                    if (actionType === 'kick') {
-                      const registration = registrations.find(r => r.registrationId === selectedRegistration);
-                      if (registration) {
-                        handleKickStudent(registration.studentEmail);
-                      }
-                    } else {
-                      const status = actionType === 'approve' ? 'approved' : 'rejected';
-                      handleStatusUpdate(selectedRegistration, status);
-                    }
+                     if (actionType === 'kick') {
+                        handleKickStudent(selectedRegistration.studentEmail);
+                     } else {
+                        handleStatusUpdate(selectedRegistration.registrationId, actionType as any);
+                     }
                   }
                 }}
+                className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                  actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                }`}
                 disabled={processingAction}
-                className={`px-4 py-2 text-white rounded-lg transition-colors duration-200 flex items-center ${
-                  actionType === 'approve'
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                } ${processingAction ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {processingAction && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
-                {actionType === 'approve' ? 'Approve' : actionType === 'reject' ? 'Reject' : 'Remove Student'}
+                {processingAction ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>
