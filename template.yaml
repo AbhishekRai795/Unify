@@ -168,6 +168,60 @@ Resources:
           Value: Payment
 
   # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — EventRegistrationRequests Table (NEW)
+  # ──────────────────────────────────────────────────────────────────────────
+  EventRegistrationRequestsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: EventRegistrationRequests
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: registrationId
+          AttributeType: S
+        - AttributeName: chapterId
+          AttributeType: S
+        - AttributeName: eventId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: registrationId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ChapterIdIndex
+          KeySchema:
+            - AttributeName: chapterId
+              KeyType: HASH
+            - AttributeName: registrationId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: EventIdIndex
+          KeySchema:
+            - AttributeName: eventId
+              KeyType: HASH
+            - AttributeName: registrationId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: registrationId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: EventRegistration
+
+  # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — ChapterEvents Table
   # ──────────────────────────────────────────────────────────────────────────
   ChapterEventsTable:
@@ -425,6 +479,58 @@ Resources:
           Value: Unify
         - Key: Component
           Value: Certificates
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — Wallet Table
+  # Stores student reward points balance
+  # ──────────────────────────────────────────────────────────────────────────
+  WalletTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: Wallet
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Wallet
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — WalletTransactions Table
+  # History of credits (certificates) and debits (payments)
+  # ──────────────────────────────────────────────────────────────────────────
+  WalletTransactionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: WalletTransactions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: transactionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: transactionId
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Wallet
 
   # ──────────────────────────────────────────────────────────────────────────
   # S3 Bucket — Payment Receipts
@@ -921,6 +1027,75 @@ Resources:
         Component: EventProfile
 
   # ──────────────────────────────────────────────────────────────────────────
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Manage Event Registrations API
+  # GET /api/chapterhead/event-registrations
+  # PUT /api/chapterhead/event-registration/{registrationId}
+  # ──────────────────────────────────────────────────────────────────────────
+  ManageEventRegistrationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-manage-event-registrations-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/manage-event-registrations/
+      Description: Handle listing and approval of event registration requests
+      Timeout: 15
+      Environment:
+        Variables:
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          USERS_TABLE: Unify-Users
+          CHAPTERS_TABLE: Chapters
+          EVENTS_TABLE: !Ref ChapterEventsTable
+          ACTIVITIES_TABLE: Activities
+          CHAPTER_HEAD_TABLE: ChapterHead
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
+        - DynamoDBCrudPolicy:
+            TableName: Unify-Users
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBReadPolicy:
+            TableName: ChapterHead
+      Events:
+        GetEventRegistrationsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapterhead/event-registrations
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        GetEventRegistrationsOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapterhead/event-registrations
+            Method: OPTIONS
+        UpdateEventRegistrationApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapterhead/event-registration/{registrationId}
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuth
+        UpdateEventRegistrationOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapterhead/event-registration/{registrationId}
+            Method: OPTIONS
+      Tags:
+        Application: Unify
+        Component: EventRegistration
+
   # Lambda 6: Get Payment Details
   # Returns payment history for a user or chapter (requires auth)
   # GET /api/payments/details
@@ -1121,9 +1296,18 @@ Resources:
       Handler: index.handler
       CodeUri: deploy/functions/joinFreeEvent-payment/
       Description: Student joins a free chapter event
+      Environment:
+        Variables:
+          EVENT_PAYMENTS_TABLE: !Ref EventPaymentsTable
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          EVENTS_TABLE: !Ref ChapterEventsTable
+          USERS_TABLE: Unify-Users
+          ACTIVITIES_TABLE: Activities
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ChapterEventsTable
         - DynamoDBCrudPolicy:
@@ -1631,6 +1815,10 @@ Resources:
             TableName: ChapterEvents
         - DynamoDBReadPolicy:
             TableName: EventPayments
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WalletTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WalletTransactionsTable
       Events:
         IssueCertificateApi:
           Type: HttpApi
@@ -1665,6 +1853,108 @@ Resources:
       Tags:
         Application: Unify
         Component: Certificates
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Wallet Management
+  # GET /api/wallet/balance (Student)
+  # GET /api/wallet/history (Student)
+  # ──────────────────────────────────────────────────────────────────────────
+  WalletFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-wallet-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/wallet-management/
+      Description: Manages student wallet balance and history
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref WalletTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref WalletTransactionsTable
+      Events:
+        GetWalletBalanceApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/wallet/balance
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        GetWalletHistoryApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/wallet/history
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        WalletOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/wallet/{proxy+}
+            Method: OPTIONS
+      Tags:
+        Application: Unify
+        Component: Wallet
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Pay With Wallet
+  # POST /api/wallet/pay (Student)
+  # ──────────────────────────────────────────────────────────────────────────
+  PayWithWalletFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-pay-with-wallet-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/pay-with-wallet/
+      Description: Handles payments using wallet points
+      Timeout: 30
+      Environment:
+        Variables:
+          WALLET_TABLE: !Ref WalletTable
+          TRANSACTIONS_TABLE: !Ref WalletTransactionsTable
+          CHAPTER_PAYMENTS_TABLE: !Ref ChapterPaymentsTable
+          EVENT_PAYMENTS_TABLE: !Ref EventPaymentsTable
+          REGISTRATION_TABLE: RegistrationRequests
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          USERS_TABLE: Unify-Users
+          CHAPTERS_TABLE: Chapters
+          EVENTS_TABLE: !Ref ChapterEventsTable
+          ACTIVITIES_TABLE: Activities
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WalletTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WalletTransactionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventPaymentsTable
+        - DynamoDBCrudPolicy:
+            TableName: RegistrationRequests
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
+        - DynamoDBCrudPolicy:
+            TableName: Unify-Users
+        - DynamoDBCrudPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+      Events:
+        PayWithWalletApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/wallet/pay
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Wallet
 
 Outputs:
   PaymentApiUrl:

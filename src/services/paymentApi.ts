@@ -8,7 +8,7 @@ const PAYMENT_API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
 
-const getAuthHeaders = () => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('idToken');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

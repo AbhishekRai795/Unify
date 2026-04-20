@@ -243,4 +243,31 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["CertificateFunction"]
 
+[function_build_definitions.0e7bd59f-e76e-43bb-9b88-162dc3d43bb1]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/wallet-management"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["WalletFunction"]
+
+[function_build_definitions.640a42d6-ff76-4f22-bc32-7005e88822a0]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/pay-with-wallet"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["PayWithWalletFunction"]
+
+[function_build_definitions.bbbbf581-a15a-4622-beca-e5d70cafda17]
+codeuri = "/Users/govindmaheshwari/Unify/deploy/functions/manage-event-registrations"
+runtime = "nodejs20.x"
+architecture = "x86_64"
+handler = "index.handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ManageEventRegistrationsFunction"]
+
 [layer_build_definitions]

@@ -174,7 +174,7 @@ export const handler = async (event) => {
       }));
 
       const chapterTransactions = await Promise.all((response.Items || [])
-        .filter(item => item.recordType === "TRANSACTION" || !item.recordType)
+        .filter(item => item.recordType === "TRANSACTION" || item.recordType === "PAYMENT" || !item.recordType)
         .map(async (tx) => {
         const amount = Number(tx.amount || 0);
         return {

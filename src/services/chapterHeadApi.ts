@@ -301,5 +301,23 @@ export const chapterHeadAPI = {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
+  },
+
+  // Event Registrations (Independent System)
+  getEventRegistrations: async () => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/event-registrations`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  updateEventRegistrationStatus: async (registrationId: string, status: 'approved' | 'rejected' | 'removed', notes?: string) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapterhead/event-registration/${encodeURIComponent(registrationId)}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status, notes }),
+    });
+    return handleResponse(response);
   }
 };
