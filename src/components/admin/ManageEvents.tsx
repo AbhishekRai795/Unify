@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { 
   Calendar, 
   MapPin, 
@@ -48,6 +49,7 @@ interface EventRegistration {
 }
 
 const ManageEvents: React.FC = () => {
+  const { isDark } = useTheme();
   const { fetchMyEvents, updateEvent, deleteEvent, chapters } = useChapterHead();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -200,9 +202,27 @@ const ManageEvents: React.FC = () => {
           </button>
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Manage Events</h1>
-          <p className="text-slate-600 max-w-2xl mx-auto font-medium">View, edit, and manage your chapter's events</p>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+          </div>
+          <h1 className={`
+            text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
+            ${isDark 
+              ? 'text-dark-text-primary' 
+              : 'text-[#1a1f36]'
+            }
+          `}>
+            Manage Events
+          </h1>
+          <p className={`
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
+          `}>
+            View, edit, and manage your chapter's events
+          </p>
         </div>
       </div>
 

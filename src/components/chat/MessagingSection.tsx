@@ -108,16 +108,24 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
           </Link>
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+          </div>
           <h1 className={`
-            text-4xl font-black mb-2 tracking-tight transition-colors duration-300
-            ${isDark ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' : 'text-slate-900'}
+            text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
+            ${isDark 
+              ? 'text-dark-text-primary' 
+              : 'text-[#1a1f36]'
+            }
           `}>
             {title}
           </h1>
           <p className={`
-            text-lg font-medium max-w-2xl mx-auto transition-colors duration-300
-            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
+            text-lg font-normal max-w-2xl mx-auto transition-colors duration-300
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
             {subtitle}
           </p>

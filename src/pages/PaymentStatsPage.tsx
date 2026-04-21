@@ -210,34 +210,46 @@ const PaymentStatsPage: React.FC = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${pageClass}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation & Title */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        {/* Navigation & Header */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-8">
             <button
                 onClick={() => navigate(-1)}
-                className={`p-3 backdrop-blur-md border rounded-xl hover:shadow-lg transition-all group ${cardClass} ${isDark ? 'text-dark-text-secondary hover:text-accent-400' : 'text-gray-600 hover:text-blue-600'}`}
-                title="Back to Dashboard"
+                className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
             >
-              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+              <div className={`p-2 mr-2 rounded-lg border transition-all ${isDark ? 'bg-dark-surface border-dark-border group-hover:border-accent-500/50 group-hover:bg-accent-600/10' : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'}`}>
+                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+              Back to Dashboard
             </button>
-            <div>
-                <h1 className={`text-3xl font-bold tracking-tight ${headingClass}`}>Payment Statistics Dashboard</h1>
-                <p className={`font-medium flex items-center gap-2 mt-1 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                    Chapter Management Center • <span className="text-blue-600">{chapterName}</span>
-                </p>
-            </div>
+
+            <button
+              onClick={handleExport}
+              className="flex items-center px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {viewType === 'chapter' ? 'Export Members CSV' : 'Export Stats CSV'}
+            </button>
           </div>
 
-          <div className="flex items-center gap-3">
-              <button
-                onClick={handleExport}
-                className="flex items-center px-6 py-3 bg-gray-900 text-white rounded-2xl text-sm font-bold hover:bg-black transition-all shadow-xl active:scale-95"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {viewType === 'chapter' ? 'Export Members CSV' : 'Export Stats CSV'}
-              </button>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="flex items-center justify-center space-x-4 mb-4">
+              <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+              <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
+              <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            </div>
+            <h1 className={`text-4xl font-bold mb-4 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]'}`}>
+              Payment Statistics Dashboard
+            </h1>
+            <p className={`text-lg max-w-2xl mx-auto font-normal flex items-center justify-center gap-2 ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>
+              <ShieldCheck className="w-5 h-5 text-green-500" />
+              Chapter Management Center • <span className="text-blue-600 font-medium">{chapterName}</span>
+            </p>
+          </motion.div>
         </div>
 
         {/* Quick Stats Grid */}

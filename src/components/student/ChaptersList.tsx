@@ -4,7 +4,6 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { studentAPI } from '../../services/api';
-import { paymentAPI } from '../../services/paymentApi';
 import ErrorMessage from '../common/ErrorMessage';
 import ChapterPaymentModal from './ChapterPaymentModal';
 
@@ -20,6 +19,8 @@ interface Chapter {
   memberCount?: number;
   contactEmail?: string;
   category?: string;
+  isPaid?: boolean;
+  registrationFee?: number;
 }
 
 interface ChapterCardProps {
@@ -559,21 +560,26 @@ const ChaptersList: React.FC = () => {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
+            <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+          </div>
           <h1 className={`
-            text-4xl font-black mb-4 transition-all duration-300 tracking-tight
+            text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
             ${isDark 
-              ? 'text-dark-text-primary bg-gradient-to-r from-accent-400 via-primary-400 to-accent-600 bg-clip-text text-transparent' 
-              : 'text-slate-900'
+              ? 'text-dark-text-primary' 
+              : 'text-[#1a1f36]'
             }
           `}>
             Browse Chapters
           </h1>
           <p className={`
-            text-lg max-w-2xl mx-auto transition-colors duration-300 font-medium
-            ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}
+            text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
+            ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
-            Discover and join chapters that match your interests and goals.
+            Discover and join chapters match your interests and goals
           </p>
         </div>
 
@@ -895,7 +901,7 @@ const ChaptersList: React.FC = () => {
           isOpen={showPaymentModal}
           chapterId={selectedChapterForPayment.id}
           chapterName={selectedChapterForPayment.name}
-          registrationFee={selectedChapterForPayment.registrationFee}
+          registrationFee={selectedChapterForPayment.registrationFee ?? 0}
           onClose={() => {
             setShowPaymentModal(false);
             setSelectedChapterForPayment(null);

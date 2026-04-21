@@ -30,6 +30,9 @@ const handleResponse = async (response: Response) => {
     } catch {
       errorData = { error: errorText || 'Unknown error' };
     }
+    if (errorData.details) {
+      throw new Error(`${errorData.error || 'Forbidden'}: ${errorData.details}`);
+    }
     throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
   }
   
