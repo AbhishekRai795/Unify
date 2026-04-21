@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, User, Users, Menu, X, Wallet } from 'lucide-react';
+import { LogOut, User, Users, Menu, X, Wallet, Calendar } from 'lucide-react';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 import RoleToggle from './RoleToggle';
 import { getWalletBalance } from '../../services/walletApi';
 import { WalletModal } from './WalletModal';
+import NotificationCenter from './NotificationCenter';
+
 
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -108,11 +111,30 @@ const Header: React.FC = () => {
 
             {/* Desktop Navigation */}
             {isAuthenticated && user && user.activeRole ? (
-              <div className="hidden md:flex items-center space-x-4">
-                <ThemeToggle />
-                
-                {/* Role Toggle - only show if user has multiple roles */}
-                <RoleToggle />
+                <div className="hidden md:flex items-center space-x-4">
+                  <ThemeToggle />
+                  <NotificationCenter />
+                  
+                  {user.activeRole === 'chapter-head' && (
+                    <Link
+                      to="/head/calendar"
+                      className={`
+                        p-2 rounded-xl transition-all duration-300 backdrop-blur-md border shadow-sm
+                        ${isDark 
+                          ? 'bg-dark-card/80 border-dark-border text-dark-text-secondary hover:text-accent-400 hover:bg-dark-surface' 
+                          : 'bg-white border-gray-200 text-gray-600 hover:text-blue-600 hover:shadow-md'
+                        }
+                      `}
+                      title="Meeting Calendar"
+                    >
+                      <Calendar className="h-5 w-5" />
+                    </Link>
+                  )}
+
+                  
+                  {/* Role Toggle - only show if user has multiple roles */}
+                  <RoleToggle />
+
                 
                 <div className={`
                   flex items-center space-x-2 px-3 py-1 rounded-full backdrop-blur-md border transition-all duration-300
@@ -295,7 +317,26 @@ const Header: React.FC = () => {
                 <RoleToggle />
               </div>
 
+              {/* Meeting Calendar for Chapter Heads */}
+              {user.activeRole === 'chapter-head' && (
+                <Link
+                  to="/head/calendar"
+                  onClick={closeMobileMenu}
+                  className={`
+                    w-full flex items-center space-x-3 p-4 rounded-lg transition-all duration-200 backdrop-blur-md border
+                    ${isDark 
+                      ? 'text-dark-text-secondary hover:text-accent-400 hover:bg-dark-surface border-dark-border' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100 border-gray-200'
+                    }
+                  `}
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="font-medium">Meeting Calendar</span>
+                </Link>
+              )}
+
               {/* Logout Button */}
+
               <button
                 onClick={handleLogout}
                 className={`
