@@ -97,9 +97,12 @@ export const handler = async (event) => {
   
   // Log sanitized authorizer info
   const authorizer = event.requestContext?.authorizer || {};
+  console.log("Full Authorizer Context:", JSON.stringify(authorizer, null, 2));
+  
   const claims = authorizer.jwt?.claims || authorizer.claims || {};
-  console.log("User Email:", claims.email || "Unknown");
-  console.log("User Sub:", claims.sub);
+  console.log("Final Claims used:", JSON.stringify(claims, null, 2));
+  
+  console.log("User Email identifying as:", claims.email || claims["cognito:username"] || "Unknown");
   
   const rawGroups = claims["cognito:groups"] || claims["groups"];
   console.log("Raw Groups Type:", typeof rawGroups);
@@ -118,22 +121,8 @@ export const handler = async (event) => {
     const groups = normalizeGroups(claims);
     console.log("Normalized Groups for check:", groups);
     
-    // Check groups and custom role
-    const isAuthorized = groups.some(isAuthorizedGroup) || 
-                       isAuthorizedGroup(claims["custom:role"] || "") ||
-                       isAuthorizedGroup(claims["role"] || "");
-    
-    if (!isAuthorized) {
-      console.warn("Permission denied for groups/roles:", { groups, customRole: claims["custom:role"] });
-      return {
-        statusCode: 403,
-        headers: corsHeaders,
-        body: JSON.stringify({ 
-          error: "Forbidden: Admin or Chapter Head access required",
-          details: `Your current groups (${groups.join(", ")}) do not have the required permissions.`
-        })
-      };
-    }
+    // Preliminary check for global admin
+    const isGlobalAdmin = groups.some(g => String(g).toLowerCase().includes('admin'));
 
     const chapterId = event.queryStringParameters?.chapterId;
     if (!chapterId) {
@@ -144,9 +133,8 @@ export const handler = async (event) => {
       };
     }
 
-    const includeRazorpay = (event.queryStringParameters?.includeRazorpay || "true") !== "false";
-
-    // 3. Load Chapter Data
+    // 3. Load Chapter Data EARLY to perform granular authorization check
+    console.log(`Checking permissions for chapterId: ${chapterId}...`);
     const chapterResponse = await docClient.send(new GetCommand({
       TableName: CHAPTERS_TABLE,
       Key: { chapterId }
@@ -160,6 +148,53 @@ export const handler = async (event) => {
       };
     }
     const chapter = chapterResponse.Item;
+
+    // Final authorization check:
+    // 1. User is a global admin
+    // 2. User's email matches the headEmail for this specific chapter
+    // 3. (Fallback) User belongs to a chapter-head group in Cognito
+    
+    // Broad extraction of user identity (similar to frontend AuthContext)
+    const userEmail = claims.email || 
+                     claims["cognito:username"] || 
+                     claims.preferred_username || 
+                     claims.username || 
+                     claims.sub;
+
+    const isChapterHeadOfThisChapter = userEmail && chapter.headEmail && 
+                                      String(userEmail).toLowerCase() === String(chapter.headEmail).toLowerCase();
+    
+    const isAuthorized = isGlobalAdmin || 
+                         isChapterHeadOfThisChapter || 
+                         groups.some(isAuthorizedGroup) || 
+                         isAuthorizedGroup(claims["custom:role"] || "") ||
+                         isAuthorizedGroup(claims["role"] || "");
+    
+    if (!isAuthorized) {
+      console.warn("Permission denied for transparency access:", { 
+        email: userEmail, 
+        dbHeadEmail: chapter.headEmail,
+        groups, 
+        isHeadMatch: isChapterHeadOfThisChapter 
+      });
+      return {
+        statusCode: 403,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          error: "Forbidden: Admin or Chapter Head access required",
+          details: `Authorization failed for ${userEmail}. Chapter '${chapter.chapterName}' is managed by ${chapter.headEmail}.`,
+          diagnostics: {
+            userEmail,
+            dbHeadEmail: chapter.headEmail,
+            hasAdminGroup: isGlobalAdmin,
+            hasChapterHeadGroup: groups.some(isAuthorizedGroup),
+            isHeadMatch: isChapterHeadOfThisChapter
+          }
+        })
+      };
+    }
+
+    const includeRazorpay = (event.queryStringParameters?.includeRazorpay || "true") !== "false";
 
     // 4. Load Metadata (Events & Members)
     console.log(`Loading events and payments for chapterId: ${chapterId}...`);

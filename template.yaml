@@ -1607,6 +1607,8 @@ Resources:
             ApiId: !Ref PaymentHttpApi
             Path: /api/admin/payments/transparency
             Method: GET
+            Auth:
+              Authorizer: CognitoAuth
       Tags:
         Application: Unify
         Component: Payment

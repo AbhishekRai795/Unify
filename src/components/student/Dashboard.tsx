@@ -210,62 +210,59 @@ const Dashboard: React.FC = () => {
       }));
     })
   return (
-    <div className={isDark ? 'aurora-bg' : ''}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <motion.div 
-        className="space-y-8 p-4 md:p-6 lg:p-8"
-        variants={containerVariants}
+        className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8"
         initial="hidden"
         animate="visible"
+        variants={containerVariants}
       >
         {/* Header */}
-        <motion.div variants={itemVariants}>
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-dark-text-primary">
+        <motion.div variants={itemVariants} className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
             Welcome back, {user?.name}!
           </h1>
-          <p className="text-gray-500 dark:text-dark-text-secondary mt-2 text-lg">
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-2">
             Discover new opportunities and stay connected with your chapters.
           </p>
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={containerVariants}
-        >
-          {stats.map((stat) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => {
             const IconComponent = stat.icon;
+            const colors = {
+              blue: 'bg-blue-500',
+              green: 'bg-green-500',
+              purple: 'bg-purple-500',
+              orange: 'bg-orange-500'
+            };
+            
             return (
               <motion.div
-                key={stat.label}
-                variants={itemVariants}
-                whileHover={{ scale: 1.02 }}
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
                 <Link
                   to={stat.link}
-                  className={`
-                    block relative overflow-hidden p-6 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-md
-                    ${isDark 
-                      ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20 hover:bg-dark-surface/40' 
-                      : 'bg-white/40 border-white/20'
-                    }
-                  `}
+                  className="block bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:shadow-lg hover:bg-white/90 transition-all duration-200 group"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">{stat.label}</p>
-                      <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{stat.value}</p>
-                      <p className="text-xs text-gray-600 dark:text-dark-text-muted mt-1">{stat.change}</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary mb-1">{stat.label}</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{stat.value}</p>
                     </div>
-                    <div className={`p-3 rounded-xl ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-white/50'}`}>
-                      <IconComponent className={`h-7 w-7 ${isDark ? 'text-accent-400' : `text-${stat.color}-600`}`} />
+                    <div className={`p-3 rounded-lg ${colors[stat.color as keyof typeof colors]} group-hover:scale-110 transition-transform duration-200`}>
+                      <IconComponent className="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  {isDark && <div className="absolute bottom-0 left-0 h-1 w-full bg-accent"></div>}
                 </Link>
               </motion.div>
             );
           })}
-        </motion.div>
+        </div>
 
 <motion.div 
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
@@ -289,29 +286,29 @@ const Dashboard: React.FC = () => {
               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
                 <Link to="/student/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                   <div className="flex items-center space-x-4">
-                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-blue-100/70'}`}>
-                        <Users className={`h-5 w-5 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-blue-600/20 to-accent-600/20 border border-blue-500/30' : 'bg-blue-100/70'}`}>
+                        <Users className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Browse Chapters</p>
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Find and join new chapters</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-blue-600 transition-colors" />
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
                 <Link to="/student/events" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                   <div className="flex items-center space-x-4">
-                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-accent-600/20 to-primary-600/20 border border-accent-500/30' : 'bg-green-100/70'}`}>
-                        <Calendar className={`h-5 w-5 ${isDark ? 'text-accent-400' : 'text-green-600'}`} />
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-green-600/20 to-accent-600/20 border border-green-500/30' : 'bg-green-100/70'}`}>
+                        <Calendar className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-dark-text-primary">View Events</p>
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">See what's happening</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-green-600 transition-colors" />
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -325,7 +322,7 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">View your transactions</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-purple-600 transition-colors" />
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -339,7 +336,7 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Open your chat workspace</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-accent transition-colors" />
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-emerald-600 transition-colors" />
                 </Link>
               </motion.div>
             </div>
@@ -386,7 +383,7 @@ const Dashboard: React.FC = () => {
           {/* Chapter Meetings */}
           <motion.div 
             className={`
-              p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md h-[500px] flex flex-col
+              p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md h-[500px]
               ${isDark 
                 ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10 hover:shadow-accent-500/20' 
                 : 'bg-white/40 border-white/20'
@@ -398,7 +395,7 @@ const Dashboard: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Chapter Meetings</h2>
               <Video className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="h-[390px]">
               <MeetingCalendarView chapterIds={studentChapterIds} />
             </div>
           </motion.div>
@@ -414,7 +411,7 @@ const Dashboard: React.FC = () => {
             <ConversationsList chapterIds={studentChapterIds} />
           </motion.div>
 
-          {/* Recent Activity */}
+          {/* Recent Activities */}
           <motion.div 
             className={`
               p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md h-[500px] flex flex-col
@@ -426,9 +423,9 @@ const Dashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Recent Activity</h2>
-              <div className="p-2 rounded-lg bg-blue-50 dark:bg-accent-500/10">
-                <History className="h-5 w-5 text-blue-600 dark:text-accent-400" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Recent Activities</h2>
+              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-accent-500/10">
+                <History className="h-5 w-5 text-indigo-600 dark:text-accent-400" />
               </div>
             </div>
 
@@ -439,7 +436,7 @@ const Dashboard: React.FC = () => {
                                activity.type === 'event' ? Calendar : Info;
                   const color = activity.type === 'registration' ? 'text-green-600 bg-green-50' : 
                                 activity.type === 'event' ? 'text-blue-600 bg-blue-50' : 
-                                'text-blue-600 bg-blue-50';
+                                'text-indigo-600 bg-indigo-50';
                   
                   return (
                     <motion.div 
@@ -486,9 +483,13 @@ const Dashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-dark-text-primary">My Chapters</h2>
-              <Link to="/student/chapters" className="text-blue-600 dark:text-accent-400 hover:underline text-sm font-medium transition-colors">
-                View All →
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">My Chapters</h2>
+              <Link
+                to="/student/chapters"
+                className="p-2 rounded-lg bg-indigo-50 dark:bg-accent-500/10 text-indigo-600 dark:text-accent-400 hover:bg-indigo-100 dark:hover:bg-accent-500/20 transition-all group"
+                title="View All Chapters"
+              >
+                <BookOpen className="h-5 w-5" />
               </Link>
             </div>
             
