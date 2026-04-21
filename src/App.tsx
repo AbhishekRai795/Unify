@@ -9,7 +9,9 @@ import StudentPortal from './pages/StudentPortal';
 import HeadPortal from './pages/HeadPortal';
 import AdminPortal from './pages/AdminPortal';
 import AuthPage from './pages/AuthPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import Loader from './components/common/Loader';
+
 import { Shield, User, UserCog } from 'lucide-react';
 import { ChatProvider } from './contexts/ChatContext';
 import ChatWidget from './components/chat/ChatWidget';
@@ -196,8 +198,11 @@ function AppContent() {
           } 
         />
         
+        <Route path="/google-callback" element={<OAuthCallbackPage />} />
+        
         {/* Add the new route for role selection */}
         <Route path="/select-role" element={<RoleSelectionPage />} />
+
 
         <Route element={<MainLayout />}>
           <Route

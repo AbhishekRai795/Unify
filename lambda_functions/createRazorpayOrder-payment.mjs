@@ -172,7 +172,7 @@ export const handler = async (event) => {
         currency: "INR",
         receiptId,
         transactionId,
-        keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_SWAh58F3yse7lJ",
+        keyId: process.env.RAZORPAY_KEY_ID,
         studentEmail: userEmail,
         studentName: userName,
         notes: {

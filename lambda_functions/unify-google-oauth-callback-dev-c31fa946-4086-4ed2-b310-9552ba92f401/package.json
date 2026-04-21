@@ -1,0 +1,12 @@
+{
+  "name": "google-oauth-callback",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.540.0",
+    "@aws-sdk/util-dynamodb": "^3.540.0",
+    "@aws-sdk/client-secrets-manager": "^3.540.0",
+    "google-auth-library": "^9.7.0"
+  }
+}

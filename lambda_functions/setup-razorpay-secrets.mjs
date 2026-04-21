@@ -7,8 +7,8 @@ const client = new SecretsManagerClient({ region: "ap-south-1" });
 export const setupRazorpayCredentials = async () => {
   try {
     const secretValue = {
-      key_id: "rzp_test_SWAh58F3yse7lJ",
-      key_secret: "llIrsgJJLG8NaIQsUPUPCYs1"
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
     };
 
     const response = await client.send(new CreateSecretCommand({

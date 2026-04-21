@@ -33,12 +33,10 @@ Parameters:
 
   RazorpayKeyId:
     Type: String
-    Default: rzp_test_SWAh58F3yse7lJ
     Description: Razorpay Key ID (stored in Secrets Manager)
 
   RazorpayKeySecret:
     Type: String
-    Default: llIrsgJJLG8NaIQsUPUPCYs1
     NoEcho: true
     Description: Razorpay Key Secret (stored securely in Secrets Manager)
 
@@ -1609,11 +1607,287 @@ Resources:
             ApiId: !Ref PaymentHttpApi
             Path: /api/admin/payments/transparency
             Method: GET
+      Tags:
+        Application: Unify
+        Component: Payment
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Google OAuth Init
+  # GET /api/google/oauth/init
+  # ──────────────────────────────────────────────────────────────────────────
+  GoogleOAuthInitFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-google-oauth-init-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/google-oauth-init/
+      Environment:
+        Variables:
+          TOKENS_TABLE: GoogleOAuthTokens
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+      Events:
+        InitApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/google/oauth/init
+            Method: GET
             Auth:
               Authorizer: CognitoAuth
       Tags:
         Application: Unify
-        Component: Payment
+        Component: CalendarIntegration
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Google OAuth Callback
+  # GET /api/google/oauth/callback
+  # ──────────────────────────────────────────────────────────────────────────
+  GoogleOAuthCallbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-google-oauth-callback-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/google-oauth-callback/
+      Environment:
+        Variables:
+          TOKENS_TABLE: GoogleOAuthTokens
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+      Events:
+        CallbackApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/google/oauth/callback
+            Method: GET
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: List Notifications
+  # GET /api/notifications
+  # ──────────────────────────────────────────────────────────────────────────
+  ListNotificationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-notifications-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/list-notifications/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications/index/*"
+      Events:
+        ListApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/notifications
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Notifications
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Mark Notification Read
+  # PUT /api/notifications/{notificationId}/read
+  # ──────────────────────────────────────────────────────────────────────────
+  MarkNotificationReadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-mark-notification-read-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/mark-notification-read/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications/index/*"
+      Events:
+        ReadApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/notifications/{notificationId}/read
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuth
+        ReadAllApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/notifications/all/read
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: Notifications
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Create Chapter Meeting
+  # POST /api/chapterhead/meetings
+  # ──────────────────────────────────────────────────────────────────────────
+  CreateChapterMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-create-chapter-meeting-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/create-chapter-meeting/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+          TOKENS_TABLE: GoogleOAuthTokens
+          REGISTRATION_TABLE: RegistrationRequests
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          USERS_TABLE: Unify-Users
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications/index/*"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+        - DynamoDBReadPolicy:
+            TableName: RegistrationRequests
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+      Events:
+        CreateApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapterhead/meetings
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: List Chapter Meetings
+  # GET /api/chapters/{chapterId}/meetings
+  # ──────────────────────────────────────────────────────────────────────────
+  ListChapterMeetingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-list-chapter-meetings-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/list-chapter-meetings/
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:Query", "dynamodb:Scan", "dynamodb:GetItem" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings/index/*"
+      Events:
+        ListMeetingsApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/meetings
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Update Chapter Meeting
+  # PATCH /api/chapters/{chapterId}/meetings/{meetingId}
+  # ──────────────────────────────────────────────────────────────────────────
+  UpdateChapterMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-update-chapter-meeting-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/update-chapter-meeting/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+          TOKENS_TABLE: GoogleOAuthTokens
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+      Events:
+        UpdateMeetingApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/meetings/{meetingId}
+            Method: PATCH
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Delete Chapter Meeting
+  # DELETE /api/chapters/{chapterId}/meetings/{meetingId}
+  # ──────────────────────────────────────────────────────────────────────────
+  DeleteChapterMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-delete-chapter-meeting-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/delete-chapter-meeting/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+          TOKENS_TABLE: GoogleOAuthTokens
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource: 
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+      Events:
+        DeleteMeetingApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/meetings/{meetingId}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration
 
   # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — WebSocket Connections Table
