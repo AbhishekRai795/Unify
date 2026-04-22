@@ -40,7 +40,7 @@ export const handler = async (event) => {
   try {
     // Get chapter head info first
     const headInfo = await docClient.send(new GetCommand({
-      TableName: "ChapterHeads",
+      TableName: "ChapterHead",
       Key: { email }
     }));
 
@@ -54,9 +54,9 @@ export const handler = async (event) => {
 
     const { chapterId } = headInfo.Item;
 
-    // Remove from ChapterHeads table
+    // Remove from ChapterHead table
     await docClient.send(new DeleteCommand({
-      TableName: "ChapterHeads",
+      TableName: "ChapterHead",
       Key: { email }
     }));
 

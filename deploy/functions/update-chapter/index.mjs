@@ -136,7 +136,26 @@ export const handler = async (event) => {
 
     // Handle head changes
     if (headEmail !== undefined && headEmail !== oldHeadEmail) {
-      // Remove old head from ChapterHeads table and group
+      
+      // Strict Constraint: Check if new head is already assigned elsewhere
+      if (headEmail) {
+        const existingHeadCheck = await docClient.send(new GetCommand({
+          TableName: "ChapterHead",
+          Key: { email: headEmail }
+        }));
+
+        if (existingHeadCheck.Item && existingHeadCheck.Item.chapterId !== chapterId) {
+          return {
+            statusCode: 400,
+            headers: corsHeaders,
+            body: JSON.stringify({ 
+              error: `User ${headEmail} is already assigned as a head for another chapter.` 
+            })
+          };
+        }
+      }
+
+      // Remove old head from ChapterHead table and group
       if (oldHeadEmail) {
         await docClient.send(new DeleteCommand({
           TableName: "ChapterHead",
@@ -145,6 +164,7 @@ export const handler = async (event) => {
 
 
         try {
+          // Maintaining existing group logic as requested
           await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
             UserPoolId: process.env.USER_POOL_ID,
             Username: oldHeadEmail,
@@ -156,19 +176,22 @@ export const handler = async (event) => {
       }
 
 
-      // Add new head to ChapterHeads table and group
+      // Add new head to ChapterHead table and group
       if (headEmail) {
         await docClient.send(new PutCommand({
           TableName: "ChapterHead",
           Item: {
             email: headEmail,
             chapterId,
+            chapterName: chapterName || currentChapter.Item.chapterName,
+            headName: headName || currentChapter.Item.headName || null,
             linkedAt: now
           }
         }));
 
 
         try {
+          // Maintaining existing group logic as requested
           await cognitoClient.send(new AdminAddUserToGroupCommand({
             UserPoolId: process.env.USER_POOL_ID,
             Username: headEmail,

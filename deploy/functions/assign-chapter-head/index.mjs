@@ -81,62 +81,72 @@ export const handler = async (event) => {
 
   const now = new Date().toISOString();
 
-  try {
-    // Step 1: Get current chapter to find existing head
+    // Step 1: Get current chapter to find existing head and check if it already has one
     let currentChapter = null;
     let previousHeadEmail = null;
+    let chapterName = "";
     
     try {
-      const chapterResult = await docClient.send(new QueryCommand({
+      const chapterResult = await docClient.send(new GetCommand({
         TableName: "Chapters",
-        KeyConditionExpression: "chapterId = :chapterId",
-        ExpressionAttributeValues: {
-          ":chapterId": chapterId
-        }
+        Key: { chapterId }
       }));
       
-      if (chapterResult.Items && chapterResult.Items.length > 0) {
-        currentChapter = chapterResult.Items[0];
+      if (chapterResult.Item) {
+        currentChapter = chapterResult.Item;
         previousHeadEmail = currentChapter.headEmail;
+        chapterName = currentChapter.chapterName || "";
+      } else {
+        return {
+          statusCode: 404,
+          headers: corsHeaders,
+          body: JSON.stringify({ error: 'Chapter not found' })
+        };
       }
     } catch (error) {
-      console.warn('Could not fetch current chapter:', error.message);
+      console.error('Could not fetch chapter:', error.message);
+      throw new Error(`Chapter database access failed: ${error.message}`);
     }
 
-    // Step 2: Remove previous head if exists and is different from new head
+    // Step 2: Strict Constraint - Check if the new email is already assigned to ANY chapter
+    const existingHeadCheck = await docClient.send(new GetCommand({
+      TableName: "ChapterHead",
+      Key: { email }
+    }));
+
+    if (existingHeadCheck.Item) {
+      const assignedChapterId = existingHeadCheck.Item.chapterId;
+      // If it's already assigned to ANOTHER chapter, throw error
+      if (assignedChapterId !== chapterId) {
+        return {
+          statusCode: 400,
+          headers: corsHeaders,
+          body: JSON.stringify({ 
+            error: `User ${email} is already assigned as a head for another chapter (${existingHeadCheck.Item.chapterName || assignedChapterId}).` 
+          })
+        };
+      }
+    }
+
+    // Step 3: Strict Constraint - Check if the chapter already has a different head
     if (previousHeadEmail && previousHeadEmail !== email) {
-      console.log(`Removing previous head: ${previousHeadEmail}`);
-      
-      // Remove from ChapterHeads table
-      try {
-        await docClient.send(new DeleteCommand({
-          TableName: "ChapterHeads",
-          Key: { email: previousHeadEmail }
-        }));
-        console.log(`Removed ${previousHeadEmail} from ChapterHeads table`);
-      } catch (error) {
-        console.warn(`Failed to remove ${previousHeadEmail} from ChapterHeads:`, error.message);
-      }
-
-      // Remove from chapter_head Cognito group
-      try {
-        await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
-          UserPoolId: process.env.USER_POOL_ID,
-          Username: previousHeadEmail,
-          GroupName: 'chapter_head'
-        }));
-        console.log(`Removed ${previousHeadEmail} from chapter_head group`);
-      } catch (error) {
-        console.warn(`Failed to remove ${previousHeadEmail} from chapter_head group:`, error.message);
-      }
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          error: `Chapter already has a head (${previousHeadEmail}). Please remove the existing head before assigning a new one.` 
+        })
+      };
     }
 
-    // Step 3: Assign new chapter head
+    // Step 4: Assign new chapter head to mapping table with all required fields
     await docClient.send(new PutCommand({
-      TableName: "ChapterHeads",
+      TableName: "ChapterHead",
       Item: {
         email,
         chapterId,
+        chapterName,
+        headName: headName || currentChapter.headName || null,
         linkedAt: now
       }
     }));

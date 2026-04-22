@@ -1,6 +1,6 @@
 // createChapter.js
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { randomUUID } from 'crypto';
 
@@ -120,6 +120,24 @@ export const handler = async (event) => {
     if (headEmail && headEmail.trim()) {
       const trimmedEmail = headEmail.trim();
       
+      console.log('Checking if email is already a head:', trimmedEmail);
+      
+      // Strict Constraint: Check if email is already assigned
+      const existingHeadCheck = await docClient.send(new GetCommand({
+        TableName: "ChapterHead",
+        Key: { email: trimmedEmail }
+      }));
+
+      if (existingHeadCheck.Item) {
+        return {
+          statusCode: 400,
+          headers: corsHeaders,
+          body: JSON.stringify({ 
+            error: `User ${trimmedEmail} is already assigned as a head for another chapter (${existingHeadCheck.Item.chapterName || existingHeadCheck.Item.chapterId}).` 
+          })
+        };
+      }
+
       console.log('Creating chapter head mapping for:', trimmedEmail);
       
       // Create chapter head mapping
