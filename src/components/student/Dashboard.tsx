@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
     // Pending requests
     (pendingRegistrations || []).forEach((reg, idx) => {
       activities.push({
-        id: `pending-${reg.registrationId || reg.id || idx}`,
+        id: `pending-${reg.registrationId || idx}`,
         type: 'request',
         message: `Applied for membership in ${reg.chapterName}`,
         timestamp: reg.appliedAt || new Date().toISOString()

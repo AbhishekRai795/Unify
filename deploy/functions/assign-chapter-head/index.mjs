@@ -81,6 +81,7 @@ export const handler = async (event) => {
 
   const now = new Date().toISOString();
 
+  try {
     // Step 1: Get current chapter to find existing head and check if it already has one
     let currentChapter = null;
     let previousHeadEmail = null;
@@ -205,3 +206,4 @@ export const handler = async (event) => {
     };
   }
 };
+
