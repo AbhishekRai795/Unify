@@ -331,7 +331,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                   } ${!isCurrentMonth ? (isDark ? 'opacity-20' : 'bg-slate-50/20 opacity-30') : ''}`}
                 >
                   <div className="flex justify-end mb-1">
-                    <span className={`text-xs font-mono w-6 h-6 flex items-center justify-center rounded-sm transition-all ${
+                    <span className={`text-xs font-sans w-6 h-6 flex items-center justify-center rounded-none transition-all ${
                       isToday ? 'bg-blue-600 text-white' : 
                       isCurrentMonth ? (isDark ? 'text-dark-text-primary' : 'text-slate-600') : (isDark ? 'text-dark-text-muted' : 'text-slate-400')
                     }`}>
@@ -340,11 +340,11 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                   </div>
 
                   <div className="space-y-1 relative z-10">
-                    {items.slice(0, 3).map((m) => (
+                    {items.slice(0, 3).map((m, idx) => (
                       <div
-                        key={m.meetingId}
+                        key={m.meetingId || `m-${idx}-${m.startDateTime}`}
                         onClick={(e) => handleMeetingClick(e, m)}
-                        className={`flex items-center space-x-1 px-1.5 py-1 rounded-sm text-[9px] font-medium truncate transition-all border ${
+                        className={`flex items-center space-x-1 px-1.5 py-1 rounded-none text-[9px] font-medium truncate transition-all border ${
                           isDark 
                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20' 
                             : 'bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100'

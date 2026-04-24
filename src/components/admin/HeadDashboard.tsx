@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, MessageSquare, Megaphone, Activity, ArrowRight, Video, History, UserPlus, Info, BookOpen } from 'lucide-react';
+import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, MessageSquare, Megaphone, Activity, ArrowRight, Video, History, UserPlus, Info, BookOpen, CreditCard } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -462,11 +462,28 @@ const HeadDashboard: React.FC = () => {
             <div className={`flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4`}>
               {activityList.length > 0 ? (
                 activityList.map((activity, index) => {
-                  const Icon = activity.type === 'registration' ? UserPlus : 
-                              activity.type === 'event' ? Calendar : Info;
-                  const color = activity.type === 'registration' ? 'text-green-600 bg-green-50' : 
-                               activity.type === 'event' ? 'text-blue-600 bg-blue-50' : 
-                               'text-indigo-600 bg-indigo-50';
+                  const msg = (activity.message || '').toString().toLowerCase();
+                  const typ = (activity.type || '').toString().toLowerCase();
+                  
+                  let Icon = Activity; // Changed default from Info to Activity to test
+                  let color = 'text-indigo-600 bg-indigo-50';
+                  
+                  if (typ === 'registration' || msg.includes('join') || msg.includes('regist')) {
+                    Icon = UserPlus;
+                    color = 'text-green-600 bg-green-50';
+                  } else if (typ === 'event' || msg.includes('event')) {
+                    Icon = Calendar;
+                    color = 'text-blue-600 bg-blue-50';
+                  } else if (typ === 'meeting' || msg.includes('meet') || msg.includes('sched')) {
+                    Icon = Video;
+                    color = 'text-purple-600 bg-purple-50';
+                  } else if (typ === 'payment' || msg.includes('pay') || msg.includes('wallet') || msg.includes('paid') || msg.includes('buy') || msg.includes('purchas')) {
+                    Icon = CreditCard;
+                    color = 'text-amber-600 bg-amber-50';
+                  } else if (typ === 'chapter_update' || msg.includes('updat')) {
+                    Icon = RefreshCw;
+                    color = 'text-emerald-600 bg-emerald-50';
+                  }
                   
                   return (
                     <motion.div 

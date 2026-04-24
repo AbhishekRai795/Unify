@@ -40,6 +40,15 @@ Parameters:
     NoEcho: true
     Description: Razorpay Key Secret (stored securely in Secrets Manager)
 
+  GoogleClientId:
+    Type: String
+    Description: Google OAuth Client ID
+
+  GoogleClientSecret:
+    Type: String
+    NoEcho: true
+    Description: Google OAuth Client Secret
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Globals
 # ─────────────────────────────────────────────────────────────────────────────
@@ -65,6 +74,9 @@ Globals:
         USER_POOL_ID: !Ref CognitoUserPoolId
         ALLOWED_ORIGIN: "*"
         ENVIRONMENT: !Ref Environment
+        MEETINGS_TABLE: ChapterMeetings
+        GOOGLE_CLIENT_ID: !Ref GoogleClientId
+        GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resources
@@ -477,7 +489,7 @@ Resources:
           Value: Unify
         - Key: Component
           Value: Certificates
-
+          
   # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — Wallet Table
   # Stores student reward points balance
@@ -689,6 +701,94 @@ Resources:
       Tags:
         Application: Unify
         Component: Payment
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Manage Chapters (Consolidated)
+  # Handles Create, Update, Assign Head, and Remove Head
+  # ──────────────────────────────────────────────────────────────────────────
+  ManageChaptersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-manage-chapters-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/manage-chapters/
+      Description: Consolidated function for Chapter and Chapter Head management
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: ChapterHead
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminAddUserToGroup
+              - cognito-idp:AdminRemoveUserFromGroup
+            Resource: !Sub arn:aws:cognito-idp:ap-south-1:${AWS::AccountId}:userpool/${CognitoUserPoolId}
+      Events:
+        # Base Chapters API
+        ManageChaptersApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # Chapter Specific API
+        ManageChapterSpecificApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # Head Management API
+        ManageChapterHeadApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/head
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # List Chapter Heads API
+        ManageChapterHeadsListApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/heads
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        # Head by Email (Legacy support)
+        ManageChapterHeadByEmailApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/head-by-email/{email}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+        # Options for CORS
+        ManageChaptersRootOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters
+            Method: OPTIONS
+        ManageChaptersProxyOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{proxy+}
+            Method: OPTIONS
+        ManageChapterSpecificOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}
+            Method: OPTIONS
 
   # ──────────────────────────────────────────────────────────────────────────
   # Lambda 2: Create Razorpay Order
@@ -1633,6 +1733,9 @@ Resources:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         InitApi:
           Type: HttpApi
@@ -1664,6 +1767,9 @@ Resources:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         CallbackApi:
           Type: HttpApi
@@ -1763,19 +1869,29 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
-          REGISTRATION_TABLE: RegistrationRequests
+          REGISTRATION_TABLE: ChapterPayments
           EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
           USERS_TABLE: Unify-Users
+          ACTIVITIES_TABLE: Activities
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications/index/*"
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
         - DynamoDBReadPolicy:
-            TableName: RegistrationRequests
+            TableName: ChapterPayments
         - DynamoDBReadPolicy:
             TableName: !Ref EventRegistrationRequestsTable
         - DynamoDBReadPolicy:
@@ -1837,14 +1953,33 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
+          REGISTRATION_TABLE: ChapterPayments
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          USERS_TABLE: Unify-Users
+          ACTIVITIES_TABLE: Activities
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
-              Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+              Resource:
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
       Events:
         UpdateMeetingApi:
           Type: HttpApi
@@ -1872,14 +2007,27 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
+          ACTIVITIES_TABLE: Activities
+          REGISTRATION_TABLE: ChapterPayments
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
-              Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+              Resource:
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         DeleteMeetingApi:
           Type: HttpApi
@@ -1892,6 +2040,8 @@ Resources:
       Tags:
         Application: Unify
         Component: CalendarIntegration
+
+
 
   # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — WebSocket Connections Table

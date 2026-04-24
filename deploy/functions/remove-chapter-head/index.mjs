@@ -70,12 +70,12 @@ export const handler = async (event) => {
       }
     }));
 
-    // Remove from chapter_head group
+    // Remove from chapter-head group
     try {
       await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
         UserPoolId: process.env.USER_POOL_ID,
         Username: email,
-        GroupName: 'chapter_head'
+        GroupName: 'chapter-head'
       }));
     } catch (cognitoError) {
       console.warn('Failed to remove user from group:', cognitoError.message);

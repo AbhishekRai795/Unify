@@ -1,5 +1,6 @@
 // src/services/adminApi.ts
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y0fr6gasgk.execute-api.ap-south-1.amazonaws.com/dev';
+const PAYMENT_API_BASE_URL = import.meta.env.VITE_PAYMENT_API_BASE_URL || API_BASE_URL;
 
 async function getAuthHeaders() {
   // Use the same token storage method as your AuthContext
@@ -53,7 +54,7 @@ export const adminApi = {
     
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapters`, {
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters`, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)
@@ -94,7 +95,7 @@ export const adminApi = {
       if (params?.limit) qs.set('limit', String(params.limit));
       if (params?.lastEvaluatedKey) qs.set('lastEvaluatedKey', params.lastEvaluatedKey);
       
-      const url = `${API_BASE_URL}/admin/chapters${qs.toString() ? `?${qs}` : ''}`;
+      const url = `${PAYMENT_API_BASE_URL}/api/chapters${qs.toString() ? `?${qs}` : ''}`;
       console.log('Fetching chapters from:', url);
       
       const res = await fetch(url, { method: 'GET', headers });
@@ -128,7 +129,7 @@ export const adminApi = {
   async getChapter(chapterId: string) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapters/${chapterId}`, { 
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/${chapterId}`, { 
         method: 'GET', 
         headers 
       });
@@ -154,8 +155,8 @@ export const adminApi = {
   async updateChapter(chapterId: string, payload: any) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapters/${chapterId}`, {
-        method: 'PUT',
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/${chapterId}`, {
+        method: 'PATCH', // Consolidated function supports PATCH/PUT
         headers,
         body: JSON.stringify(payload)
       });
@@ -181,7 +182,7 @@ export const adminApi = {
   async deleteChapter(chapterId: string) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapters/${chapterId}`, {
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/${chapterId}`, {
         method: 'DELETE',
         headers
       });
@@ -207,7 +208,7 @@ export const adminApi = {
   async assignChapterHead(payload: { email: string; chapterId: string; headName?: string }) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapter-heads`, {
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/${payload.chapterId}/head`, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)
@@ -235,7 +236,7 @@ export const adminApi = {
     console.log('=== Testing listChapterHeads for comparison ===');
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapter-heads`, { 
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/heads`, { 
         method: 'GET', 
         headers 
       });
@@ -267,7 +268,7 @@ export const adminApi = {
   async removeChapterHead(email: string) {
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/admin/chapter-heads/${encodeURIComponent(email)}`, {
+      const res = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/head-by-email/${encodeURIComponent(email)}`, {
         method: 'DELETE',
         headers
       });

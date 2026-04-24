@@ -1,0 +1,47 @@
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Delete Chapter Meeting
+  # DELETE /api/chapters/{chapterId}/meetings/{meetingId}
+  # ──────────────────────────────────────────────────────────────────────────
+  DeleteChapterMeetingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-delete-chapter-meeting-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/delete-chapter-meeting/
+      Environment:
+        Variables:
+          NOTIFICATIONS_TABLE: UnifyNotifications
+          TOKENS_TABLE: GoogleOAuthTokens
+          ACTIVITIES_TABLE: Activities
+          REGISTRATION_TABLE: ChapterPayments
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
+        - Statement:
+            - Effect: Allow
+              Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
+              Resource:
+                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
+      Events:
+        DeleteMeetingApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/meetings/{meetingId}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: CalendarIntegration

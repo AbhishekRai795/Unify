@@ -103,8 +103,8 @@ export const CreateChapterWithPayment: React.FC = () => {
       setTimeout(() => {
         navigate('/admin/dashboard');
       }, 2000);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to create chapter';
+    } catch (err: any) {
+      const errorMsg = err?.error || err?.message || (err instanceof Error ? err.message : 'Failed to create chapter');
       setError(errorMsg);
       console.error('Chapter creation error:', err);
     } finally {

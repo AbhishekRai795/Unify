@@ -168,7 +168,7 @@ export const handler = async (event) => {
           await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
             UserPoolId: process.env.USER_POOL_ID,
             Username: oldHeadEmail,
-            GroupName: 'chapter_head'
+            GroupName: 'chapter-head'
           }));
         } catch (cognitoError) {
           console.warn('Failed to remove user from group:', cognitoError.message);
@@ -195,7 +195,7 @@ export const handler = async (event) => {
           await cognitoClient.send(new AdminAddUserToGroupCommand({
             UserPoolId: process.env.USER_POOL_ID,
             Username: headEmail,
-            GroupName: 'chapter_head'
+            GroupName: 'chapter-head'
           }));
         } catch (cognitoError) {
           console.warn('Failed to add user to group:', cognitoError.message);

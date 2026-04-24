@@ -164,16 +164,16 @@ export const handler = async (event) => {
       }
     }));
 
-    // Step 5: Add new user to chapter_head group
+    // Step 5: Add new user to chapter-head group
     try {
       await cognitoClient.send(new AdminAddUserToGroupCommand({
         UserPoolId: process.env.USER_POOL_ID,
         Username: email,
-        GroupName: 'chapter_head'
+        GroupName: 'chapter-head'
       }));
-      console.log(`Added ${email} to chapter_head group`);
+      console.log(`Added ${email} to chapter-head group`);
     } catch (cognitoError) {
-      console.warn('Failed to add user to chapter_head group:', cognitoError.message);
+      console.warn('Failed to add user to chapter-head group:', cognitoError.message);
     }
 
     const responseMessage = previousHeadEmail && previousHeadEmail !== email

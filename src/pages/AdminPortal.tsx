@@ -65,7 +65,7 @@ const AdminDashboard: React.FC = () => {
   }, [user]);
 
   const handleDeleteChapter = async (chapterId: string) => {
-    if (!window.confirm('Are you sure you want to archive this chapter?')) {
+    if (!window.confirm('Are you sure you want to permanently DELETE this chapter and its head assignment? This action cannot be undone.')) {
       return;
     }
     
@@ -173,7 +173,7 @@ const AdminDashboard: React.FC = () => {
                         className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
                         onClick={() => handleDeleteChapter(chapter.chapterId)}
                       >
-                        Archive
+                        Delete
                       </button>
                     </div>
                   </td>

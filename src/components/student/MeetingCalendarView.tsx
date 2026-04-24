@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Video, Calendar as CalendarIcon, ExternalLin
 import { motion, AnimatePresence } from 'framer-motion';
 import { googleMeetAPI } from '../../services/googleMeetApi';
 
+import { useSmartPolling } from '../../hooks/useSmartPolling';
+
 interface Meeting {
   meetingId: string;
   chapterId: string;
@@ -26,7 +28,7 @@ const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds })
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
 
   const fetchAllMeetings = async () => {
-    setIsLoading(true);
+    if (chapterIds.length === 0) return;
     try {
       const allMeetings: Meeting[] = [];
       await Promise.all(chapterIds.map(async (id) => {
@@ -45,8 +47,15 @@ const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds })
     }
   };
 
+  // Smart Polling for Meetings
+  useSmartPolling(fetchAllMeetings, { 
+    enabled: chapterIds.length > 0,
+    activeInterval: 45000 // Poll every 45s for meetings
+  });
+
   useEffect(() => {
     if (chapterIds.length > 0) {
+      setIsLoading(true);
       fetchAllMeetings();
     }
   }, [chapterIds]);
