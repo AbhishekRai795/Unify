@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, DeleteCommand, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, DeleteCommand, QueryCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getGoogleCredentials } from "./google-utils.mjs";
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
@@ -70,24 +70,30 @@ export const handler = async (event) => {
 
     // 3. Notify Students of Cancellation
     try {
-      const registrations = await docClient.send(new ScanCommand({
-        TableName: "RegistrationRequests",
-        FilterExpression: "chapterId = :id OR chapterName = :id",
+      console.log(`Searching for students to notify cancellation in chapter: ${chapterId}`);
+      const registrations = await docClient.send(new QueryCommand({
+        TableName: process.env.REGISTRATION_TABLE || "ChapterPayments",
+        KeyConditionExpression: "chapterId = :id",
         ExpressionAttributeValues: { ":id": chapterId }
       }));
 
-      if (registrations.Items) {
+      if (registrations.Items && registrations.Items.length > 0) {
         const notifyPromises = registrations.Items
-          .filter(reg => (reg.userId || reg.sapId) && (reg.status === 'approved' || reg.status === 'active'))
+          .filter(reg => {
+             const status = (reg.status || "").toLowerCase();
+             const payment = (reg.paymentStatus || "").toUpperCase();
+             return payment === 'COMPLETED' || payment === 'FREE' || status === 'active' || status === 'approved';
+          })
           .map(reg => {
-            const studentId = String(reg.userId || reg.sapId);
+            const studentId = String(reg.userId || reg.studentSapId || reg.sapId || "");
+            if (!studentId) return Promise.resolve();
             
             // Notification Tray
             const p1 = docClient.send(new PutCommand({
-              TableName: "UnifyNotifications",
+              TableName: process.env.NOTIFICATIONS_TABLE || "UnifyNotifications",
               Item: {
                 userId: studentId,
-                notificationId: `cancel-${meetingId}-${Date.now()}`,
+                notificationId: `cancel-${meetingId}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                 type: "alert",
                 title: `Meeting Cancelled: ${meeting.title}`,
                 message: `The meeting scheduled for ${new Date(meeting.startDateTime).toLocaleString()} has been cancelled.`,
@@ -98,21 +104,23 @@ export const handler = async (event) => {
 
             // Activity Log
             const p2 = docClient.send(new PutCommand({
-              TableName: "Activities",
+              TableName: process.env.ACTIVITIES_TABLE || "Activities",
               Item: {
-                activityId: `act-cancel-${Date.now()}`,
+                activityId: `act-cancel-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                 userId: studentId,
                 chapterId: chapterId,
                 type: "meeting_cancelled",
                 message: `Meeting cancelled: ${meeting.title}`,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                metadata: { meetingId: meetingId, originalTitle: meeting.title }
               }
-            }));
+            })).catch(err => console.warn(`Failed activity log for ${studentId}:`, err.message));
 
-            return Promise.all([p1, p2]);
+            return Promise.all([p1, p2]).catch(err => console.error(`Failed to notify user ${studentId}:`, err));
           });
         
         await Promise.all(notifyPromises.slice(0, 50));
+        console.log(`Cancellation notifications dispatched to ${notifyPromises.length} potential students.`);
       }
     } catch (notifErr) {
       console.error("Notification failed during cancellation:", notifErr);

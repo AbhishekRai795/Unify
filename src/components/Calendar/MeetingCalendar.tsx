@@ -23,7 +23,6 @@ import {
   Calendar as CalendarIcon, 
   Video, 
   X,
-  Check,
   Trash2,
   Loader2,
   AlertCircle,
@@ -37,7 +36,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { googleMeetAPI } from '../../services/googleMeetApi';
 import { paymentAPI } from '../../services/paymentApi';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useChapterHead } from '../../contexts/ChapterHeadContext';
+
 
 interface Meeting {
   meetingId: string;
@@ -239,40 +238,40 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
   };
 
   return (
-    <div className={`flex flex-col rounded-[2.5rem] border backdrop-blur-xl shadow-2xl transition-all duration-500 overflow-hidden ${
-      isDark ? 'bg-dark-surface/30 border-white/10' : 'bg-white/40 border-white/40'
+    <div className={`flex flex-col rounded-lg border shadow-sm transition-all duration-300 overflow-hidden ${
+      isDark ? 'bg-dark-surface border-dark-border' : 'bg-white border-slate-200'
     }`}>
 
       {/* Header */}
-      <div className="p-5 flex items-center justify-between border-b border-white/10">
+      <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-dark-border">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-2xl shadow-inner ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
-              <CalendarIcon className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+              <CalendarIcon className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
             </div>
-            <h2 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-800'}`}>
+            <h2 className={`text-xl font-bold tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-800'}`}>
               {format(currentDate, 'MMMM yyyy')}
             </h2>
           </div>
           
-          <div className={`flex p-0.5 rounded-2xl shadow-inner ${isDark ? 'bg-black/20' : 'bg-slate-100/50'}`}>
+          <div className={`flex p-1 rounded-md ${isDark ? 'bg-black/20' : 'bg-slate-100'}`}>
             <button 
               onClick={prevPeriod}
-              className={`p-2 rounded-xl transition-all duration-300 ${isDark ? 'hover:bg-white/5 text-dark-text-secondary hover:text-blue-400' : 'hover:bg-white text-slate-500 hover:text-blue-600 shadow-sm hover:shadow-md'}`}
+              className={`p-1.5 rounded-md transition-all ${isDark ? 'hover:bg-white/5 text-dark-text-secondary' : 'hover:bg-white text-slate-500'}`}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${isDark ? 'hover:bg-white/5 text-dark-text-secondary hover:text-blue-400' : 'hover:bg-white text-slate-600 hover:text-blue-600 shadow-sm hover:shadow-md'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isDark ? 'hover:bg-white/5 text-dark-text-secondary' : 'hover:bg-white text-slate-600'}`}
             >
               Today
             </button>
             <button 
               onClick={nextPeriod}
-              className={`p-2 rounded-xl transition-all duration-300 ${isDark ? 'hover:bg-white/5 text-dark-text-secondary hover:text-blue-400' : 'hover:bg-white text-slate-500 hover:text-blue-600 shadow-sm hover:shadow-md'}`}
+              className={`p-1.5 rounded-md transition-all ${isDark ? 'hover:bg-white/5 text-dark-text-secondary' : 'hover:bg-white text-slate-500'}`}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -281,7 +280,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
           {!isReadOnly && !isOAuthConnected && (
             <button 
               onClick={connectGoogle}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 font-bold text-sm"
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold text-sm"
             >
               <Video className="h-4 w-4" />
               <span>Connect Google</span>
@@ -291,9 +290,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
           {!isReadOnly && isOAuthConnected && (
             <button 
               onClick={() => handleDateClick(new Date())}
-              className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 font-bold text-sm"
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold text-sm"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               <span>Schedule Meet</span>
             </button>
           )}
@@ -309,8 +308,8 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div 
                 key={day} 
-                className={`p-3 text-center text-[10px] font-black uppercase tracking-widest border-b transition-colors ${
-                  isDark ? 'text-dark-text-muted border-white/5 bg-black/20' : 'text-slate-400 border-slate-100 bg-slate-50/50'
+                className={`p-2 text-center text-[10px] font-bold uppercase tracking-wider border-b transition-colors ${
+                  isDark ? 'text-dark-text-muted border-dark-border bg-dark-card/50' : 'text-slate-500 border-slate-100 bg-slate-50'
                 }`}
               >
                 {day}
@@ -327,47 +326,46 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                 <div 
                   key={day.toString()}
                   onClick={() => handleDateClick(day)}
-                  className={`min-h-[110px] p-2 border-r border-b transition-all duration-300 cursor-pointer group/day relative ${
-                    isDark ? 'border-white/5 hover:bg-white/5' : 'border-slate-50 hover:bg-blue-50/30'
-                  } ${!isCurrentMonth ? (isDark ? 'opacity-20' : 'bg-slate-50/30 opacity-40') : ''}`}
+                  className={`min-h-[100px] p-1 border-r border-b transition-all cursor-pointer group/day relative ${
+                    isDark ? 'border-dark-border hover:bg-white/5' : 'border-slate-100 hover:bg-blue-50/20'
+                  } ${!isCurrentMonth ? (isDark ? 'opacity-20' : 'bg-slate-50/20 opacity-30') : ''}`}
                 >
                   <div className="flex justify-end mb-1">
-                    <span className={`text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-lg transition-all duration-300 ${
-                      isToday ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-blue-600/10' : 
-                      isCurrentMonth ? (isDark ? 'text-dark-text-primary group-hover/day:text-blue-400' : 'text-slate-700 group-hover/day:text-blue-600') : (isDark ? 'text-dark-text-muted' : 'text-slate-300')
+                    <span className={`text-xs font-sans w-6 h-6 flex items-center justify-center rounded-none transition-all ${
+                      isToday ? 'bg-blue-600 text-white' : 
+                      isCurrentMonth ? (isDark ? 'text-dark-text-primary' : 'text-slate-600') : (isDark ? 'text-dark-text-muted' : 'text-slate-400')
                     }`}>
                       {format(day, 'd')}
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 relative z-10">
-                    {items.slice(0, 3).map((m) => (
-                      <motion.div
-                        key={m.meetingId}
-                        whileHover={{ scale: 1.02, x: 2 }}
+                  <div className="space-y-1 relative z-10">
+                    {items.slice(0, 3).map((m, idx) => (
+                      <div
+                        key={m.meetingId || `m-${idx}-${m.startDateTime}`}
                         onClick={(e) => handleMeetingClick(e, m)}
-                        className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-[10px] font-bold truncate transition-all border shadow-sm ${
+                        className={`flex items-center space-x-1 px-1.5 py-1 rounded-none text-[9px] font-medium truncate transition-all border ${
                           isDark 
                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20' 
-                            : 'bg-blue-50/80 border-blue-100 text-blue-700 hover:bg-blue-100'
+                            : 'bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100'
                         }`}
                       >
-                        <Video className="h-3 w-3 shrink-0" />
+                        <Video className="h-2.5 w-2.5 shrink-0" />
                         <span className="truncate">
-                          {format(parseISO(m.startDateTime), 'HH:mm')} &bull; {m.title}
+                          {format(parseISO(m.startDateTime), 'HH:mm')} {m.title}
                         </span>
-                      </motion.div>
+                      </div>
                     ))}
                     {items.length > 3 && (
-                      <div className={`text-[9px] font-black pl-1 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>
-                        + {items.length - 3} more meetings
+                      <div className={`text-[9px] font-medium pl-1 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>
+                        + {items.length - 3} more
                       </div>
                     )}
                   </div>
 
                   {/* Highlight on hover */}
-                  <div className={`absolute inset-0 opacity-0 group-hover/day:opacity-100 transition-opacity pointer-events-none border-2 rounded-xl m-1 ${
-                    isDark ? 'border-accent-500/10' : 'border-indigo-500/10'
+                  <div className={`absolute inset-0 opacity-0 group-hover/day:opacity-100 transition-opacity pointer-events-none border m-0 ${
+                    isDark ? 'border-blue-500/20' : 'border-blue-500/20'
                   }`} />
                 </div>
               );
@@ -400,10 +398,10 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
               className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.98, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-7xl bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-white/50 overflow-hidden"
+              exit={{ scale: 0.98, opacity: 0, y: 10 }}
+              className="relative w-full max-w-4xl bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
             >
               <div className="p-6 flex items-center justify-between border-b border-gray-100">
                 <h3 className="text-xl font-bold text-gray-800">

@@ -213,9 +213,10 @@ const EditChapter: React.FC = () => {
 
     } catch (error: any) {
       console.error('Error updating chapter head:', error);
+      const errorMsg = error?.error || error?.message || 'Failed to update chapter head';
       setNotification({
         type: 'error',
-        message: error.message || 'Failed to update chapter head'
+        message: errorMsg
       });
       setTimeout(() => setNotification(null), 3000);
     } finally {

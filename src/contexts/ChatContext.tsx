@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useSmartPolling } from '../hooks/useSmartPolling';
 import { useAuth } from './AuthContext';
 import { ChatMessage, chatApi } from '../services/chatApi';
 
@@ -175,17 +176,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshConversations]);
 
   // Poll as a fallback in case WS delivery is missed/interrupted.
-  useEffect(() => {
-    if (!user?.sub) return;
-
-    const intervalId = window.setInterval(() => {
-      refreshConversationsRef.current();
-    }, 10000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [user?.sub]);
+  useSmartPolling(() => {
+    if (user?.sub) refreshConversationsRef.current();
+  }, {
+    enabled: !!user?.sub,
+    activeInterval: 15000, // 15s
+    immediate: false
+  });
 
   // Connect to WS globally for the user, not per conversation
   useEffect(() => {

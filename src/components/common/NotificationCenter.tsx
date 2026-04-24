@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Clock, ExternalLink, AlertCircle, Loader2, Video } from 'lucide-react';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { googleMeetAPI } from '../../services/googleMeetApi';
 import { useTheme } from '../../contexts/ThemeContext';
 import { formatDistanceToNow } from 'date-fns';
+import { useSmartPolling } from '../../hooks/useSmartPolling';
 
 interface Notification {
   notificationId: string;
@@ -26,7 +26,6 @@ const NotificationCenter: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
-    setIsLoading(true);
     try {
       const response = await googleMeetAPI.getNotifications();
       const fetchedNotifications = (response.notifications || [])
@@ -36,35 +35,20 @@ const NotificationCenter: React.FC = () => {
       setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.isRead).length);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Smart Polling Logic
+  // Smart Polling Logic for Notifications
+  useSmartPolling(fetchNotifications, {
+    activeInterval: 30000, // 30s when active
+    inactiveInterval: 300000, // 5m when background
+    immediate: true
+  });
+
   useEffect(() => {
-    fetchNotifications();
-    
-    let interval: any;
-    const startPolling = () => {
-      const isVisible = document.visibilityState === 'visible';
-      const delay = isVisible ? 30000 : 300000; // 30s vs 5m
-      
-      if (interval) clearInterval(interval);
-      interval = setInterval(fetchNotifications, delay);
-    };
-
-    const handleVisibilityChange = () => {
-      startPolling();
-    };
-
-    startPolling();
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    // Initial fetch on mount
+    setIsLoading(true);
+    fetchNotifications().finally(() => setIsLoading(false));
   }, []);
 
   useEffect(() => {

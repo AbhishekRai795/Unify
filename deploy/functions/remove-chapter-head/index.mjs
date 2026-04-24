@@ -40,7 +40,7 @@ export const handler = async (event) => {
   try {
     // Get chapter head info first
     const headInfo = await docClient.send(new GetCommand({
-      TableName: "ChapterHeads",
+      TableName: "ChapterHead",
       Key: { email }
     }));
 
@@ -54,9 +54,9 @@ export const handler = async (event) => {
 
     const { chapterId } = headInfo.Item;
 
-    // Remove from ChapterHeads table
+    // Remove from ChapterHead table
     await docClient.send(new DeleteCommand({
-      TableName: "ChapterHeads",
+      TableName: "ChapterHead",
       Key: { email }
     }));
 
@@ -70,12 +70,12 @@ export const handler = async (event) => {
       }
     }));
 
-    // Remove from chapter_head group
+    // Remove from chapter-head group
     try {
       await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
         UserPoolId: process.env.USER_POOL_ID,
         Username: email,
-        GroupName: 'chapter_head'
+        GroupName: 'chapter-head'
       }));
     } catch (cognitoError) {
       console.warn('Failed to remove user from group:', cognitoError.message);

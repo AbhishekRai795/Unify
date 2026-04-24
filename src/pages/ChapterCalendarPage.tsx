@@ -26,8 +26,8 @@ const ChapterCalendarPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'}`}>
-      <div className="max-w-[1600px] mx-auto px-8 sm:px-20 lg:px-32 xl:px-40 py-4">
-        {/* Navigation */}
+      {/* Navigation - Aligned with logo */}
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="mb-4 flex justify-start">
           <button
             onClick={() => navigate('/head/dashboard')}
@@ -39,7 +39,10 @@ const ChapterCalendarPage: React.FC = () => {
             Back to Dashboard
           </button>
         </div>
+      </div>
 
+      {/* Main Content - Wider padding for calendar component */}
+      <div className="max-w-[1600px] mx-auto px-8 sm:px-20 lg:px-32 xl:px-40">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="inline-flex items-center justify-center mb-4">

@@ -40,6 +40,15 @@ Parameters:
     NoEcho: true
     Description: Razorpay Key Secret (stored securely in Secrets Manager)
 
+  GoogleClientId:
+    Type: String
+    Description: Google OAuth Client ID
+
+  GoogleClientSecret:
+    Type: String
+    NoEcho: true
+    Description: Google OAuth Client Secret
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Globals
 # ─────────────────────────────────────────────────────────────────────────────
@@ -65,6 +74,9 @@ Globals:
         USER_POOL_ID: !Ref CognitoUserPoolId
         ALLOWED_ORIGIN: "*"
         ENVIRONMENT: !Ref Environment
+        MEETINGS_TABLE: ChapterMeetings
+        GOOGLE_CLIENT_ID: !Ref GoogleClientId
+        GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resources
@@ -477,7 +489,7 @@ Resources:
           Value: Unify
         - Key: Component
           Value: Certificates
-
+          
   # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — Wallet Table
   # Stores student reward points balance
@@ -689,6 +701,94 @@ Resources:
       Tags:
         Application: Unify
         Component: Payment
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Manage Chapters (Consolidated)
+  # Handles Create, Update, Assign Head, and Remove Head
+  # ──────────────────────────────────────────────────────────────────────────
+  ManageChaptersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-manage-chapters-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/manage-chapters/
+      Description: Consolidated function for Chapter and Chapter Head management
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: ChapterHead
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminAddUserToGroup
+              - cognito-idp:AdminRemoveUserFromGroup
+            Resource: !Sub arn:aws:cognito-idp:ap-south-1:${AWS::AccountId}:userpool/${CognitoUserPoolId}
+      Events:
+        # Base Chapters API
+        ManageChaptersApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # Chapter Specific API
+        ManageChapterSpecificApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # Head Management API
+        ManageChapterHeadApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}/head
+            Method: ANY
+            Auth:
+              Authorizer: CognitoAuth
+        # List Chapter Heads API
+        ManageChapterHeadsListApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/heads
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+        # Head by Email (Legacy support)
+        ManageChapterHeadByEmailApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/head-by-email/{email}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+        # Options for CORS
+        ManageChaptersRootOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters
+            Method: OPTIONS
+        ManageChaptersProxyOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{proxy+}
+            Method: OPTIONS
+        ManageChapterSpecificOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chapters/{chapterId}
+            Method: OPTIONS
 
   # ──────────────────────────────────────────────────────────────────────────
   # Lambda 2: Create Razorpay Order
@@ -1583,14 +1683,16 @@ Resources:
           CHAPTERS_TABLE: Chapters
           EVENTS_TABLE: !Ref ChapterEventsTable
           EVENT_PAYMENTS_TABLE: !Ref EventPaymentsTable
+          CHAPTER_PAYMENTS_TABLE: !Ref ChapterPaymentsTable
           USERS_TABLE: Unify-Users
           REGISTRATION_TABLE: RegistrationRequests
           RAZORPAY_SECRET_NAME: unify/razorpay/credentials
+          RAZORPAY_KEY_ID: !Ref RazorpayKeyId
       Policies:
         - DynamoDBReadPolicy:
             TableName: Chapters
         - DynamoDBReadPolicy:
-            TableName: ChapterPayments
+            TableName: !Ref ChapterPaymentsTable
         - DynamoDBReadPolicy:
             TableName: !Ref ChapterEventsTable
         - DynamoDBReadPolicy:
@@ -1631,6 +1733,9 @@ Resources:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         InitApi:
           Type: HttpApi
@@ -1662,6 +1767,9 @@ Resources:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         CallbackApi:
           Type: HttpApi
@@ -1761,19 +1869,29 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
-          REGISTRATION_TABLE: RegistrationRequests
+          REGISTRATION_TABLE: ChapterPayments
           EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
           USERS_TABLE: Unify-Users
+          ACTIVITIES_TABLE: Activities
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
               Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications/index/*"
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
         - DynamoDBReadPolicy:
-            TableName: RegistrationRequests
+            TableName: ChapterPayments
         - DynamoDBReadPolicy:
             TableName: !Ref EventRegistrationRequestsTable
         - DynamoDBReadPolicy:
@@ -1835,14 +1953,33 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
+          REGISTRATION_TABLE: ChapterPayments
+          EVENT_REG_TABLE: !Ref EventRegistrationRequestsTable
+          USERS_TABLE: Unify-Users
+          ACTIVITIES_TABLE: Activities
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
-              Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+              Resource:
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventRegistrationRequestsTable
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
       Events:
         UpdateMeetingApi:
           Type: HttpApi
@@ -1870,14 +2007,27 @@ Resources:
         Variables:
           NOTIFICATIONS_TABLE: UnifyNotifications
           TOKENS_TABLE: GoogleOAuthTokens
+          ACTIVITIES_TABLE: Activities
+          REGISTRATION_TABLE: ChapterPayments
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ChapterMeetings
+        - DynamoDBCrudPolicy:
+            TableName: UnifyNotifications
+        - DynamoDBCrudPolicy:
+            TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: GoogleOAuthTokens
+        - DynamoDBReadPolicy:
+            TableName: ChapterPayments
         - Statement:
             - Effect: Allow
               Action: [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan" ]
-              Resource: 
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/UnifyNotifications"
+              Resource:
                 - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/GoogleOAuthTokens"
-                - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ChapterMeetings"
+            - Effect: Allow
+              Action: [ "secretsmanager:GetSecretValue" ]
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:unify/google/credentials-*"
       Events:
         DeleteMeetingApi:
           Type: HttpApi
@@ -1890,6 +2040,8 @@ Resources:
       Tags:
         Application: Unify
         Component: CalendarIntegration
+
+
 
   # ──────────────────────────────────────────────────────────────────────────
   # DynamoDB — WebSocket Connections Table
@@ -2232,339 +2384,7 @@ Resources:
         Application: Unify
         Component: Wallet
 
-  # ──────────────────────────────────────────────────────────────────────────
-  # Core Application Functions (Migrated)
-  # ──────────────────────────────────────────────────────────────────────────
 
-  ListChaptersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-list-chapters-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/list-chapters/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: Chapters
-      Events:
-        ListChaptersApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/chapters
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetAvailableChaptersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-available-chapters-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/get-available-chapters/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: Chapters
-      Events:
-        GetAvailableChaptersApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/chapters/available
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetStudentDashboardFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-student-dashboard-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/get-student-dashboard/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: Unify-Users
-        - DynamoDBReadPolicy:
-            TableName: Chapters
-        - DynamoDBReadPolicy:
-            TableName: EventPayments
-        - DynamoDBReadPolicy:
-            TableName: Activities
-      Events:
-        GetDashboardApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/student/dashboard
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  RegisterStudentFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-register-student-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/register-student/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Unify-Users
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-        - DynamoDBCrudPolicy:
-            TableName: ChapterPayments
-        - DynamoDBCrudPolicy:
-            TableName: RegistrationRequests
-      Events:
-        RegisterStudentApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/student/register
-            Method: POST
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetMyChaptersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-my-chapters-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/get-my-chapters/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: Unify-Users
-      Events:
-        GetMyChaptersApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/student/my-chapters
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetStudentProfileFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-student-profile-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/get-student-profile/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: Unify-Users
-      Events:
-        GetProfileApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/student/profile
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  ToggleChapterStatusFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-toggle-chapter-status-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/toggle-chapter-status/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-      Events:
-        ToggleStatusApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapters/toggle-status
-            Method: POST
-            Auth:
-              Authorizer: CognitoAuth
-
-  StudentLeaveChapterFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-student-leave-chapter-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/student-leave-chapter/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Unify-Users
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-      Events:
-        LeaveChapterApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/student/chapters/{chapterId}/leave
-            Method: DELETE
-            Auth:
-              Authorizer: CognitoAuth
-
-  AssignChapterHeadFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-assign-chapter-head-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/assign-chapter-head/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: ChapterHead
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-        - Statement:
-            Effect: Allow
-            Action: [ "cognito-idp:AdminAddUserToGroup" ]
-            Resource: !Sub arn:aws:cognito-idp:ap-south-1:${AWS::AccountId}:userpool/${CognitoUserPoolId}
-      Events:
-        AssignHeadApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapter-heads
-            Method: POST
-            Auth:
-              Authorizer: CognitoAuth
-
-  RemoveChapterHeadFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-remove-chapter-head-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/remove-chapter-head/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: ChapterHead
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-        - Statement:
-            Effect: Allow
-            Action: [ "cognito-idp:AdminRemoveUserFromGroup" ]
-            Resource: !Sub arn:aws:cognito-idp:ap-south-1:${AWS::AccountId}:userpool/${CognitoUserPoolId}
-      Events:
-        RemoveHeadApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapter-heads/{email}
-            Method: DELETE
-            Auth:
-              Authorizer: CognitoAuth
-
-  CreateChapterFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-create-chapter-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/create-chapter/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-      Events:
-        CreateChapterApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapters
-            Method: POST
-            Auth:
-              Authorizer: CognitoAuth
-
-  DeleteChapterFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-delete-chapter-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/delete-chapter/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-      Events:
-        DeleteChapterApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapters/{chapterId}
-            Method: DELETE
-            Auth:
-              Authorizer: CognitoAuth
-
-  UpdateChapterFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-update-chapter-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/update-chapter/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: Chapters
-      Events:
-        UpdateChapterApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/admin/chapters/{chapterId}
-            Method: PUT
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetChapterHeadDetailFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-chapter-head-detail-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/chapter-head-detail/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: ChapterHead
-      Events:
-        GetHeadDetailApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/chapterhead-profile
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  GetChapterRegistrationsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-get-chapter-registrations-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/get-chapter-registrations/
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: RegistrationRequests
-      Events:
-        GetRegistrationsApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/chapterhead/registrations/{chapterId}
-            Method: GET
-            Auth:
-              Authorizer: CognitoAuth
-
-  UploadHandlerFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub unify-upload-handler-${Environment}
-      Handler: index.handler
-      CodeUri: deploy/functions/upload-handler/
-      Policies:
-        - S3CrudPolicy:
-            BucketName: !Ref UnifyChapterImagesBucket
-      Events:
-        UploadApi:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref PaymentHttpApi
-            Path: /api/upload
-            Method: POST
-            Auth:
-              Authorizer: CognitoAuth
 
 Outputs:
   PaymentApiUrl:

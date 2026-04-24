@@ -10,7 +10,7 @@ const secretsClient = new SecretsManagerClient({ region: "ap-south-1" });
 const CHAPTERS_TABLE = process.env.CHAPTERS_TABLE || "Chapters";
 const EVENTS_TABLE = process.env.EVENTS_TABLE || "ChapterEvents";
 const EVENT_PAYMENTS_TABLE = process.env.EVENT_PAYMENTS_TABLE || "EventPayments";
-const CHAPTER_PAYMENTS_TABLE = "ChapterPayments";
+const CHAPTER_PAYMENTS_TABLE = process.env.CHAPTER_PAYMENTS_TABLE || "ChapterPayments";
 const USERS_TABLE = process.env.USERS_TABLE || "Unify-Users";
 const REGISTRATION_TABLE = process.env.REGISTRATION_TABLE || "RegistrationRequests";
 const RAZORPAY_SECRET_NAME = process.env.RAZORPAY_SECRET_NAME || "unify/razorpay/credentials";
@@ -138,7 +138,10 @@ export const handler = async (event) => {
     const chapterResponse = await docClient.send(new GetCommand({
       TableName: CHAPTERS_TABLE,
       Key: { chapterId }
-    }));
+    })).catch((err) => {
+      console.error(`CRITICAL: Database error fetching chapter ${chapterId} from ${CHAPTERS_TABLE}:`, err);
+      throw new Error(`Chapter database access failed: ${err.message}`);
+    });
 
     if (!chapterResponse.Item) {
       return {
@@ -155,11 +158,14 @@ export const handler = async (event) => {
     // 3. (Fallback) User belongs to a chapter-head group in Cognito
     
     // Broad extraction of user identity (similar to frontend AuthContext)
-    const userEmail = claims.email || 
-                     claims["cognito:username"] || 
-                     claims.preferred_username || 
-                     claims.username || 
-                     claims.sub;
+    const userEmail = (
+      claims.email || 
+      claims["cognito:username"] || 
+      claims.preferred_username || 
+      claims.username || 
+      claims.sub ||
+      ""
+    ).toLowerCase();
 
     const isChapterHeadOfThisChapter = userEmail && chapter.headEmail && 
                                       String(userEmail).toLowerCase() === String(chapter.headEmail).toLowerCase();

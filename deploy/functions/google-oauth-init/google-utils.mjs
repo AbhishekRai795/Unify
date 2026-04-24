@@ -1,33 +1,15 @@
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
-
-const secretsClient = new SecretsManagerClient({ region: "ap-south-1" });
-
-let cachedCredentials = null;
-let credentialsCacheTime = 0;
-const CACHE_TTL = 300000; // 5 minutes
-
 export const getGoogleCredentials = async () => {
-  try {
-    if (cachedCredentials && Date.now() - credentialsCacheTime < CACHE_TTL) {
-      return cachedCredentials;
-    }
+  const client_id = process.env.GOOGLE_CLIENT_ID;
+  const client_secret = process.env.GOOGLE_CLIENT_SECRET;
 
-    const response = await secretsClient.send(new GetSecretValueCommand({
-      SecretId: "unify/google/credentials"
-    }));
-
-    if (!response.SecretString) {
-      throw new Error("Google secret value not found");
-    }
-
-    cachedCredentials = JSON.parse(response.SecretString);
-    credentialsCacheTime = Date.now();
-
-    return cachedCredentials;
-  } catch (error) {
-    console.error("Error retrieving Google credentials:", error);
-    throw new Error(`Failed to retrieve Google credentials: ${error.message}`);
+  if (!client_id || !client_secret) {
+    throw new Error("Google Client ID or Secret missing in environment variables");
   }
+
+  return {
+    client_id,
+    client_secret
+  };
 };
 
 export const getBaseUrl = (event) => {
