@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { 
+  Camera, 
   CheckCircle2, 
   XCircle, 
   RefreshCw,
@@ -19,85 +20,74 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose, onSuccess }) => {
   const [status, setStatus] = useState<'idle' | 'scanning' | 'verifying' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
-    // Small timeout to ensure the DOM element is ready
-    const timer = setTimeout(() => {
-      startScanner();
-    }, 100);
-
+    checkPermission();
     return () => {
-      clearTimeout(timer);
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        html5QrCodeRef.current.stop().catch(err => console.error('Failed to stop scanner', err));
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(err => console.error('Failed to clear scanner', err));
       }
     };
   }, []);
 
-  const onScanSuccess = async (decodedText: string) => {
-    if (status === 'verifying' || status === 'success') return;
-    
-    // Stop camera immediately after successful scan to free up resources
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-      await html5QrCodeRef.current.stop().catch(console.error);
-    }
-
-    setStatus('verifying');
-    
+  const checkPermission = async () => {
     try {
-      let location = undefined;
-      try {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-        });
-        location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      } catch (e) {
-        console.warn('Geolocation failed or denied:', e);
-      }
-
-      const deviceId = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
-      await attendanceAPI.markAttendance(decodedText, location, deviceId);
-      setStatus('success');
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+      setHasPermission(true);
+      setStatus('scanning');
+      setTimeout(startScanner, 100);
+    } catch (err) {
+      console.error('Camera permission denied:', err);
+      setHasPermission(false);
       setStatus('error');
-      setErrorMessage(err.response?.data?.message || 'Failed to verify attendance');
-      // On error, let the user manually try again which will restart the scanner
+      setErrorMessage('Camera permission is required to scan QR codes. Please enable it in your browser settings.');
     }
   };
 
-  const startScanner = async () => {
-    try {
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        await html5QrCodeRef.current.stop();
-      }
+  const startScanner = () => {
+    if (scannerRef.current) return;
 
-      const html5QrCode = new Html5Qrcode("qr-reader");
-      html5QrCodeRef.current = html5QrCode;
-      
-      setStatus('scanning');
-      setHasPermission(true);
-
-      const config = { 
+    const scanner = new Html5QrcodeScanner(
+      'qr-reader',
+      { 
         fps: 10, 
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
-      };
+        showTorchButtonIfSupported: true,
+      },
+      /* verbose= */ false
+    );
 
-      // Prefer back camera ("environment") for mobile, or any camera for desktop
-      await html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onScanSuccess,
-        () => {} // Ignore scan errors (just means no QR in frame)
-      );
-    } catch (err: any) {
-      console.error('Scanner start failed:', err);
-      setHasPermission(false);
-      setStatus('error');
-      setErrorMessage('Camera access failed. Please ensure you have granted permission and no other app is using the camera.');
-    }
+    const onScanSuccess = async (decodedText: string) => {
+      scanner.pause(true);
+      setStatus('verifying');
+      
+      try {
+        let location = undefined;
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch (e) {
+          console.warn('Geolocation failed or denied:', e);
+        }
+
+        const deviceId = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
+        await attendanceAPI.markAttendance(decodedText, location, deviceId);
+        setStatus('success');
+        if (onSuccess) onSuccess();
+      } catch (err: any) {
+        setStatus('error');
+        setErrorMessage(err.response?.data?.message || 'Failed to verify attendance');
+        scanner.resume();
+      }
+    };
+
+    scanner.render(onScanSuccess, (err) => {});
+    scannerRef.current = scanner;
   };
 
   return (
@@ -120,7 +110,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose, onSuccess }) => {
             <h4 className="font-bold text-slate-800 dark:text-dark-text-primary">Permission Denied</h4>
             <p className="text-sm text-slate-500 dark:text-dark-text-muted mt-2">{errorMessage}</p>
             <button 
-              onClick={startScanner}
+              onClick={checkPermission}
               className="mt-6 flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
             >
               <Settings className="h-5 w-5" />
@@ -160,7 +150,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose, onSuccess }) => {
             <button 
               onClick={() => {
                 setStatus('scanning');
-                startScanner();
+                if (scannerRef.current) scannerRef.current.resume();
               }}
               className="mt-8 bg-white text-red-600 px-8 py-2 rounded-2xl font-bold hover:bg-opacity-90 transition-all"
             >
