@@ -141,72 +141,64 @@ export const handler = async (event) => {
       
       console.log(`[ATTENDANCE] Marking attendance - type: ${type}, id: ${sessionId}, user: ${userId}`);
 
-      // --- ELIGIBILITY CHECK ---
-      let isEligible = false;
+      // ELIGIBILITY CHECK
       try {
-        const session = type === "event" ? { eventId: sessionId, chapterId: null } : await findMeeting(sessionId);
-        
-        // If it's a meeting and not found, we can't verify chapter/event linkage
-        if (!session && type === "meeting") {
-          return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ message: "Meeting session not found" }) };
+        // 1. Fetch session/meeting info to get eventId and chapterId
+        let session = type === "event" ? { eventId: sessionId, title: "Event Session" } : await findMeeting(sessionId);
+        if (!session && type === "meeting" && sessionId.startsWith("meet-")) {
+           session = { meetingId: sessionId, title: "Ad-hoc Session", chapterId: "" }; // Ad-hoc fallback
         }
 
-        const targetEventId = type === "event" ? sessionId : session?.eventId;
+        if (!session) {
+          return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ message: "Session not found" }) };
+        }
+
+        // 2. Determine eligibility source
+        let isEligible = false;
+        const targetEventId = type === "event" ? sessionId : session.eventId;
         
-        // 1. Check Event Registration if linked to an event
         if (targetEventId && targetEventId !== "null" && targetEventId !== "") {
-          const eventRegs = await docClient.send(new QueryCommand({
+          console.log(`[DEBUG] Validating against EventPayments for event: ${targetEventId}`);
+          const regs = await docClient.send(new QueryCommand({
             TableName: process.env.EVENT_PAYMENTS_TABLE || "EventPayments",
-            KeyConditionExpression: "eventId = :e",
-            FilterExpression: "userId = :u",
+            KeyConditionExpression: "eventId = :e AND userId = :u",
             ExpressionAttributeValues: { ":e": targetEventId, ":u": userId }
           }));
-          
-          const validReg = (eventRegs.Items || []).find(r => 
+          isEligible = (regs.Items || []).some(r => 
             r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || 
             r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED"
           );
-          if (validReg) {
-            isEligible = true;
-            console.log(`[ATTENDANCE] Eligibility found via Event: ${targetEventId}`);
-          }
-        }
-
-        // 2. Check Chapter Fallback (if not already eligible via event, or if it's a chapter meeting)
-        // Note: For event-only QR codes, we might want to stay strict, but for meetings linked to events,
-        // we often allow chapter members to join even if they didn't pay for the main event.
-        if (!isEligible && session?.chapterId) {
-          const chapterRegs = await docClient.send(new QueryCommand({
+        } else if (session.chapterId) {
+          console.log(`[DEBUG] Validating against ChapterPayments for chapter: ${session.chapterId}`);
+          const regs = await docClient.send(new QueryCommand({
             TableName: process.env.REGISTRATION_TABLE || "ChapterPayments",
             KeyConditionExpression: "chapterId = :c",
             FilterExpression: "userId = :u",
             ExpressionAttributeValues: { ":c": session.chapterId, ":u": userId }
           }));
-          
-          const validReg = (chapterRegs.Items || []).find(r => 
+          isEligible = (regs.Items || []).some(r => 
             r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED" ||
             r.paymentStatus === "SUCCESS" || r.paymentStatus === "COMPLETED"
           );
-          if (validReg) {
-            isEligible = true;
-            console.log(`[ATTENDANCE] Eligibility found via Chapter: ${session.chapterId}`);
-          }
+        } else {
+          // If it's a meeting with no chapterId and no eventId, we can't validate (shouldn't happen with valid sessions)
+          console.log(`[DEBUG] No chapterId or eventId found for session validation`);
+          isEligible = true; 
         }
 
         if (!isEligible) {
-          console.log(`[ATTENDANCE] Eligibility DENIED for user ${userId} in session ${sessionId}`);
+          console.log(`[ATTENDANCE] Blocking ineligible user: ${userId} for session: ${sessionId}`);
           return { 
             statusCode: 403, 
             headers: corsHeaders, 
-            body: JSON.stringify({ 
-              message: "Access Denied: You are not registered for this event or chapter. Please ensure your payment is approved." 
-            }) 
+            body: JSON.stringify({ message: "Unauthorized: You are not registered for this session/event" }) 
           };
         }
-      } catch (e) {
-        console.error(`[ATTENDANCE] Eligibility check error: ${e.message}`);
-        // In case of a major backend failure, we default to strict rejection for security
-        return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ message: "Verification system error" }) };
+      } catch (err) {
+        console.error(`[ATTENDANCE] Eligibility check failed: ${err.message}`);
+        // In case of system error during check, we might want to fail-closed or fail-open.
+        // Failing closed (blocking) for security.
+        return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ message: "Error validating eligibility" }) };
       }
 
       // Verify location if required
@@ -318,26 +310,26 @@ export const handler = async (event) => {
                 r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED"
               );
 
-              if (paidRegs.length > 0) {
-                foundEventRegs = true;
-                // Enrich with user info from Users table
-                eligibleStudents = await Promise.all(paidRegs.map(async (r) => {
-                  try {
-                    const userRes = await docClient.send(new GetCommand({
-                      TableName: process.env.USERS_TABLE || "Users",
-                      Key: { userId: r.userId }
-                    }));
-                    const u = userRes.Item || {};
-                    return {
-                      userId: r.userId,
-                      name: u.name || r.studentName || r.name || "Unknown Student",
-                      sapId: u.sapId || r.studentSapId || r.sapId || "N/A"
-                    };
-                  } catch (e) {
-                    return { userId: r.userId, name: "Unknown Student", sapId: "N/A" };
-                  }
-                }));
-              }
+              // If event-linked, we ONLY show event registrations (strict mode as per user request)
+              foundEventRegs = true; 
+              
+              // Enrich with user info from Users table
+              eligibleStudents = await Promise.all(paidRegs.map(async (r) => {
+                try {
+                  const userRes = await docClient.send(new GetCommand({
+                    TableName: process.env.USERS_TABLE || "Users",
+                    Key: { userId: r.userId }
+                  }));
+                  const u = userRes.Item || {};
+                  return {
+                    userId: r.userId,
+                    name: u.name || r.studentName || r.name || "Unknown Student",
+                    sapId: u.sapId || r.studentSapId || r.sapId || "N/A"
+                  };
+                } catch (e) {
+                  return { userId: r.userId, name: "Unknown Student", sapId: "N/A" };
+                }
+              }));
             }
             
             // Fallback to chapter members if no event registrations found, OR if not an event-linked meeting
