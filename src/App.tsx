@@ -15,6 +15,7 @@ import Loader from './components/common/Loader';
 import { Shield, User, UserCog } from 'lucide-react';
 import { ChatProvider } from './contexts/ChatContext';
 import ChatWidget from './components/chat/ChatWidget';
+import { ChapterHeadProvider } from './contexts/ChapterHeadContext';
 
 // This component will wrap pages that need the Header and Footer
 const MainLayout: React.FC = () => (
@@ -148,7 +149,9 @@ function App() {
   return (
     <ThemeProvider>
       <ChatProvider>
-        <AppContent />
+        <ChapterHeadProvider>
+          <AppContent />
+        </ChapterHeadProvider>
       </ChatProvider>
     </ThemeProvider>
   );

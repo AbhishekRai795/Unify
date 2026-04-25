@@ -33,6 +33,9 @@ import {
   Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AttendanceManager from '../attendance/AttendanceManager';
+import QRScanner from '../attendance/QRScanner';
+import { useAuth } from '../../contexts/AuthContext';
 import { googleMeetAPI } from '../../services/googleMeetApi';
 import { paymentAPI } from '../../services/paymentApi';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -58,13 +61,17 @@ interface MeetingCalendarProps {
 
 const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly = false }) => {
   const { isDark } = useTheme();
+  const { user } = useAuth();
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view] = useState<'month' | 'week' | 'day'>('month');
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAttendanceManager, setShowAttendanceManager] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [managingMeetingId, setManagingMeetingId] = useState<string | null>(null);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
@@ -389,8 +396,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
       {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div key="meeting-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div 
+              key="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -398,6 +406,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
               className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             />
             <motion.div 
+              key="modal-content"
               initial={{ scale: 0.98, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.98, opacity: 0, y: 10 }}
@@ -463,8 +472,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                       </div>
 
                       <AnimatePresence mode="wait">
-                        {formData.isForEvent && (
+                        {formData.isForEvent ? (
                           <motion.div
+                            key="event-selector"
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
@@ -478,8 +488,8 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                               className="w-full px-4 py-2.5 rounded-xl bg-white border border-blue-100 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-sm font-medium text-gray-700 cursor-pointer"
                             >
                               <option value="">Select an Event...</option>
-                              {events.map(event => (
-                                <option key={event.eventId} value={event.eventId}>
+                              {events.map((event, idx) => (
+                                <option key={event.eventId || `evt-opt-${idx}`} value={event.eventId}>
                                   {event.title}
                                 </option>
                               ))}
@@ -489,27 +499,28 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
                                 No live events found for this chapter.
                               </p>
                             )}
+                            {formData.eventId && (
+                              <motion.div
+                                key="event-notice"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="bg-green-500/5 border border-green-500/10 rounded-xl p-3"
+                              >
+                                <p className="text-[11px] text-green-600/80 font-bold italic leading-relaxed">
+                                  * Only students whose registration is Approved/Paid for this event will be invited.
+                                </p>
+                              </motion.div>
+                            )}
                           </motion.div>
-                        )}
-                        {!formData.isForEvent && (
+                        ) : (
                           <motion.div
+                            key="chapter-notice"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3"
                           >
                             <p className="text-[11px] text-blue-600/80 font-bold italic leading-relaxed">
                               * All registered chapter members will receive an invite and a notification for this meeting.
-                            </p>
-                          </motion.div>
-                        )}
-                        {formData.isForEvent && formData.eventId && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="bg-green-500/5 border border-green-500/10 rounded-xl p-3"
-                          >
-                            <p className="text-[11px] text-green-600/80 font-bold italic leading-relaxed">
-                              * Only students whose registration is Approved/Paid for this event will be invited.
                             </p>
                           </motion.div>
                         )}
@@ -600,14 +611,45 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
 
                     <div className="pt-4 flex items-center justify-between border-t border-gray-100">
                       {editingMeeting ? (
-                        <button 
-                          type="button"
-                          onClick={handleDelete}
-                          className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold text-xs"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Cancel Meeting</span>
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          <button 
+                            type="button"
+                            onClick={handleDelete}
+                            className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold text-xs"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Cancel Meeting</span>
+                          </button>
+                          
+                          {user?.activeRole === 'chapter_head' && (
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setManagingMeetingId(editingMeeting.meetingId);
+                                setShowAttendanceManager(true);
+                                setIsModalOpen(false);
+                              }}
+                              className="flex items-center space-x-2 px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-xl transition-all font-bold text-xs"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                              <span>Live Attendance</span>
+                            </button>
+                          )}
+
+                          {user?.activeRole === 'student' && (
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setShowQRScanner(true);
+                                setIsModalOpen(false);
+                              }}
+                              className="flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs"
+                            >
+                              <Camera className="h-4 w-4" />
+                              <span>Scan Attendance</span>
+                            </button>
+                          )}
+                        </div>
                       ) : <div />}
 
                       <div className="flex items-center space-x-3">
@@ -640,6 +682,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
       <AnimatePresence>
         {error && (
           <motion.div 
+            key="error-toast"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
@@ -651,6 +694,68 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
               <X className="h-4 w-4" />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Attendance Manager Modal */}
+      <AnimatePresence>
+        {showAttendanceManager && managingMeetingId && (
+          <div key="attendance-manager-modal" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              key="attendance-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAttendanceManager(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            />
+            <motion.div 
+              key="attendance-content"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-5xl bg-white dark:bg-dark-surface rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-dark-border overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-dark-text-primary">Attendance Management</h2>
+                <button 
+                  onClick={() => setShowAttendanceManager(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full"
+                >
+                  <X className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
+              <AttendanceManager 
+                meetingId={managingMeetingId} 
+                onClose={() => setShowAttendanceManager(false)} 
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Scanner Modal */}
+      <AnimatePresence>
+        {showQRScanner && (
+          <div key="qr-scanner-modal" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              key="qr-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowQRScanner(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+            />
+            <motion.div 
+              key="qr-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-md bg-white dark:bg-dark-surface rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <QRScanner onClose={() => setShowQRScanner(false)} />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

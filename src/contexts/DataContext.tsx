@@ -3,6 +3,7 @@ import { Chapter, ChapterRegistration } from '../types/chapter';
 import { Event, EventRegistration } from '../types/event';
 import { studentAPI } from '../services/api';
 import { paymentAPI } from '../services/paymentApi';
+import { attendanceAPI } from '../services/attendanceApi';
 import { useAuth } from './AuthContext';
 
 interface RegistrationRequest {
@@ -24,6 +25,7 @@ interface DataContextType {
   myChapters: any[];
   pendingRegistrations: RegistrationRequest[];
   dashboardData: any;
+  attendanceStats: any;
   isLoading: boolean;
   error: string | null;
   fetchChapters: () => Promise<void>;
@@ -31,6 +33,7 @@ interface DataContextType {
   fetchMyChapters: () => Promise<void>;
   fetchPendingRegistrations: () => Promise<void>;
   fetchDashboard: () => Promise<void>;
+  fetchAttendanceStats: () => Promise<void>;
   fetchEventRegistrations: () => Promise<void>;
   registerForChapter: (chapterId: string, formData?: any) => Promise<boolean>;
   leaveChapter: (chapterId: string) => Promise<boolean>;
@@ -62,19 +65,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [myChapters, setMyChapters] = useState<any[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<RegistrationRequest[]>([]);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [attendanceStats, setAttendanceStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Auto-fetch data when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.activeRole === 'student') {
-      fetchChapters();
-      fetchMyChapters();
-      fetchPendingRegistrations();
-      fetchDashboard();
-      fetchEvents();
-      fetchEventRegistrations();
-    }
+    const fetchAllData = async () => {
+      if (isAuthenticated && user?.activeRole === 'student') {
+        // Fetch sequentially to stay under account concurrency limits (10)
+        await fetchChapters();
+        await fetchMyChapters();
+        await fetchPendingRegistrations();
+        await fetchDashboard();
+        await fetchEvents();
+        await fetchEventRegistrations();
+        await fetchAttendanceStats();
+      }
+    };
+    
+    fetchAllData();
   }, [isAuthenticated, user?.activeRole]);
 
   const fetchChapters = async () => {
@@ -123,6 +133,15 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       setDashboardData(data);
     } catch (error) {
       console.error('Error fetching dashboard:', error);
+    }
+  };
+  const fetchAttendanceStats = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await attendanceAPI.getStats();
+      setAttendanceStats(data);
+    } catch (error) {
+      console.error('Error fetching attendance stats:', error);
     }
   };
 
@@ -259,6 +278,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     myChapters,
     pendingRegistrations,
     dashboardData,
+    attendanceStats,
     isLoading,
     error,
     fetchChapters,
@@ -267,6 +287,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     fetchMyChapters,
     fetchPendingRegistrations,
     fetchDashboard,
+    fetchAttendanceStats,
     registerForChapter,
     leaveChapter,
     registerForEvent,

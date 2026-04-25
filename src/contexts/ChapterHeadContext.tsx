@@ -180,7 +180,8 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
       ));
       
       // Refresh stats and activities
-      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      await fetchDashboardStats();
+      await fetchRecentActivities();
       return true;
     } catch (error) {
       console.error('Error toggling registration:', error);
@@ -205,7 +206,8 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
       ));
       
       // Refresh stats and activities
-      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      await fetchDashboardStats();
+      await fetchRecentActivities();
       return true;
     } catch (error) {
       console.error('Error updating registration status:', error);
@@ -221,7 +223,8 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
         registrationFee: eventData.isPaid ? parseFloat(eventData.registrationFee || 0) : 0
       };
       await chapterHeadAPI.createEvent(sanitizedData);
-      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      await fetchDashboardStats();
+      await fetchRecentActivities();
       return true;
     } catch (error) {
       console.error('Error creating event:', error);
@@ -233,7 +236,8 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
   const updateEvent = async (chapterId: string, eventId: string, eventData: any): Promise<boolean> => {
     try {
       await chapterHeadAPI.updateEvent(chapterId, eventId, eventData);
-      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      await fetchDashboardStats();
+      await fetchRecentActivities();
       return true;
     } catch (error) {
       console.error('Error updating event:', error);
@@ -246,7 +250,8 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     try {
       await chapterHeadAPI.deleteEvent(chapterId, eventId);
       // Refresh stats and activities
-      await Promise.all([fetchDashboardStats(), fetchRecentActivities()]);
+      await fetchDashboardStats();
+      await fetchRecentActivities();
       return true;
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -275,13 +280,11 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     setError(null);
     
     try {
-      await Promise.all([
-        // fetchProfile(), // Disabled as requested
-        fetchMyChapters(),
-        fetchRegistrations(),
-        fetchDashboardStats(),
-        fetchRecentActivities()
-      ]);
+      // Fetch sequentially to stay under account concurrency limits (10)
+      await fetchMyChapters();
+      await fetchRegistrations();
+      await fetchDashboardStats();
+      await fetchRecentActivities();
     } catch (error) {
       console.error('Error refreshing data:', error);
       setError('Failed to refresh data');

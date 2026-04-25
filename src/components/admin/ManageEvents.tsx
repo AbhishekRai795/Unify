@@ -19,10 +19,17 @@ import {
   Download,
   Megaphone,
   BookOpen,
-  Award
+  Award,
+  UserCheck,
+  Camera,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { paymentAPI } from '../../services/paymentApi';
+import { attendanceAPI } from '../../services/attendanceApi';
+import { motion, AnimatePresence } from 'framer-motion';
+import AttendanceManager from '../attendance/AttendanceManager';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Event {
   chapterId: string;
@@ -62,8 +69,14 @@ const ManageEvents: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedEventForRegistrations, setSelectedEventForRegistrations] = useState<Event | null>(null);
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>([]);
+  const [eventAttendance, setEventAttendance] = useState<any[]>([]);
   const [isLoadingRegistrations, setIsLoadingRegistrations] = useState(false);
   const [registrationsError, setRegistrationsError] = useState<string | null>(null);
+
+  // Attendance State
+  const [showAttendanceManager, setShowAttendanceManager] = useState(false);
+  const [managingMeetingId, setManagingMeetingId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (chapters && chapters.length > 0) {
@@ -120,11 +133,16 @@ const ManageEvents: React.FC = () => {
     setIsLoadingRegistrations(true);
     setRegistrationsError(null);
     setEventRegistrations([]);
+    setEventAttendance([]);
     try {
-      const res = await paymentAPI.getEventRegistrationsForEvent(eventItem.eventId);
-      setEventRegistrations(res.registrations || []);
+      const [regRes, attRes] = await Promise.all([
+        paymentAPI.getEventRegistrationsForEvent(eventItem.eventId),
+        attendanceAPI.getEventAttendance(eventItem.eventId)
+      ]);
+      setEventRegistrations(regRes.registrations || []);
+      setEventAttendance(attRes.attendance || []);
     } catch (err: any) {
-      setRegistrationsError(err?.message || 'Failed to load event registrations');
+      setRegistrationsError(err?.message || 'Failed to load event data');
     } finally {
       setIsLoadingRegistrations(false);
     }
@@ -145,14 +163,18 @@ const ManageEvents: React.FC = () => {
       ['Event Title', selectedEventForRegistrations.title],
       ['Event ID', selectedEventForRegistrations.eventId],
       [],
-      ['Student Name', 'Email', 'Status', 'Joined At', 'User ID'],
-      ...eventRegistrations.map((reg) => ([
-        reg.studentName || '',
-        reg.studentEmail || '',
-        reg.paymentStatus || 'REGISTERED',
-        reg.joinedAt ? new Date(reg.joinedAt).toLocaleString() : '',
-        reg.userId || ''
-      ]))
+      ['Student Name', 'Email', 'Status', 'Attendance', 'Joined At', 'User ID'],
+      ...eventRegistrations.map((reg) => {
+        const isPresent = eventAttendance.some(a => a.userId === reg.userId);
+        return [
+          reg.studentName || '',
+          reg.studentEmail || '',
+          reg.paymentStatus || 'REGISTERED',
+          isPresent ? 'PRESENT' : 'ABSENT',
+          reg.joinedAt ? new Date(reg.joinedAt).toLocaleString() : '',
+          reg.userId || ''
+        ];
+      })
     ];
 
     const csvContent = rows
@@ -399,6 +421,25 @@ const ManageEvents: React.FC = () => {
                   >
                     View Registrations
                   </button>
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const res = await attendanceAPI.getEventAttendance(event.eventId);
+                        if (res.meetings && res.meetings.length > 0) {
+                          setManagingMeetingId(res.meetings[0].meetingId);
+                          setShowAttendanceManager(true);
+                        } else {
+                          alert("No meeting found for this event. Please schedule one in the Calendar first.");
+                        }
+                      } catch (err) {
+                        alert("Failed to find associated meeting.");
+                      }
+                    }}
+                    className="flex items-center text-xs font-semibold text-green-600 hover:text-green-700 ml-4"
+                  >
+                    <UserCheck className="h-3 w-3 mr-1" />
+                    Live Attendance
+                  </button>
                   <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
@@ -454,6 +495,7 @@ const ManageEvents: React.FC = () => {
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">Student</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">Email</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Attendance</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">Joined</th>
                       </tr>
                     </thead>
@@ -463,6 +505,16 @@ const ManageEvents: React.FC = () => {
                           <td className="px-4 py-3 text-gray-900">{reg.studentName || reg.userId}</td>
                           <td className="px-4 py-3 text-gray-700">{reg.studentEmail || '-'}</td>
                           <td className="px-4 py-3 text-gray-700">{reg.paymentStatus || 'REGISTERED'}</td>
+                          <td className="px-4 py-3">
+                            {eventAttendance.some(a => a.userId === reg.userId) ? (
+                              <span className="inline-flex items-center text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                PRESENT
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs italic">ABSENT</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-gray-700">
                             {reg.joinedAt ? new Date(reg.joinedAt).toLocaleString() : '-'}
                           </td>
@@ -644,6 +696,41 @@ const ManageEvents: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* Attendance Manager Modal */}
+      <AnimatePresence>
+        {showAttendanceManager && managingMeetingId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAttendanceManager(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-5xl bg-white dark:bg-dark-surface rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-dark-border overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-dark-text-primary">Live Attendance Dashboard</h2>
+                <button 
+                  onClick={() => setShowAttendanceManager(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full"
+                >
+                  <X className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
+              <AttendanceManager 
+                meetingId={managingMeetingId} 
+                onClose={() => setShowAttendanceManager(false)} 
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
