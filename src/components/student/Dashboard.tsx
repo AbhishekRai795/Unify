@@ -53,7 +53,7 @@ const itemVariants: Variants = {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { dashboardData, myChapters, events, eventRegistrations, pendingRegistrations, isLoading, fetchDashboard, fetchMyChapters, fetchEvents, fetchEventRegistrations, fetchPendingRegistrations } = useData();
+  const { dashboardData, attendanceStats, myChapters, events, eventRegistrations, pendingRegistrations, isLoading, fetchDashboard, fetchMyChapters, fetchEvents, fetchEventRegistrations, fetchPendingRegistrations, fetchAttendanceStats } = useData();
   const { conversations, setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
   const { isDark } = useTheme();
 
@@ -93,13 +93,13 @@ const Dashboard: React.FC = () => {
     )) as string[],
     [myChapters]
   );
-
   useEffect(() => {
     fetchDashboard();
     fetchMyChapters();
     fetchEvents();
     fetchEventRegistrations();
     fetchPendingRegistrations();
+    fetchAttendanceStats();
   }, []);
 
   // Smart Polling for Events/Announcements
@@ -130,8 +130,9 @@ const Dashboard: React.FC = () => {
 
     // Event registrations
     (eventRegistrations || []).forEach((reg, idx) => {
+      if (!reg) return;
       const eventId = reg.eventId || (reg as any).eventID;
-      const event = events.find(e => (e.id === eventId || e.eventId === eventId));
+      const event = (events || []).find(e => e && (e.id === eventId || e.eventId === eventId));
       activities.push({
         id: `event-${reg.id || eventId || idx}`,
         type: 'event',
@@ -142,10 +143,11 @@ const Dashboard: React.FC = () => {
 
     // Pending requests
     (pendingRegistrations || []).forEach((reg, idx) => {
+      if (!reg) return;
       activities.push({
         id: `pending-${reg.registrationId || idx}`,
         type: 'request',
-        message: `Applied for membership in ${reg.chapterName}`,
+        message: `Applied for membership in ${reg.chapterName || 'Unknown Chapter'}`,
         timestamp: reg.appliedAt || new Date().toISOString()
       });
     });
@@ -200,15 +202,16 @@ const Dashboard: React.FC = () => {
 
   const announcements = (events || [])
     .flatMap((event: any) => {
-      const list = Array.isArray(event.announcements) ? event.announcements : [];
+      if (!event) return [];
+      const list = Array.isArray(event?.announcements) ? event.announcements : [];
       return list.map((announcement: any, index: number) => ({
-        id: `${event.eventId || event.id}-announcement-${index}`,
+        id: `${event?.eventId || event?.id || 'evt'}-announcement-${index}`,
         message: announcement?.message || '',
-        timestamp: announcement?.timestamp || event.updatedAt || event.createdAt,
-        chapterName: event.chapterName || event.chapterId || 'Unknown Chapter',
-        eventName: event.title || event.eventId || event.id || 'Event'
+        timestamp: announcement?.timestamp || event?.updatedAt || event?.createdAt,
+        chapterName: event?.chapterName || event?.chapterId || 'Unknown Chapter',
+        eventName: event?.title || event?.eventId || event?.id || 'Event'
       }));
-    })
+    });
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <motion.div 
@@ -282,7 +285,7 @@ const Dashboard: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Quick Actions</h2>
               <Activity className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
             </div>
-            <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
               <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
                 <Link to="/student/chapters" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
                   <div className="flex items-center space-x-4">
@@ -337,6 +340,20 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-emerald-600 transition-colors" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03, x: 5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <Link to="/student/attendance/stats" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 dark:hover:bg-dark-card/50 transition-colors group">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-lg ${isDark ? 'bg-gradient-to-br from-indigo-600/20 to-accent-600/20 border border-indigo-500/30' : 'bg-indigo-100/70'}`}>
+                      <Activity className={`h-5 w-5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Attendance Statistics</p>
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Track your participation</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-indigo-600 transition-colors" />
                 </Link>
               </motion.div>
             </div>
@@ -400,6 +417,7 @@ const Dashboard: React.FC = () => {
             </div>
           </motion.div>
         </motion.div>
+
 
         {/* Second Row Grid - 3 Columns */}
         <motion.div 

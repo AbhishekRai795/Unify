@@ -118,14 +118,16 @@ const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds })
                 </span>
                 <div className="w-full space-y-1">
                   {items.map(m => (
-                    <motion.div
-                      key={m.meetingId}
-                      layoutId={m.meetingId}
-                      onClick={() => setSelectedMeeting(m)}
-                      className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[9px] rounded-md truncate cursor-pointer hover:bg-indigo-200 transition-colors"
-                    >
-                      {m.title}
-                    </motion.div>
+                    m && (
+                      <motion.div
+                        key={m.meetingId || Math.random()}
+                        layoutId={m.meetingId}
+                        onClick={() => setSelectedMeeting(m)}
+                        className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[9px] rounded-md truncate cursor-pointer hover:bg-indigo-200 transition-colors"
+                      >
+                        {m.title}
+                      </motion.div>
+                    )
                   ))}
                 </div>
               </div>

@@ -9,6 +9,8 @@ import PaymentHistory from '../components/student/PaymentHistory';
 import StudentMessaging from './StudentMessaging';
 import ChapterPublicProfile from './ChapterPublicProfile';
 import EventPublicProfile from './EventPublicProfile';
+import StudentAttendance from './attendance/StudentAttendance';
+import StudentAttendanceStats from './attendance/StudentAttendanceStats';
 
 const StudentPortal: React.FC = () => {
   return (
@@ -23,6 +25,8 @@ const StudentPortal: React.FC = () => {
       <Route path="profile" element={<Profile />} />
       <Route path="payments/history" element={<PaymentHistory />} />
       <Route path="messages" element={<StudentMessaging />} />
+      <Route path="attendance/scan" element={<StudentAttendance />} />
+      <Route path="attendance/stats" element={<StudentAttendanceStats />} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );

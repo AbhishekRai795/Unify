@@ -1,0 +1,10 @@
+{
+  "name": "unify-attendance-handler",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1019.0",
+    "@aws-sdk/lib-dynamodb": "^3.1019.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

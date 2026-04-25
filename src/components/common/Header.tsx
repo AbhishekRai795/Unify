@@ -9,6 +9,7 @@ import RoleToggle from './RoleToggle';
 import { getWalletBalance } from '../../services/walletApi';
 import { WalletModal } from './WalletModal';
 import NotificationCenter from './NotificationCenter';
+import AttendanceHeaderManager from '../attendance/AttendanceHeaderManager';
 
 
 const Header: React.FC = () => {
@@ -131,6 +132,8 @@ const Header: React.FC = () => {
                     </Link>
                   )}
 
+                  {/* Global Attendance Controls */}
+                  <AttendanceHeaderManager role={user.activeRole as any} />
                   
                   {/* Role Toggle - only show if user has multiple roles */}
                   <RoleToggle />
@@ -315,6 +318,11 @@ const Header: React.FC = () => {
               {/* Role Toggle */}
               <div className="px-2">
                 <RoleToggle />
+              </div>
+
+              {/* Global Attendance Controls (Mobile) */}
+              <div className="px-2 pt-2 border-t border-gray-100 dark:border-dark-border">
+                <AttendanceHeaderManager role={user.activeRole as any} fullWidth />
               </div>
 
               {/* Meeting Calendar for Chapter Heads */}

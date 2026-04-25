@@ -14,28 +14,30 @@ import EditEventProfile from '../components/admin/EditEventProfile';
 import PaymentStatsPage from './PaymentStatsPage';
 import CertificateIssuance from '../components/admin/CertificateIssuance';
 import ChapterCalendarPage from './ChapterCalendarPage';
+import HeadAttendance from './attendance/HeadAttendance';
+import AttendanceSelectionPage from './attendance/AttendanceSelectionPage';
 
 const HeadPortal: React.FC = () => {
   return (
-    <ChapterHeadProvider>
-      <Routes>
-        <Route path="/" element={<Navigate to="/head/dashboard" replace />} />
-        <Route path="/dashboard" element={<HeadDashboard />} />
-        <Route path="/chapters" element={<ManageChapters />} />
-        <Route path="/chapters/edit/:chapterId" element={<EditChapter />} />
-        <Route path="/chapters/profile/:chapterId" element={<EditChapterProfile />} />
-        <Route path="/registrations" element={<Registrations />} />
-        <Route path="/events/create" element={<CreateEvent />} />
-        <Route path="/events/manage" element={<ManageEvents />} />
-        <Route path="/events/profile/:eventId" element={<EditEventProfile />} />
-        <Route path="/messages" element={<HeadMessaging />} />
-        <Route path="/chapter/:chapterId/stats" element={<PaymentStatsPage />} />
-        <Route path="certificates" element={<CertificateIssuance />} />
-        <Route path="certificates/:eventId" element={<CertificateIssuance />} />
-        <Route path="/calendar" element={<ChapterCalendarPage />} />
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
-      </Routes>
-    </ChapterHeadProvider>
+    <Routes>
+      <Route path="/" element={<Navigate to="/head/dashboard" replace />} />
+      <Route path="/dashboard" element={<HeadDashboard />} />
+      <Route path="/chapters" element={<ManageChapters />} />
+      <Route path="/chapters/edit/:chapterId" element={<EditChapter />} />
+      <Route path="/chapters/profile/:chapterId" element={<EditChapterProfile />} />
+      <Route path="/registrations" element={<Registrations />} />
+      <Route path="/events/create" element={<CreateEvent />} />
+      <Route path="/events/manage" element={<ManageEvents />} />
+      <Route path="/events/profile/:eventId" element={<EditEventProfile />} />
+      <Route path="/messages" element={<HeadMessaging />} />
+      <Route path="/chapter/:chapterId/stats" element={<PaymentStatsPage />} />
+      <Route path="certificates" element={<CertificateIssuance />} />
+      <Route path="certificates/:eventId" element={<CertificateIssuance />} />
+      <Route path="/calendar" element={<ChapterCalendarPage />} />
+      <Route path="/attendance/select" element={<AttendanceSelectionPage />} />
+      <Route path="/attendance/:meetingId" element={<HeadAttendance />} />
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
+    </Routes>
   );
 };
 
