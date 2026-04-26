@@ -30,7 +30,9 @@ import {
   Timer,
   AlignLeft,
   Type,
-  Users
+  Users,
+  UserCheck,
+  Camera
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceManager from '../attendance/AttendanceManager';
@@ -284,6 +286,12 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto justify-end">
+          <div className={`flex p-1 rounded-md ${isDark ? 'bg-black/20' : 'bg-slate-100'}`}>
+            <button onClick={() => setView('month')} className={`px-2 py-1 text-xs rounded ${view === 'month' ? 'bg-white text-slate-700' : 'text-slate-500'}`}>Month</button>
+            <button onClick={() => setView('week')} className={`px-2 py-1 text-xs rounded ${view === 'week' ? 'bg-white text-slate-700' : 'text-slate-500'}`}>Week</button>
+            <button onClick={() => setView('day')} className={`px-2 py-1 text-xs rounded ${view === 'day' ? 'bg-white text-slate-700' : 'text-slate-500'}`}>Day</button>
+          </div>
+
           {!isReadOnly && !isOAuthConnected && (
             <button 
               onClick={connectGoogle}

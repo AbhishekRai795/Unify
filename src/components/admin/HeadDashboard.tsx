@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, MessageSquare, Megaphone, Activity, ArrowRight, Video, History, UserPlus, Info, BookOpen, CreditCard } from 'lucide-react';
+import { Users, Calendar, Settings, TrendingUp, Plus, Eye, RefreshCw, AlertCircle, MessageSquare, Megaphone, Activity, ArrowRight, Video, History, UserPlus, BookOpen, CreditCard } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';

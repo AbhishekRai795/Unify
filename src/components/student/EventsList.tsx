@@ -351,7 +351,7 @@ const EventsList: React.FC = () => {
                           )}
                         </div>
                         
-                        {event.maxAttendees > 0 && (
+                        {event.maxAttendees && event.maxAttendees > 0 && (
                           <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
                             <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-teal-500'}`} />
                             <span>
@@ -402,7 +402,7 @@ const EventsList: React.FC = () => {
                                     ? 'Registering...' 
                                     : isRegistrationClosed
                                       ? 'Registration Closed'
-                                      : (event.maxAttendees > 0 && event.currentAttendees >= event.maxAttendees)
+                                      : (event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees)
                                         ? 'Full'
                                         : 'Register'
                               }

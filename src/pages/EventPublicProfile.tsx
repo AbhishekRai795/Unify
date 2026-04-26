@@ -3,18 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Target,
-  Eye,
   Award,
-  CheckCircle,
   Instagram,
   Linkedin,
   Twitter,
   Globe,
-  Calendar,
-  Clock,
   Users,
   Sparkles,
-  CircleDollarSign
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
@@ -22,7 +17,6 @@ import { chapterHeadAPI } from '../services/chapterHeadApi';
 import Loader from '../components/common/Loader';
 import PublicProfileLayout from '../components/profiles/PublicProfileLayout';
 import { useTheme } from '../contexts/ThemeContext';
-import { encodeS3Url } from '../utils/s3Utils';
 import { format } from 'date-fns';
 
 const EventPublicProfile: React.FC = () => {
