@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen, ArrowLeft } from 'lucide-react';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen, ArrowLeft, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -73,17 +73,17 @@ const ManageChapters: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Notification */}
         {notification && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`mb-6 p-4 rounded-lg flex items-center ${
+            className={`mb-6 p-4 rounded-lg flex items-center text-sm sm:text-base ${
               notification.type === 'success'
-                ? 'bg-green-50 border border-green-200 text-green-800'
-                : 'bg-red-50 border border-red-200 text-red-800'
+                ? (isDark ? 'bg-green-500/10 border border-green-500/20 text-green-300' : 'bg-green-50 border border-green-200 text-green-800')
+                : (isDark ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-red-50 border border-red-200 text-red-800')
             }`}
           >
             {notification.type === 'success' ? (
@@ -102,14 +102,14 @@ const ManageChapters: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
-                <p className="text-red-800">{error}</p>
+            <div className={`rounded-lg p-4 flex items-start sm:items-center justify-between ${isDark ? 'bg-red-900/20 border border-red-500/30 text-red-300' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+              <div className="flex items-start sm:items-center">
+                <AlertCircle className="h-5 w-5 shrink-0 mr-3 mt-1 sm:mt-0" />
+                <p className="text-sm sm:text-base">{error}</p>
               </div>
               <button
                 onClick={refreshData}
-                className="ml-3 text-red-600 hover:text-red-700"
+                className={`ml-3 p-1 rounded-md transition-colors ${isDark ? 'hover:bg-red-500/20' : 'hover:bg-red-100'}`}
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -135,7 +135,7 @@ const ManageChapters: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
+          className="text-center mb-8 sm:mb-12"
         >
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
@@ -143,7 +143,7 @@ const ManageChapters: React.FC = () => {
             <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
           </div>
           <h1 className={`
-            text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
+            text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 transition-all duration-300 tracking-tight
             ${isDark 
               ? 'text-dark-text-primary' 
               : 'text-[#1a1f36]'
@@ -152,7 +152,7 @@ const ManageChapters: React.FC = () => {
             Manage Communities
           </h1>
           <p className={`
-            text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
+            text-base sm:text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
             Control registration status and view community details for your assigned chapters and clubs.
@@ -166,34 +166,34 @@ const ManageChapters: React.FC = () => {
           className={`backdrop-blur-md rounded-xl border overflow-hidden transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           {chapters.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Communities Assigned</h3>
-              <p className="text-gray-500">You don't have any communities assigned to manage yet.</p>
+            <div className="text-center py-12 px-4">
+              <Users className={`h-12 w-12 mx-auto mb-4 ${isDark ? 'text-dark-text-muted' : 'text-gray-300'}`} />
+              <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>No Communities Assigned</h3>
+              <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-500'}`}>You don't have any communities assigned to manage yet.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50/80">
+                <thead className={`${isDark ? 'bg-dark-surface/95' : 'bg-gray-50/80'}`}>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                       Community
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`hidden md:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`hidden lg:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                       Members
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                       Registration
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium uppercase tracking-wider ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className={`divide-y ${isDark ? 'divide-dark-border/50' : 'divide-gray-200'}`}>
                   {chapters.map((chapter, index) => {
                     const typeLabel = (chapter as any).type === 'club' ? 'Club' : 'Chapter';
                     return (
@@ -202,61 +202,61 @@ const ManageChapters: React.FC = () => {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="hover:bg-gray-50/50 transition-colors duration-200"
+                        className={`${isDark ? 'hover:bg-dark-surface/70' : 'hover:bg-gray-50/50'} transition-colors duration-200`}
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 sm:px-6 py-4">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <div className="hidden sm:flex h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg items-center justify-center mr-3 shrink-0">
                               <span className="text-white font-semibold text-sm">
                                 {chapter.chapterName.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                                 {chapter.chapterName}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-500'}`}>
                                 {typeLabel} Head: {chapter.headName}
                               </div>
                             </div>
                           </div>
                         </td>
                         
-                        <td className="px-6 py-4">
+                        <td className="hidden md:table-cell px-4 sm:px-6 py-4">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             chapter.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-800')
+                              : (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-100 text-red-800')
                           }`}>
                             {chapter.status}
                           </span>
                         </td>
                         
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className={`hidden lg:table-cell px-4 sm:px-6 py-4 text-sm ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                           <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-1 text-gray-400" />
+                            <Users className={`h-4 w-4 mr-1 ${isDark ? 'text-dark-text-muted' : 'text-gray-400'}`} />
                             {chapter.memberCount}
                           </div>
                         </td>
                         
-                        <td className="px-6 py-4">
+                        <td className="px-4 sm:px-6 py-4">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             chapter.registrationStatus === 'open'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-800')
+                              : (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-100 text-red-800')
                           }`}>
                             {chapter.registrationStatus === 'open' ? 'Open' : 'Closed'}
                           </span>
                         </td>
                         
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-2">
+                        <td className="px-4 sm:px-6 py-4">
+                          <div className="flex items-center justify-start gap-1">
                             <button
                               onClick={() => {
                                 setSelectedChapter(chapter.chapterId);
                                 setShowDetailsModal(true);
                               }}
-                              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                              className={`p-2 rounded-lg transition-all duration-200 ${isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'}`}
                               title="View Details"
                             >
                               <Eye className="h-4 w-4" />
@@ -266,7 +266,7 @@ const ManageChapters: React.FC = () => {
                               onClick={() => {
                                 navigate(`/head/chapters/profile/${chapter.chapterId}`);
                               }}
-                              className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+                              className={`p-2 rounded-lg transition-all duration-200 ${isDark ? 'text-indigo-400 hover:bg-indigo-500/10' : 'text-indigo-600 hover:bg-indigo-50'}`}
                               title="Edit Community Profile"
                             >
                               <BookOpen className="h-4 w-4" />
@@ -276,7 +276,7 @@ const ManageChapters: React.FC = () => {
                               onClick={() => {
                                 handleEditChapterHead(chapter);
                               }}
-                              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
+                              className={`p-2 rounded-lg transition-all duration-200 ${isDark ? 'text-green-400 hover:bg-green-500/10' : 'text-green-600 hover:bg-green-50'}`}
                               title={`Edit ${typeLabel} Head`}
                             >
                               <Edit2 className="h-4 w-4" />
@@ -285,18 +285,22 @@ const ManageChapters: React.FC = () => {
                             <button
                               onClick={() => handleToggleRegistration(chapter.chapterId, chapter.registrationStatus || 'closed')}
                               disabled={updating === chapter.chapterId}
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                              className={`w-full sm:w-auto text-center px-3 py-2 sm:py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
                                 chapter.registrationStatus === 'open'
-                                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                  ? (isDark ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-100 text-red-800 hover:bg-red-200')
+                                  : (isDark ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-green-100 text-green-800 hover:bg-green-200')
                               } ${updating === chapter.chapterId ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              {updating === chapter.chapterId
-                                ? 'Updating...'
-                                : chapter.registrationStatus === 'open'
-                                  ? 'Close Registration'
-                                  : 'Open Registration'
-                              }
+                              {updating === chapter.chapterId ? (
+                                'Updating...'
+                              ) : chapter.registrationStatus === 'open' ? (
+                                <>
+                                  <span className="sm:hidden"><X className="h-4 w-4 mx-auto" /></span>
+                                  <span className="hidden sm:inline">Close</span>
+                                </>
+                              ) : (
+                                'Open'
+                              )}
                             </button>
                           </div>
                         </td>
@@ -320,18 +324,18 @@ const ManageChapters: React.FC = () => {
           size="lg"
         >
           {selectedChapterData && (
-            <div className="space-y-6">
+            <div className="space-y-6 p-1">
               <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className={`h-16 w-16 shrink-0 bg-gradient-to-br rounded-xl flex items-center justify-center ${isDark ? 'from-accent-600 to-blue-600' : 'from-blue-500 to-purple-600'}`}>
                   <span className="text-white font-bold text-xl">
                     {selectedChapterData.chapterName.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                     {selectedChapterData.chapterName}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
                     {(selectedChapterData as any).type === 'club' ? 'Club' : 'Chapter'} Head: {selectedChapterData.headName}
                   </p>
                 </div>
@@ -340,20 +344,20 @@ const ManageChapters: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Community Information</h4>
+                    <h4 className={`font-medium mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Community Information</h4>
                     <div className="space-y-2">
-                      <div className="flex items-center text-sm text-gray-700">
-                        <Users className="h-4 w-4 mr-2 text-blue-600" />
+                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
+                        <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
                         <span>{selectedChapterData.memberCount} members</span>
                       </div>
                       
-                      <div className="flex items-center text-sm text-gray-700">
-                        <Mail className="h-4 w-4 mr-2 text-blue-600" />
+                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
+                        <Mail className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
                         <span>{selectedChapterData.headEmail}</span>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-700">
-                        <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                      <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
+                        <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`} />
                         <span>Status: <span className="font-medium capitalize">{selectedChapterData.status}</span></span>
                       </div>
                     </div>
@@ -362,12 +366,12 @@ const ManageChapters: React.FC = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Registration Status</h4>
+                    <h4 className={`font-medium mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Registration Status</h4>
                     <div className="flex items-center space-x-2">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                         selectedChapterData.registrationStatus === 'open'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          ? (isDark ? 'bg-green-500/10 text-green-300' : 'bg-green-100 text-green-800')
+                          : (isDark ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-800')
                       }`}>
                         {selectedChapterData.registrationStatus === 'open' ? 'Open' : 'Closed'}
                       </span>
@@ -375,19 +379,19 @@ const ManageChapters: React.FC = () => {
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Community ID</h4>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">
+                    <h4 className={`font-medium mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Community ID</h4>
+                    <code className={`text-sm px-2 py-1 rounded font-mono ${isDark ? 'bg-dark-card text-dark-text-secondary' : 'bg-gray-100'}`}>
                       {selectedChapterData.chapterId}
                     </code>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="text-sm text-gray-500">
+              <div className={`flex items-center justify-between pt-4 border-t ${isDark ? 'border-dark-border' : 'border-gray-200'}`}>
+                <div className={`text-sm ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                   Created: {new Date(selectedChapterData.createdAt).toLocaleDateString()}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className={`text-sm ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                   Updated: {new Date(selectedChapterData.updatedAt).toLocaleDateString()}
                 </div>
               </div>

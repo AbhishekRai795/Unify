@@ -290,9 +290,9 @@ const CertificateIssuance: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
       {/* Header */}
-      <div className="mb-0 text-left">
+      <div className="mb-4 text-left">
           <button
             onClick={() => {
               if (selectedEvent) {
@@ -307,13 +307,14 @@ const CertificateIssuance: React.FC = () => {
             <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             </div>
-            {selectedEvent ? 'Back to Events' : 'Back to Dashboard'}
+            <span className="hidden sm:inline">{selectedEvent ? 'Back to Events' : 'Back to Dashboard'}</span>
+            <span className="sm:hidden">Back</span>
           </button>
       </div>
 
-      <div className="text-center mb-10 mt-4">
-        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Certificate Issuance</h1>
-        <p className="text-slate-600 max-w-2xl mx-auto font-medium">
+      <div className="text-center mb-8 sm:mb-10 mt-4">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2 tracking-tight">Certificate Issuance</h1>
+        <p className="text-slate-600 max-w-2xl mx-auto font-medium text-sm sm:text-base">
           {selectedEvent 
             ? `Issuing certificates for "${selectedEvent.title}"` 
             : 'Select an event to start issuing certificates to participants.'}
@@ -322,20 +323,20 @@ const CertificateIssuance: React.FC = () => {
 
       {!selectedEvent ? (
         /* Event Selection Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {events.map((event) => (
             <div 
               key={event.eventId}
-              className="group bg-white rounded-3xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              className="group bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
               onClick={() => handleSelectEvent(event)}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-blue-50 rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  <Calendar className="h-6 w-6" />
+              <div className="flex justify-between items-start mb-3 sm:mb-4">
+                <div className="p-3 bg-blue-50 rounded-xl sm:rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <Award className="h-6 w-6 text-gray-200 group-hover:text-yellow-500 transition-colors" />
+                <Award className="h-5 w-5 sm:h-6 sm:w-6 text-gray-200 group-hover:text-yellow-500 transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-blue-600 transition-colors">
                 {event.title}
               </h3>
               <p className="text-gray-500 text-sm line-clamp-2 mb-4">
@@ -354,9 +355,9 @@ const CertificateIssuance: React.FC = () => {
         </div>
       ) : (
         /* Registration Management */
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden animate-scale-in">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 overflow-hidden animate-scale-in">
+          <div className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative flex-1 w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"

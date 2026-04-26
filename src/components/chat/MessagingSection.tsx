@@ -131,9 +131,12 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/30 dark:border-dark-border/50 shadow-xl overflow-hidden bg-white/70 dark:bg-dark-surface/60 backdrop-blur-md h-[calc(100vh-240px)] min-h-[620px]">
+        <div className={`rounded-2xl border border-white/30 dark:border-dark-border/50 shadow-xl overflow-hidden bg-white/70 dark:bg-dark-surface/60 backdrop-blur-md h-[calc(100vh-220px)] min-h-[580px] sm:h-[calc(100vh-240px)] sm:min-h-[620px]`}>
           <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] h-full min-h-0">
-            <aside className="border-r border-gray-200/70 dark:border-dark-border/50 h-full min-h-0 flex flex-col">
+            <aside className={`
+              border-r border-gray-200/70 dark:border-dark-border/50 h-full min-h-0 flex flex-col
+              ${activeConversation ? 'hidden lg:flex' : 'flex'}
+            `}>
               <div className="p-4 pt-5 border-b border-gray-200/70 dark:border-dark-border/50 bg-gradient-to-r from-accent/10 to-primary/10 shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
@@ -217,11 +220,14 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({
               </div>
             </aside>
 
-            <section className="h-full min-h-0 flex flex-col">
+            <section className={`h-full min-h-0 flex-col ${activeConversation ? 'flex' : 'hidden lg:flex'}`}>
               <div className="p-4 border-b border-gray-200/70 dark:border-dark-border/50 bg-white/70 dark:bg-dark-surface/70 shrink-0">
                 {activeConversation ? (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                      <button onClick={() => setActiveConversation(null)} className="lg:hidden p-2 -ml-2 text-gray-600 dark:text-dark-text-secondary">
+                        <ArrowLeft className="h-5 w-5" />
+                      </button>
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-accent to-primary text-white flex items-center justify-center">
                         <User className="h-5 w-5" />
                       </div>

@@ -84,22 +84,22 @@ const AdminDashboard: React.FC = () => {
   });
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Admin Portal</h1>
         <button 
           onClick={() => navigate(`/admin/chapters/create-with-payment?type=${activeTab}`)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold shadow-md transition-all"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all w-full sm:w-auto"
         >
           Create {activeTab === 'chapter' ? 'Chapter' : 'Club'}
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl w-full sm:w-fit">
         <button
           onClick={() => setActiveTab('chapter')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-lg text-sm font-bold transition-all ${
             activeTab === 'chapter' 
               ? 'bg-white text-blue-600 shadow-sm' 
               : 'text-gray-500 hover:text-gray-700'
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('club')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-lg text-sm font-bold transition-all ${
             activeTab === 'club' 
               ? 'bg-white text-indigo-600 shadow-sm' 
               : 'text-gray-500 hover:text-gray-700'
@@ -134,19 +134,19 @@ const AdminDashboard: React.FC = () => {
           <table className="min-w-full">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   {activeTab === 'chapter' ? 'Chapter' : 'Club'} Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <th className="hidden md:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   {activeTab === 'chapter' ? 'Chapter' : 'Club'} Head
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <th className="hidden lg:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Members
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <th className="hidden lg:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Created Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -154,36 +154,41 @@ const AdminDashboard: React.FC = () => {
             <tbody className="divide-y divide-gray-100">
               {filteredItems.map((item) => (
                 <tr key={item.chapterId} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 font-semibold text-gray-900">{item.chapterName}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4 font-semibold text-gray-900">
+                    {item.chapterName}
+                    <div className="md:hidden text-sm text-gray-500 font-normal">
+                      {item.headName || item.headEmail || 'No head'}
+                    </div>
+                  </td>
+                  <td className="hidden md:table-cell px-4 sm:px-6 py-4">
                     {item.headName && <div className="font-medium text-gray-800">{item.headName}</div>}
                     {item.headEmail && <div className="text-sm text-gray-500">{item.headEmail}</div>}
                     {!item.headName && !item.headEmail && <span className="text-gray-400 italic">No head assigned</span>}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden lg:table-cell px-4 sm:px-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {item.memberCount ?? 0} members
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="hidden lg:table-cell px-4 sm:px-6 py-4 text-sm text-gray-500">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button 
-                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors"
+                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors text-center"
                         onClick={() => handleEditChapter(item)}
                       >
                         Edit
                       </button>
                       <button 
-                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition-colors"
+                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition-colors text-center"
                         onClick={() => handleOpenPaymentTransparency(item)}
                       >
                         Stats
                       </button>
                       <button 
-                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
+                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors text-center"
                         onClick={() => handleDeleteChapter(item.chapterId)}
                       >
                         Delete

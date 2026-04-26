@@ -212,7 +212,7 @@ const PaymentStatsPage: React.FC = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation & Header */}
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
             <button
                 onClick={() => navigate(-1)}
                 className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
@@ -225,10 +225,10 @@ const PaymentStatsPage: React.FC = () => {
 
             <button
               onClick={handleExport}
-              className="flex items-center px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+              className={`flex items-center px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95 mt-4 sm:mt-0 ${isDark ? 'bg-accent-600 text-white hover:bg-accent-700' : 'bg-gray-900 text-white hover:bg-black'}`}
             >
               <Download className="w-4 h-4 mr-2" />
-              {viewType === 'chapter' ? 'Export Members CSV' : 'Export Stats CSV'}
+              {viewType === 'chapter' ? 'Export Members' : 'Export Stats'}
             </button>
           </div>
 
@@ -242,59 +242,59 @@ const PaymentStatsPage: React.FC = () => {
               <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
               <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
             </div>
-            <h1 className={`text-4xl font-bold mb-4 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]'}`}>
+            <h1 className={`text-3xl sm:text-4xl font-bold mb-4 tracking-tight ${isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]'}`}>
               Payment Statistics Dashboard
             </h1>
-            <p className={`text-lg max-w-2xl mx-auto font-normal flex items-center justify-center gap-2 ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>
+            <p className={`text-base sm:text-lg max-w-2xl mx-auto font-normal flex items-center justify-center gap-2 ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>
               <ShieldCheck className="w-5 h-5 text-green-500" />
-              Chapter Management Center • <span className="text-blue-600 font-medium">{chapterName}</span>
+              Chapter Management Center • <span className={`${isDark ? 'text-accent-400' : 'text-blue-600'} font-medium`}>{chapterName}</span>
             </p>
           </motion.div>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Active Chapter Members</p>
-                    <p className={`text-3xl font-bold ${headingClass}`}>{data?.overallStats.chapterEnrolledMembersCountFromRegistrations}</p>
+                    <p className={`text-xs sm:text-sm font-medium mb-1 ${subtleClass}`}>Active Members</p>
+                    <p className={`text-2xl sm:text-3xl font-bold ${headingClass}`}>{data?.overallStats.chapterEnrolledMembersCountFromRegistrations}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-500 group-hover:scale-110 transition-transform duration-200">
-                    <Users className="h-6 w-6 text-white" />
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Managed Active Events</p>
-                    <p className={`text-3xl font-bold ${headingClass}`}>{data?.overallStats.totalEvents}</p>
+                    <p className={`text-xs sm:text-sm font-medium mb-1 ${subtleClass}`}>Active Events</p>
+                    <p className={`text-2xl sm:text-3xl font-bold ${headingClass}`}>{data?.overallStats.totalEvents}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-purple-500 group-hover:scale-110 transition-transform duration-200">
-                    <Calendar className="h-6 w-6 text-white" />
+                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Total Completion Value</p>
-                    <p className={`text-3xl font-bold ${headingClass}`}>₹{data?.overallStats.totalRevenueInRupees.toLocaleString('en-IN')}</p>
+                    <p className={`text-xs sm:text-sm font-medium mb-1 ${subtleClass}`}>Total Revenue</p>
+                    <p className={`text-2xl sm:text-3xl font-bold ${headingClass}`}>₹{data?.overallStats.totalRevenueInRupees.toLocaleString('en-IN')}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-emerald-500 group-hover:scale-110 transition-transform duration-200">
-                    <TrendingUp className="h-6 w-6 text-white" />
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`backdrop-blur-md rounded-xl p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm hover:shadow-lg transition-all duration-200 group ${cardClass}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm font-medium mb-1 ${subtleClass}`}>Registration Success Hub</p>
-                    <p className={`text-3xl font-bold ${headingClass}`}>
+                    <p className={`text-xs sm:text-sm font-medium mb-1 ${subtleClass}`}>Success Rate</p>
+                    <p className={`text-2xl sm:text-3xl font-bold ${headingClass}`}>
                     {(() => {
                   const totalRows = data?.overallStats.totalEventRegistrationRows ?? 0;
                   const completed = data?.overallStats.totalCompletedPayments ?? 0;
@@ -305,49 +305,53 @@ const PaymentStatsPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-orange-500 group-hover:scale-110 transition-transform duration-200">
-                    <ShieldCheck className="h-6 w-6 text-white" />
+                    <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
             </motion.div>
         </div>
 
         {/* Main Interface Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
             
             {/* Sidebar Controls */}
             <div className="lg:col-span-1 space-y-6">
-                <div className={`backdrop-blur-md rounded-xl p-6 border shadow-sm ${cardClass}`}>
-                  <h2 className={`text-xl font-bold mb-4 ${headingClass}`}>View Category</h2>
+                <div className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm ${cardClass}`}>
+                  <h2 className={`text-lg sm:text-xl font-bold mb-4 ${headingClass}`}>View Category</h2>
                     <div className="flex flex-col gap-2">
                         <button
                             onClick={() => setViewType('events')}
                             className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                                viewType === 'events' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                                viewType === 'events' 
+                                ? (isDark ? 'bg-accent-600/30 text-accent-300' : 'bg-blue-50 text-blue-700 font-semibold')
+                                : (isDark ? 'text-dark-text-secondary hover:bg-dark-surface' : 'text-gray-700 hover:bg-gray-50')
                             }`}
                         >
-                            <Calendar className="w-5 h-5 mr-3 text-blue-500" /> Event Registrations
+                            <Calendar className={`w-5 h-5 mr-3 ${isDark ? 'text-accent-400' : 'text-blue-500'}`} /> Event Registrations
                         </button>
                         <button
                             onClick={() => setViewType('chapter')}
                             className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                                viewType === 'chapter' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                                viewType === 'chapter' 
+                                ? (isDark ? 'bg-accent-600/30 text-accent-300' : 'bg-blue-50 text-blue-700 font-semibold')
+                                : (isDark ? 'text-dark-text-secondary hover:bg-dark-surface' : 'text-gray-700 hover:bg-gray-50')
                             }`}
                         >
-                            <Users className="w-5 h-5 mr-3 text-purple-500" /> Chapter Joining
+                            <Users className={`w-5 h-5 mr-3 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} /> Chapter Joining
                         </button>
                     </div>
                 </div>
 
                 {viewType === 'events' && (
-                    <div className={`backdrop-blur-md rounded-xl p-6 border shadow-sm ${cardClass}`}>
-                      <h2 className={`text-xl font-bold mb-4 flex items-center ${headingClass}`}>
+                    <div className={`backdrop-blur-md rounded-xl p-4 sm:p-6 border shadow-sm ${cardClass}`}>
+                      <h2 className={`text-lg sm:text-xl font-bold mb-4 flex items-center ${headingClass}`}>
                             <Filter className="w-5 h-5 mr-2 text-gray-500" /> Event Filter
                         </h2>
                         <div className="space-y-2">
                             <select
                                 value={eventFilter}
                                 onChange={(e) => setEventFilter(e.target.value)}
-                                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium"
+                                className={`w-full border text-sm rounded-lg block p-2.5 outline-none font-medium ${isDark ? 'bg-dark-card border-dark-border text-dark-text-primary focus:ring-accent focus:border-accent' : 'bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500'}`}
                             >
                                 <option value="all">All Events Summary</option>
                                 {data?.eventStats.map((evt) => (
@@ -362,61 +366,55 @@ const PaymentStatsPage: React.FC = () => {
             </div>
 
             {/* Main Data Table Area */}
-            <div className="lg:col-span-3 space-y-6">
-                <div className={`backdrop-blur-md rounded-3xl border shadow-xl overflow-hidden min-h-[600px] flex flex-col ${cardStrongClass}`}>
+            <div className="lg:col-span-3">
+                <div className={`backdrop-blur-md rounded-2xl sm:rounded-3xl border shadow-xl overflow-hidden min-h-[600px] flex flex-col ${cardStrongClass}`}>
                     <div className="flex-1 overflow-x-auto custom-scrollbar">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50/80 sticky top-0 z-10 border-b border-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                            <thead className={`${isDark ? 'bg-dark-surface/90' : 'bg-gray-50/80'} sticky top-0 z-10 border-b ${isDark ? 'border-dark-border' : 'border-gray-200'}`}>
                                 <tr>
-                                    <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Student Info</th>
-                                    <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Academic</th>
+                                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Student</th>
+                                    <th className="hidden md:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Details</th>
                                     {viewType === 'events' && (
-                                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Registered For</th>
+                                        <th className="hidden sm:table-cell px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Event</th>
                                     )}
-                                    <th className="px-8 py-4 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-8 py-4 text-right text-xs font-medium text-gray-500 uppercase">Value</th>
+                                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Status</th>
+                                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-right text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Value</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-transparent divide-y divide-gray-100">
+                            <tbody className={`bg-transparent divide-y ${isDark ? 'divide-dark-border/50' : 'divide-gray-100'}`}>
                                 {displayData.map((row: any, idx: number) => (
-                                    <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
-                                        <td className="px-8 py-5">
-                                            <div className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{row.studentName}</div>
-                                            <div className="text-xs text-gray-500 font-medium">{row.studentEmail}</div>
+                                    <tr key={idx} className={`${isDark ? 'hover:bg-dark-surface/50' : 'hover:bg-blue-50/40'} transition-colors group`}>
+                                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                                            <div className={`text-sm font-bold ${headingClass} group-hover:text-blue-700 transition-colors`}>{row.studentName}</div>
+                                            <div className={`text-xs font-medium ${subtleClass}`}>{row.studentEmail}</div>
                                         </td>
-                                        <td className="px-8 py-5">
-                                            <div className="text-xs text-gray-700 font-bold">SAP: <span className="font-mono text-blue-600">{row.sapId || 'N/A'}</span></div>
-                                            <div className="text-[10px] text-gray-500 uppercase mt-1">Year: {row.year || 'N/A'}</div>
+                                        <td className="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap">
+                                            <div className={`text-xs font-bold ${subtleClass}`}>SAP: <span className={`font-mono ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>{row.sapId || 'N/A'}</span></div>
+                                            <div className={`text-[10px] uppercase mt-1 ${subtleClass}`}>Year: {row.year || 'N/A'}</div>
                                         </td>
                                         {viewType === 'events' && (
-                                            <td className="px-8 py-5">
-                                                <div className="text-xs font-semibold text-gray-700 max-w-[200px] truncate" title={row.eventTitle}>
+                                            <td className="hidden sm:table-cell px-4 sm:px-6 py-4 whitespace-nowrap">
+                                                <div className={`text-xs font-semibold max-w-[150px] truncate ${subtleClass}`} title={row.eventTitle}>
                                                     {row.eventTitle}
-                                                </div>
-                                                <div className="text-[9px] text-gray-400 font-mono mt-1">
-                                                    ID: {row.eventId?.substring(0, 12)}
                                                 </div>
                                             </td>
                                         )}
-                                        <td className="px-8 py-4 text-center">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase inline-block ${
+                                        <td className="px-4 sm:px-6 py-4 text-center">
+                                            <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase inline-block ${
                                                 row.paymentStatus === 'COMPLETED' || row.paymentStatus === 'NA' || row.paymentStatus === 'FREE'
-                                                ? 'bg-green-100 text-green-700' 
+                                                ? (isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700')
                                                 : row.paymentStatus === 'PENDING' 
-                                                    ? 'bg-amber-100 text-amber-700' 
-                                                    : 'bg-red-100 text-red-700'
+                                                    ? (isDark ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700')
+                                                    : (isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700')
                                             }`}>
                                                 {row.paymentStatus === 'NA' || row.paymentStatus === 'FREE' ? 'FREE' : row.paymentStatus}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-4 text-right">
-                                            <div className="text-sm font-bold text-gray-900">
-                                                ₹{Number(row.value ?? row.amountInRupees ?? row.amountPaid ?? 0).toLocaleString('en-IN', {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2
-                                                })}
+                                        <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+                                            <div className={`text-sm font-bold ${headingClass}`}>
+                                                ₹{Number(row.value ?? row.amountInRupees ?? row.amountPaid ?? 0).toLocaleString('en-IN')}
                                             </div>
-                                            <div className="text-xs text-gray-500 mt-1 font-mono break-all normal-case">
+                                            <div className={`text-xs mt-1 font-mono break-all normal-case ${subtleClass}`}>
                                                 {row.razorpayPaymentId || row.transactionId || 'InternalRef'}
                                             </div>
                                         </td>
@@ -424,7 +422,7 @@ const PaymentStatsPage: React.FC = () => {
                                 ))}
                                 {displayData.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-8 py-24 text-center text-gray-400 font-medium italic">
+                                        <td colSpan={5} className="px-6 py-24 text-center text-gray-400 dark:text-dark-text-muted font-medium italic">
                                             No payment records found for this combination.
                                         </td>
                                     </tr>

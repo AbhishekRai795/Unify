@@ -343,6 +343,37 @@ const Header: React.FC = () => {
                 </Link>
               )}
 
+              {/* Wallet balance for students */}
+              {user.activeRole === 'student' && (
+                <button
+                  onClick={() => {
+                    setIsWalletOpen(true);
+                    closeMobileMenu();
+                  }}
+                  className={`
+                    w-full flex items-center justify-between p-4 rounded-lg transition-all duration-200 backdrop-blur-md border
+                    ${isDark 
+                      ? 'text-dark-text-secondary hover:text-accent-400 hover:bg-dark-surface border-dark-border' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100 border-gray-200'
+                    }
+                  `}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Wallet className="h-5 w-5" />
+                    <span className="font-medium">Wallet</span>
+                  </div>
+                  <span className={`
+                    px-3 py-1 rounded-full text-sm font-bold
+                    ${isDark 
+                      ? 'bg-accent-500/20 text-accent-300' 
+                      : 'bg-blue-100 text-blue-700'
+                    }
+                  `}>
+                    {walletBalance !== null ? `${walletBalance} pts` : '...'}
+                  </span>
+                </button>
+              )}
+
               {/* Logout Button */}
 
               <button
