@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { paymentAPI } from '../../services/paymentApi';
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import CertificateTemplate from './CertificateTemplate';
@@ -38,6 +39,7 @@ type CertificateType = 'participation' | '1st' | '2nd' | '3rd';
 const CertificateIssuance: React.FC = () => {
   const { eventId: urlEventId } = useParams();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const { fetchMyEvents, chapters } = useChapterHead();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -302,9 +304,9 @@ const CertificateIssuance: React.FC = () => {
                 navigate('/head/dashboard');
               }
             }}
-            className="group flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-all duration-200"
+            className="group flex items-center text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-200"
           >
-            <div className="p-2 mr-2 bg-white rounded-lg border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all">
+            <div className="p-2 mr-2 bg-white dark:bg-dark-surface rounded-lg border border-slate-200 dark:border-dark-border group-hover:border-blue-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             </div>
             <span className="hidden sm:inline">{selectedEvent ? 'Back to Events' : 'Back to Dashboard'}</span>
@@ -312,9 +314,22 @@ const CertificateIssuance: React.FC = () => {
           </button>
       </div>
 
-      <div className="text-center mb-8 sm:mb-10 mt-4">
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2 tracking-tight">Certificate Issuance</h1>
-        <p className="text-slate-600 max-w-2xl mx-auto font-medium text-sm sm:text-base">
+      <div className="text-center mb-8 sm:mb-12 mt-4">
+        <div className="flex items-center justify-center space-x-4 mb-4">
+          <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+          <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
+          <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+        </div>
+        <h1 className={`
+          text-3xl sm:text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
+          ${isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]'}
+        `}>
+          Certificate Issuance
+        </h1>
+        <p className={`
+          text-sm sm:text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
+          ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
+        `}>
           {selectedEvent 
             ? `Issuing certificates for "${selectedEvent.title}"` 
             : 'Select an event to start issuing certificates to participants.'}
@@ -327,19 +342,19 @@ const CertificateIssuance: React.FC = () => {
           {events.map((event) => (
             <div 
               key={event.eventId}
-              className="group bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              className="group bg-white dark:bg-dark-surface rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-dark-border p-5 sm:p-6 hover:shadow-xl dark:hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
               onClick={() => handleSelectEvent(event)}
             >
               <div className="flex justify-between items-start mb-3 sm:mb-4">
-                <div className="p-3 bg-blue-50 rounded-xl sm:rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl sm:rounded-2xl text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white transition-all">
                   <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <Award className="h-5 w-5 sm:h-6 sm:w-6 text-gray-200 group-hover:text-yellow-500 transition-colors" />
+                <Award className="h-5 w-5 sm:h-6 sm:w-6 text-gray-200 dark:text-gray-700 group-hover:text-yellow-500 transition-colors" />
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 truncate group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {event.title}
               </h3>
-              <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-4">
                 {event.description}
               </p>
               <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
@@ -355,14 +370,14 @@ const CertificateIssuance: React.FC = () => {
         </div>
       ) : (
         /* Registration Management */
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 overflow-hidden animate-scale-in">
-          <div className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-dark-surface rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 dark:border-dark-border overflow-hidden animate-scale-in">
+          <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-dark-border bg-gray-50/50 dark:bg-dark-bg/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative flex-1 w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search participants..."
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -371,7 +386,7 @@ const CertificateIssuance: React.FC = () => {
               <select
                 value={certType}
                 onChange={(e) => setCertType(e.target.value as CertificateType)}
-                className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="px-3 py-2 bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
                 disabled={isIssuing}
               >
                 <option value="participation">Participation</option>
@@ -396,7 +411,7 @@ const CertificateIssuance: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-white border-b border-gray-100">
+                <tr className="bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border">
                   <th className="px-6 py-4 text-left w-12">
                     <input
                       type="checkbox"
@@ -406,7 +421,7 @@ const CertificateIssuance: React.FC = () => {
                       }}
                       onChange={toggleSelectAllFiltered}
                       disabled={filteredUserIds.length === 0 || isIssuing}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-dark-border text-blue-600 focus:ring-blue-500 bg-white dark:bg-dark-bg"
                       aria-label="Select all visible participants"
                     />
                   </th>
@@ -446,12 +461,12 @@ const CertificateIssuance: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold mr-3">
                               {reg.studentName.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-gray-900">{reg.studentName}</div>
-                              <div className="text-xs text-gray-500">{reg.studentEmail}</div>
+                              <div className="text-sm font-bold text-gray-900 dark:text-white">{reg.studentName}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{reg.studentEmail}</div>
                             </div>
                           </div>
                         </td>
@@ -511,15 +526,15 @@ const CertificateIssuance: React.FC = () => {
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
             onClick={() => !isIssuing && setIssuingFor(null)} 
           />
-          <div className="relative bg-white rounded-3xl w-full max-w-6xl shadow-2xl animate-scale-in">
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-gray-100 flex justify-between items-center z-10 rounded-t-3xl">
+          <div className="relative bg-white dark:bg-dark-surface rounded-3xl w-full max-w-6xl shadow-2xl animate-scale-in border border-white/10 dark:border-dark-border">
+            <div className="sticky top-0 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-md px-6 py-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center z-10 rounded-t-3xl">
               <div>
-                <h2 className="text-2xl font-black text-gray-900">Preview Certificate</h2>
-                <p className="text-sm text-gray-500 font-medium">Configuring for {issuingFor.studentName}</p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white">Preview Certificate</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Configuring for {issuingFor.studentName}</p>
               </div>
               <button 
                 onClick={() => setIssuingFor(null)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-bg rounded-full transition-colors"
                 disabled={isIssuing}
               >
                 <X className="h-6 w-6 text-gray-400" />
@@ -531,7 +546,7 @@ const CertificateIssuance: React.FC = () => {
                 {/* Configuration Panel */}
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-widest">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-widest">
                       Select Achievement Type
                     </label>
                     <div className="grid grid-cols-1 gap-3">
@@ -547,8 +562,8 @@ const CertificateIssuance: React.FC = () => {
                           className={`
                             flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left
                             ${certType === type.id 
-                              ? 'border-blue-600 bg-blue-50 text-blue-700' 
-                              : 'border-gray-100 hover:border-blue-200 text-gray-600'}
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' 
+                              : 'border-gray-100 dark:border-dark-border hover:border-blue-200 dark:hover:border-blue-800 text-gray-600 dark:text-gray-400'}
                           `}
                         >
                           <type.icon className={`h-5 w-5 ${certType === type.id ? 'text-blue-600' : 'text-gray-400'}`} />

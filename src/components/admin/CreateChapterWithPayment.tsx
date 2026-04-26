@@ -133,12 +133,12 @@ export const CreateChapterWithPayment: React.FC = () => {
   const headingClass = isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]';
 
   return (
-    <div className={`min-h-screen py-12 px-4 transition-colors duration-300 ${pageClass}`}>
-      <div className="max-w-3xl mx-auto">
+    <div className={`h-full flex flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
+      {/* Top Alignment Bar for Back Button */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
         >
           <button
             onClick={() => navigate('/admin/dashboard')}
@@ -150,6 +150,12 @@ export const CreateChapterWithPayment: React.FC = () => {
             Back to Dashboard
           </button>
         </motion.div>
+      </div>
+
+      {/* Scrollable Form Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-12">
+        <div className="max-w-3xl mx-auto">
+
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -349,6 +355,7 @@ export const CreateChapterWithPayment: React.FC = () => {
             </div>
           </form>
         </motion.div>
+        </div>
       </div>
     </div>
   );
