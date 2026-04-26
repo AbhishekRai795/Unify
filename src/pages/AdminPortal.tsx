@@ -16,6 +16,7 @@ interface Chapter {
   createdAt: string;
   updatedAt: string;
   status: string;
+  type?: 'chapter' | 'club';
 }
 
 const AdminDashboard: React.FC = () => {
@@ -24,7 +25,7 @@ const AdminDashboard: React.FC = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chapter' | 'club'>('chapter');
 
   // Check if user has admin access
   useEffect(() => {
@@ -40,16 +41,6 @@ const AdminDashboard: React.FC = () => {
       setError('');
       const data = await adminApi.listChapters();
       setChapters(data.chapters || []);
-      
-      // Test listChapterHeads to compare with updateChapter
-      console.log('=== Testing listChapterHeads for comparison ===');
-      try {
-        const headsData = await adminApi.listChapterHeads();
-        console.log('ListChapterHeads works! Data:', headsData);
-      } catch (headError) {
-        console.error('ListChapterHeads failed:', headError);
-      }
-      
     } catch (e: any) {
       setError(e?.error || e?.message || 'Failed to load chapters');
       console.error('Error loading chapters:', e);
@@ -65,7 +56,8 @@ const AdminDashboard: React.FC = () => {
   }, [user]);
 
   const handleDeleteChapter = async (chapterId: string) => {
-    if (!window.confirm('Are you sure you want to permanently DELETE this chapter and its head assignment? This action cannot be undone.')) {
+    const typeLabel = activeTab === 'club' ? 'club' : 'chapter';
+    if (!window.confirm(`Are you sure you want to permanently DELETE this ${typeLabel} and its head assignment? This action cannot be undone.`)) {
       return;
     }
     
@@ -78,7 +70,6 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleEditChapter = (chapter: Chapter) => {
-    console.log('Edit button clicked for chapter:', chapter.chapterId);
     navigate(`/admin/chapters/edit/${chapter.chapterId}`);
   };
 
@@ -86,17 +77,45 @@ const AdminDashboard: React.FC = () => {
     navigate(`/admin/chapter/${chapter.chapterId}/stats`);
   };
 
-
+  const filteredItems = chapters.filter(c => {
+    // If type is missing, treat as chapter
+    const itemType = (c as any).type || 'chapter';
+    return itemType === activeTab;
+  });
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Portal</h1>
         <button 
-          onClick={() => navigate('/admin/chapters/create-with-payment')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => navigate(`/admin/chapters/create-with-payment?type=${activeTab}`)}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold shadow-md transition-all"
         >
-          Create Chapter
+          Create {activeTab === 'chapter' ? 'Chapter' : 'Club'}
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('chapter')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'chapter' 
+              ? 'bg-white text-blue-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Chapters
+        </button>
+        <button
+          onClick={() => setActiveTab('club')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'club' 
+              ? 'bg-white text-indigo-600 shadow-sm' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Clubs
         </button>
       </div>
 
@@ -106,72 +125,66 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {showCreateForm && (
-        <CreateChapterForm 
-          onSuccess={() => {
-            setShowCreateForm(false);
-            loadChapters();
-          }}
-          onCancel={() => setShowCreateForm(false)}
-        />
-      )}
-
       {loading ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading chapters...</div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase">
-                  Chapter Name
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  {activeTab === 'chapter' ? 'Chapter' : 'Club'} Name
                 </th>
-                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase">
-                  Chapter Head
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  {activeTab === 'chapter' ? 'Chapter' : 'Club'} Head
                 </th>
-                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Members
                 </th>
-                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Created Date
                 </th>
-                <th className="px-6 py-3 border-b text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {chapters.map((chapter) => (
-                <tr key={chapter.chapterId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 border-b">{chapter.chapterName}</td>
-                  <td className="px-6 py-4 border-b">
-                    {chapter.headName && <div className="font-medium">{chapter.headName}</div>}
-                    {chapter.headEmail && <div className="text-sm text-gray-600">{chapter.headEmail}</div>}
-                    {!chapter.headName && !chapter.headEmail && <span className="text-gray-400">No head assigned</span>}
+            <tbody className="divide-y divide-gray-100">
+              {filteredItems.map((item) => (
+                <tr key={item.chapterId} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 font-semibold text-gray-900">{item.chapterName}</td>
+                  <td className="px-6 py-4">
+                    {item.headName && <div className="font-medium text-gray-800">{item.headName}</div>}
+                    {item.headEmail && <div className="text-sm text-gray-500">{item.headEmail}</div>}
+                    {!item.headName && !item.headEmail && <span className="text-gray-400 italic">No head assigned</span>}
                   </td>
-                  <td className="px-6 py-4 border-b">{chapter.memberCount ?? 0}</td>
-                  <td className="px-6 py-4 border-b">
-                    {new Date(chapter.createdAt).toLocaleDateString()}
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {item.memberCount ?? 0} members
+                    </span>
                   </td>
-                  <td className="px-6 py-4 border-b">
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="flex space-x-2">
                       <button 
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                        onClick={() => handleEditChapter(chapter)}
+                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors"
+                        onClick={() => handleEditChapter(item)}
                       >
                         Edit
                       </button>
                       <button 
-                        className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
-                        onClick={() => handleOpenPaymentTransparency(chapter)}
+                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition-colors"
+                        onClick={() => handleOpenPaymentTransparency(item)}
                       >
-                        Payment Stats
+                        Stats
                       </button>
                       <button 
-                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                        onClick={() => handleDeleteChapter(chapter.chapterId)}
+                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
+                        onClick={() => handleDeleteChapter(item.chapterId)}
                       >
                         Delete
                       </button>
@@ -179,10 +192,18 @@ const AdminDashboard: React.FC = () => {
                   </td>
                 </tr>
               ))}
-              {chapters.length === 0 && (
+              {filteredItems.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    No chapters found. Create your first chapter to get started.
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center">
+                      <div className="bg-gray-100 p-4 rounded-full mb-4">
+                        <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </div>
+                      <p className="text-lg font-medium text-gray-900">No {activeTab}s found</p>
+                      <p className="text-sm text-gray-500 mt-1">Create your first {activeTab} to get started.</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -194,118 +215,7 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-// Create Chapter Form Component
-const CreateChapterForm: React.FC<{
-  onSuccess: () => void;
-  onCancel: () => void;
-}> = ({ onSuccess, onCancel }) => {
-  const [formData, setFormData] = useState({
-    chapterName: '',
-    headEmail: '',
-    headName: ''
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.chapterName.trim()) {
-      setError('Chapter name is required');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setError('');
-      
-      await adminApi.createChapter({
-        chapterName: formData.chapterName.trim(),
-        headEmail: formData.headEmail.trim() || undefined,
-        headName: formData.headName.trim() || undefined
-      });
-      
-      onSuccess();
-    } catch (e: any) {
-      setError(e?.error || e?.message || 'Failed to create chapter');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="bg-white p-6 border border-gray-200 rounded-lg mb-6">
-      <h2 className="text-lg font-semibold mb-4">Create New Chapter</h2>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Chapter Name *
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.chapterName}
-              onChange={(e) => setFormData(prev => ({ ...prev, chapterName: e.target.value }))}
-              placeholder="Enter chapter name"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Head Email (optional)
-            </label>
-            <input
-              type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.headEmail}
-              onChange={(e) => setFormData(prev => ({ ...prev, headEmail: e.target.value }))}
-              placeholder="head@example.com"
-            />
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Head Name (optional)
-          </label>
-          <input
-            type="text"
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.headName}
-            onChange={(e) => setFormData(prev => ({ ...prev, headName: e.target.value }))}
-            placeholder="Enter head's full name"
-          />
-        </div>
-        
-        <div className="flex space-x-4">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {submitting ? 'Creating...' : 'Create Chapter'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
 
 // Main AdminPortal component with routing
 const AdminPortal: React.FC = () => {

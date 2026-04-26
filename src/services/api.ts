@@ -85,7 +85,7 @@ export const studentAPI = {
 
   // Dashboard
   getDashboard: async () => {
-    const response = await fetch(`${API_BASE_URL}/student/dashboard`, {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/student/dashboard`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
@@ -93,21 +93,21 @@ export const studentAPI = {
 
   // Chapters - using consistent endpoint names with backend
   getAvailableChapters: async () => {
-    const response = await fetch(`${API_BASE_URL}/get-chapters`, {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/student/chapters/available`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
   getMyChapters: async () => {
-    const response = await fetch(`${API_BASE_URL}/student/my-chapters`, {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/student/chapters/my`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
   getAllChapters: async () => {
-    const response = await fetch(`${API_BASE_URL}/get-chapters`, {
+    const response = await fetch(`${PAYMENT_API_BASE_URL}/api/student/chapters/available`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);

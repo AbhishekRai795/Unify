@@ -98,7 +98,7 @@ const StudentAttendanceStats: React.FC = () => {
             text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
-            Track and review your participation for all your chapters
+            Track and review your participation for all your communities
           </p>
         </div>
 
@@ -238,7 +238,7 @@ const StudentAttendanceStats: React.FC = () => {
 
           {/* Footer Info */}
           <div className="mt-6 flex items-center justify-between text-xs text-slate-400 italic">
-            <p>Your attendance records are synced automatically with chapter meetings.</p>
+            <p>Your attendance records are synced automatically with community sessions.</p>
             <div className="flex items-center space-x-4">
               <span className="flex items-center"><History size={12} className="mr-1" /> History Updated</span>
               <span className="flex items-center"><Calendar size={12} className="mr-1" /> All Records Secure</span>

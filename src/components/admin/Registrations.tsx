@@ -276,8 +276,8 @@ const Registrations: React.FC = () => {
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
             {viewMode === 'chapters' 
-              ? 'View and manage student chapter registrations.' 
-              : 'View and manage student entries for specific chapter events.'}
+              ? 'View and manage registrations for your communities (chapters and clubs).' 
+              : 'View and manage student entries for specific community events.'}
           </p>
         </motion.div>
 
@@ -421,7 +421,7 @@ const Registrations: React.FC = () => {
                     Student
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {viewMode === 'chapters' ? 'Chapter' : 'Event'}
+                    {viewMode === 'chapters' ? 'Community' : 'Event'}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status

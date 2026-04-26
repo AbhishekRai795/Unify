@@ -171,7 +171,7 @@ const EventPublicProfile: React.FC = () => {
       metaContent={(
         <>
           <span className="flex items-center gap-2.5 text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {event?.isOnline ? 'Online Universe' : (event?.location || 'Unify Network')}</span>
-          <span className="flex items-center gap-2.5 text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {event?.chapterName || 'Unify Chapter'}</span>
+          <span className="flex items-center gap-2.5 text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {event?.chapterName || 'Unify Community'}</span>
         </>
       )}
       ctaLabel={`Register Now • ${event?.isPaid ? `₹${event.registrationFee}` : 'Free'}`}

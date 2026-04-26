@@ -14,7 +14,8 @@ const corsHeaders = {
 };
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
+  const method = event.httpMethod || event.requestContext?.http?.method;
+  if (method === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: corsHeaders,
@@ -71,12 +72,7 @@ export const handler = async (event) => {
       registeredChapterNames = new Set(registeredChapters);
     }
 
-    // Filter out chapters student is already registered for
     const availableChapters = (allChapters.Items || [])
-      .filter(chapter => {
-        const chapterName = chapter.chapterName?.S;
-        return chapterName && !registeredChapterNames.has(chapterName);
-      })
       .map(chapter => ({
         id: chapter.chapterId?.S || 'unknown',
         name: chapter.chapterName?.S || 'Unknown Chapter',
@@ -87,6 +83,7 @@ export const handler = async (event) => {
         memberCount: chapter.memberCount?.N || "0",
         isPaid: chapter.isPaid?.BOOL || false,
         registrationFee: chapter.registrationFee?.N ? parseInt(chapter.registrationFee.N, 10) : 0,
+        type: chapter.type?.S || 'chapter',
         isRegistered: false
       }));
 

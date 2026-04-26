@@ -239,6 +239,7 @@ async function createChapterAction(data) {
   const chapterItem = {
     chapterId,
     chapterName,
+    type: data.type === 'club' ? 'club' : 'chapter',
     headEmail: headEmail ? headEmail.trim().toLowerCase() : null,
     headName: headName || null,
     status: 'active',
@@ -264,7 +265,7 @@ async function createChapterAction(data) {
  * ACTION: Update Chapter (Generic)
  */
 async function updateChapterAction(chapterId, data) {
-  const { chapterName, headEmail, headName, isPaid, registrationFee } = data;
+  const { chapterName, headEmail, headName, isPaid, registrationFee, type } = data;
   const now = new Date().toISOString();
 
   const current = await docClient.send(new GetCommand({ TableName: CHAPTERS_TABLE, Key: { chapterId } }));
@@ -301,13 +302,24 @@ async function updateChapterAction(chapterId, data) {
     updateExp += ", registrationFee = :regFee";
     expValues[":regFee"] = Number(registrationFee);
   }
+  if (type !== undefined) {
+    updateExp += ", #type = :type";
+    expValues[":type"] = type;
+  }
 
-  await docClient.send(new UpdateCommand({
+  const updateParams = {
     TableName: CHAPTERS_TABLE,
     Key: { chapterId },
     UpdateExpression: updateExp,
     ExpressionAttributeValues: expValues
-  }));
+  };
+
+  // Add expression attribute names if type is present because 'type' is a reserved word in DynamoDB
+  if (type !== undefined) {
+    updateParams.ExpressionAttributeNames = { "#type": "type" };
+  }
+
+  await docClient.send(new UpdateCommand(updateParams));
 
   // Handle Head Changes
   if (headEmail !== undefined && newHeadEmail !== oldHeadEmail) {

@@ -8,9 +8,7 @@ import {
   CheckCircle2, 
   Loader2, 
   ArrowLeft,
-  X,
-  Eye,
-  Filter
+  X
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -123,8 +121,8 @@ const CertificateIssuance: React.FC = () => {
         studentEmail: issuingFor.studentEmail,
         certificateType: certType,
         eventName: selectedEvent.title,
-        chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter',
-        headName: currentChapter?.headName || 'Chapter Head',
+        chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Community',
+        headName: currentChapter?.headName || 'Head',
         date: new Date().toLocaleDateString('en-GB')
       });
 
@@ -156,8 +154,8 @@ const CertificateIssuance: React.FC = () => {
       studentEmail: reg.studentEmail,
       certificateType: certType,
       eventName: selectedEvent.title,
-      chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter',
-      headName: currentChapter?.headName || 'Chapter Head',
+      chapterName: selectedEvent.chapterName || currentChapter?.chapterName || 'Community',
+      headName: currentChapter?.headName || 'Head',
       date: new Date().toLocaleDateString('en-GB')
     };
   };
@@ -594,8 +592,8 @@ const CertificateIssuance: React.FC = () => {
                     <CertificateTemplate
                       studentName={issuingFor.studentName}
                       eventName={selectedEvent.title}
-                      chapterName={selectedEvent.chapterName || currentChapter?.chapterName || 'Chapter'}
-                      headName={currentChapter?.headName || 'Chapter Head'}
+                      chapterName={selectedEvent.chapterName || currentChapter?.chapterName || 'Community'}
+                      headName={currentChapter?.headName || 'Head'}
                       date={new Date().toLocaleDateString('en-GB')}
                       certificateType={certType}
                     />

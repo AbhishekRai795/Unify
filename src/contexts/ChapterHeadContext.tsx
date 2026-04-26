@@ -10,6 +10,7 @@ interface ChapterHeadProfile {
   chapterName: string;
   headName: string;
   linkedAt: string;
+  type?: 'chapter' | 'club';
 }
 
 interface ChapterDetails {
@@ -26,6 +27,7 @@ interface ChapterDetails {
   status: 'active' | 'inactive';
   updatedAt: string;
   registrationStatus?: 'open' | 'closed';
+  type?: 'chapter' | 'club';
 }
 
 interface RegistrationRequest {

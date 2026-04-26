@@ -12,7 +12,6 @@ import {
   Video,
   History,
   UserPlus,
-  Info,
   RefreshCw
 } from 'lucide-react';
 
@@ -53,7 +52,7 @@ const itemVariants: Variants = {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { dashboardData, attendanceStats, myChapters, events, eventRegistrations, pendingRegistrations, isLoading, fetchDashboard, fetchMyChapters, fetchEvents, fetchEventRegistrations, fetchPendingRegistrations, fetchAttendanceStats } = useData();
+  const { dashboardData, myChapters, events, eventRegistrations, pendingRegistrations, isLoading, fetchDashboard, fetchMyChapters, fetchEvents, fetchEventRegistrations, fetchPendingRegistrations, fetchAttendanceStats } = useData();
   const { conversations, setActiveConversation, setIsWidgetOpen, setActiveChapterId, refreshConversations } = useChat();
   const { isDark } = useTheme();
 
@@ -61,7 +60,7 @@ const Dashboard: React.FC = () => {
     chapter?.chapterId || chapter?.chapterID || chapter?.id || '';
 
   const getChapterName = (chapter: any): string =>
-    chapter?.name || chapter?.chapterName || 'Chapter';
+    chapter?.name || chapter?.chapterName || 'Community';
 
   const getHeadRecipientId = (chapter: any): string =>
     chapter?.headId ||
@@ -123,7 +122,7 @@ const Dashboard: React.FC = () => {
       activities.push({
         id: `join-${chapter.chapterId || chapter.id}`,
         type: 'registration',
-        message: `Successfully joined ${getChapterName(chapter)} chapter`,
+        message: `Successfully joined ${getChapterName(chapter)}`,
         timestamp: chapter.joinedAt || chapter.createdAt || new Date().toISOString()
       });
     });
@@ -167,7 +166,7 @@ const Dashboard: React.FC = () => {
 
   const stats = [
     {
-      label: 'Registered Chapters',
+      label: 'Registered Communities',
       value: registeredChaptersCount,
       icon: Users,
       color: 'blue',
@@ -175,7 +174,7 @@ const Dashboard: React.FC = () => {
       link: '/student/chapters'
     },
     {
-      label: 'Available Chapters',
+      label: 'Available Communities',
       value: availableChaptersCount,
       icon: BookOpen,
       color: 'green',
@@ -226,7 +225,7 @@ const Dashboard: React.FC = () => {
             Welcome back, {user?.name}!
           </h1>
           <p className="text-gray-600 dark:text-dark-text-secondary mt-2">
-            Discover new opportunities and stay connected with your chapters.
+            Discover new opportunities and stay connected with your communities.
           </p>
         </motion.div>
 
@@ -293,8 +292,8 @@ const Dashboard: React.FC = () => {
                         <Users className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Browse Chapters</p>
-                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Find and join new chapters</p>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Browse Communities</p>
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Find and join new chapters & clubs</p>
                     </div>
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400 dark:text-dark-text-muted group-hover:text-blue-600 transition-colors" />
@@ -384,7 +383,7 @@ const Dashboard: React.FC = () => {
                       {item.timestamp ? `${new Date(item.timestamp).toLocaleDateString()} • ${new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Just now'}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-2">
-                       Chapter: <span className="font-medium text-gray-900 dark:text-dark-text-primary">{item.chapterName}</span> | Event: <span className="font-medium text-gray-900 dark:text-dark-text-primary">{item.eventName}</span>
+                       Community: <span className="font-medium text-gray-900 dark:text-dark-text-primary">{item.chapterName}</span> | Event: <span className="font-medium text-gray-900 dark:text-dark-text-primary">{item.eventName}</span>
                     </p>
                   </div>
                 ))
@@ -409,7 +408,7 @@ const Dashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Chapter Meetings</h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">Community Meetings</h2>
               <Video className="h-5 w-5 text-gray-500 dark:text-dark-text-muted" />
             </div>
             <div className="h-[390px]">
@@ -518,7 +517,7 @@ const Dashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">My Chapters</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">My Communities</h2>
               <Link
                 to="/student/chapters"
                 className="p-2 rounded-lg bg-indigo-50 dark:bg-accent-500/10 text-indigo-600 dark:text-accent-400 hover:bg-indigo-100 dark:hover:bg-accent-500/20 transition-all group"
@@ -577,12 +576,12 @@ const Dashboard: React.FC = () => {
               ) : (
                 <div className="text-center py-8 h-full flex flex-col justify-center">
                   <Users className="h-12 w-12 text-gray-400 dark:text-dark-text-muted mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-dark-text-secondary mb-4">You haven't joined any chapters yet</p>
+                  <p className="text-gray-600 dark:text-dark-text-secondary mb-4">You haven't joined any communities yet</p>
                   <Link
                     to="/student/chapters"
                     className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-xl hover:opacity-90 transition-opacity"
                   >
-                    Browse Chapters
+                    Browse Communities
                   </Link>
                 </div>
               )}

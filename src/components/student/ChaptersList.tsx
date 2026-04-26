@@ -14,6 +14,7 @@ interface Chapter {
   description?: string;
   status?: string;
   isRegistered: boolean;
+  type?: 'chapter' | 'club';
   registrationStatus?: 'none' | 'pending' | 'approved' | 'rejected' | 'left' | 'kicked';
   isRegistrationOpen?: boolean;
   memberCount?: number;
@@ -43,6 +44,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
   const openProfile = () => {
     window.open(`/student/chapters/${chapter.id}/about`, '_blank');
   };
+
+  const typeLabel = chapter.type === 'club' ? 'Club' : 'Chapter';
+
   
   return (
     <div className={`
@@ -222,7 +226,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               ) : (
                 <UserMinus className="h-4 w-4 mr-2" />
               )}
-              Leave Chapter
+              Leave {typeLabel}
             </button>
           ) : isPending ? (
             <button
@@ -269,7 +273,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               ) : (
                 <UserPlus className="h-4 w-4 mr-2" />
               )}
-              Re-join Chapter
+              Re-join {typeLabel}
             </button>
           ) : (
             <button
@@ -294,7 +298,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               ) : (
                 <UserPlus className="h-4 w-4 mr-2" />
               )}
-              {!isRegistrationOpen ? 'Registration Closed' : 'Join Chapter'}
+              {!isRegistrationOpen ? 'Registration Closed' : `Join ${typeLabel}`}
             </button>
           )}
           
@@ -318,9 +322,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
                 : isRejected
                   ? 'Your application was rejected'
                   : isLeft
-                    ? 'You left this chapter - you can re-join anytime'
+                    ? `You left this ${typeLabel.toLowerCase()} - you can re-join anytime`
                     : isKicked
-                      ? 'You were removed from this chapter - you can re-apply'
+                      ? `You were removed from this ${typeLabel.toLowerCase()} - you can re-apply`
                       : isRegistrationOpen 
                         ? 'Registration is currently open' 
                         : 'Registration is currently closed'
@@ -360,6 +364,7 @@ const ChaptersList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedChapterForPayment, setSelectedChapterForPayment] = useState<Chapter | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'chapter' | 'club'>('all');
 
   useEffect(() => {
     fetchChapters();
@@ -432,7 +437,8 @@ const ChaptersList: React.FC = () => {
           contactEmail: chapter.contactEmail,
           category: chapter.category || 'General',
           isPaid: chapter.isPaid || false,
-          registrationFee: chapter.registrationFee || 0
+          registrationFee: chapter.registrationFee || 0,
+          type: chapter.type || 'chapter'
         };
       });
       
@@ -509,10 +515,14 @@ const ChaptersList: React.FC = () => {
     }
   };
 
-  const filteredChapters = chapters.filter(chapter =>
-    chapter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (chapter.chapterHead && chapter.chapterHead.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredChapters = chapters.filter(chapter => {
+    const matchesSearch = chapter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (chapter.chapterHead && chapter.chapterHead.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesType = filterType === 'all' || chapter.type === filterType;
+    
+    return matchesSearch && matchesType;
+  });
 
   const registeredChapters = filteredChapters.filter(chapter => 
     chapter.registrationStatus === 'approved' || chapter.isRegistered
@@ -573,45 +583,80 @@ const ChaptersList: React.FC = () => {
               : 'text-[#1a1f36]'
             }
           `}>
-            Browse Chapters
+            Browse Communities
           </h1>
           <p className={`
             text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
-            Discover and join chapters match your interests and goals
+            Discover and join chapters and clubs that match your interests and goals
           </p>
         </div>
 
       {/* Search */}
-      <div className="mb-8">
         <div className={`
-          relative rounded-xl p-6 backdrop-blur-sm border
+          relative rounded-2xl p-6 backdrop-blur-md border transition-all duration-300
           ${isDark 
             ? 'bg-gradient-to-br from-dark-surface/80 to-dark-card/60 border-accent-500/20 shadow-2xl shadow-accent-500/10' 
-            : 'bg-white shadow-sm border-gray-200'
+            : 'bg-white shadow-xl shadow-blue-900/5 border-gray-200'
           }
         `}>
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <Search className={`h-5 w-5 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="relative flex-1 w-full">
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                <Search className={`h-5 w-5 ${isDark ? 'text-accent-400' : 'text-slate-400'}`} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search communities by name or head..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`
+                  w-full pl-12 pr-4 py-3.5 rounded-xl transition-all duration-300 backdrop-blur-sm text-sm font-medium
+                  ${isDark 
+                    ? 'bg-dark-card/50 border border-accent-500/30 text-dark-text placeholder-gray-500 focus:border-accent-400 focus:ring-4 focus:ring-accent-500/10' 
+                    : 'bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
+                  }
+                `}
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search chapters by name or chapter head..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`
-                w-full pl-10 pr-4 py-3 rounded-lg transition-all duration-200 backdrop-blur-sm
-                ${isDark 
-                  ? 'bg-dark-card/50 border border-accent-500/30 text-dark-text placeholder-gray-400 focus:border-accent-400 focus:ring-2 focus:ring-accent-500/20 focus:bg-dark-card/70' 
-                  : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                }
-              `}
-            />
+
+            {/* Filter Toggle */}
+            <div className={`
+              flex p-1 rounded-xl border transition-all duration-300 shrink-0
+              ${isDark 
+                ? 'bg-dark-card/50 border-accent-500/20' 
+                : 'bg-slate-100 border-slate-200 shadow-inner'
+              }
+            `}>
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'chapter', label: 'Chapters' },
+                { id: 'club', label: 'Clubs' }
+              ].map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setFilterType(type.id as any)}
+                  className={`
+                    px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300
+                    ${filterType === type.id
+                      ? (isDark 
+                          ? 'bg-accent-600 text-white shadow-lg shadow-accent-600/20' 
+                          : 'bg-white text-blue-600 shadow-md border-slate-200'
+                        )
+                      : (isDark
+                          ? 'text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-card/80'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                        )
+                    }
+                  `}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Error Message */}
       {(error || contextError) && (
@@ -642,7 +687,7 @@ const ChaptersList: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className={`text-2xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{chapters.length}</p>
-              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Total Chapters</p>
+              <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>Total Communities</p>
             </div>
           </div>
         </div>
@@ -724,7 +769,7 @@ const ChaptersList: React.FC = () => {
       {isLoading && (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
-          <span className="text-gray-600">Loading chapters...</span>
+          <span className="text-gray-600">Loading {filterType === 'all' ? 'communities' : (filterType === 'chapter' ? 'chapters' : 'clubs')}...</span>
         </div>
       )}
 
@@ -735,8 +780,8 @@ const ChaptersList: React.FC = () => {
           {registeredChapters.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">My Chapters</h2>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>My {filterType === 'all' ? 'Communities' : (filterType === 'chapter' ? 'Chapters' : 'Clubs')}</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'}`}>
                   {registeredChapters.length}
                 </span>
               </div>
@@ -758,8 +803,8 @@ const ChaptersList: React.FC = () => {
           {pendingChapters.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Pending Approval</h2>
-                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Pending Approval</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800'}`}>
                   {pendingChapters.length}
                 </span>
               </div>
@@ -781,8 +826,8 @@ const ChaptersList: React.FC = () => {
           {openChapters.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Open for Registration</h2>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{filterType === 'all' ? 'Communities' : (filterType === 'chapter' ? 'Chapters' : 'Clubs')} Open for Registration</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-800'}`}>
                   {openChapters.length}
                 </span>
               </div>
@@ -804,8 +849,8 @@ const ChaptersList: React.FC = () => {
           {reJoinableChapters.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Available to Re-join</h2>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Available to Re-join</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-800'}`}>
                   {reJoinableChapters.length}
                 </span>
               </div>
@@ -827,8 +872,8 @@ const ChaptersList: React.FC = () => {
           {rejectedChapters.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Rejected Applications</h2>
-                <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Rejected Applications</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'}`}>
                   {rejectedChapters.length}
                 </span>
               </div>
@@ -848,10 +893,10 @@ const ChaptersList: React.FC = () => {
 
           {/* Closed Registration Chapters */}
           {closedChapters.length > 0 && (
-            <div className="mb-12">
+            <div className="mb-12 opacity-75">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Registration Closed</h2>
-                <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Registration Closed</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-100 text-gray-800'}`}>
                   {closedChapters.length}
                 </span>
               </div>

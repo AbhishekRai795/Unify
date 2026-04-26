@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Shield, User } from 'lucide-react';
+import { Award, Shield } from 'lucide-react';
 
 interface CertificateTemplateProps {
   studentName: string;
@@ -89,7 +89,7 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
           <div className={`text-2xl font-bold mt-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             "{eventName || 'Event Name'}"
           </div>
-          organized by <span className="font-bold">{chapterName || 'Chapter Name'}</span>
+          organized by <span className="font-bold">{chapterName || 'Community Name'}</span>
         </div>
       </div>
 
@@ -108,11 +108,11 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
 
       <div className="absolute bottom-10 right-16 text-center w-56">
         <div className="h-10 flex items-end justify-center mb-1">
-           <span className="font-serif italic text-lg opacity-60 text-slate-700 uppercase tracking-widest">{headName || 'Chapter Head'}</span>
+           <span className="font-serif italic text-lg opacity-60 text-slate-700 uppercase tracking-widest">{headName || 'Authorized Signatory'}</span>
         </div>
         <div className={`h-0.5 w-full mb-2 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
         <p className={`text-[10px] uppercase tracking-tighter ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Authorized Signature</p>
-        <p className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{headName || 'Chapter Head'}</p>
+        <p className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{headName || 'Authorized Signatory'}</p>
       </div>
     </div>
   );

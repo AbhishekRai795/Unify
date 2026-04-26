@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth, Role } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/common/Header';
@@ -11,8 +11,9 @@ import AdminPortal from './pages/AdminPortal';
 import AuthPage from './pages/AuthPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import Loader from './components/common/Loader';
+import RoleSelectionWrapper from './components/common/RoleSelectionWrapper';
 
-import { Shield, User, UserCog } from 'lucide-react';
+
 import { ChatProvider } from './contexts/ChatContext';
 import ChatWidget from './components/chat/ChatWidget';
 import { ChapterHeadProvider } from './contexts/ChapterHeadContext';
@@ -80,69 +81,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: Role[]
   return <>{children}</>;
 };
 
-// New Component for Role Selection
-const RoleSelectionPage: React.FC = () => {
-    const { user, setActiveRole } = useAuth();
-    const [selectedRole, setSelectedRole] = useState<string | null>(null);
-    const navigate = useNavigate();
 
-    const roleDetails: { [key: string]: { icon: React.ElementType, name: string } } = {
-        student: { icon: User, name: 'Student' },
-        'chapter-head': { icon: Shield, name: 'Chapter Head' },
-        admin: { icon: UserCog, name: 'Admin' },
-    };
-
-    // This effect will run when the activeRole is set, triggering navigation
-    useEffect(() => {
-        if (user && user.activeRole) {
-            const path = user.activeRole === 'student' ? '/student/dashboard' : user.activeRole === 'chapter-head' ? '/head/dashboard' : '/admin/dashboard';
-            navigate(path, { replace: true });
-        }
-    }, [user, navigate]);
-
-
-    if (!user || user.groups.length < 2) {
-        return <Navigate to="/" replace />;
-    }
-
-    const handleProceed = () => {
-        if (selectedRole) {
-            setActiveRole(selectedRole);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-dark-bg p-4 transition-colors duration-300">
-            <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-lg dark:shadow-2xl text-center backdrop-blur-md border border-gray-200 dark:border-dark-border">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-2">Select Your Role</h1>
-                <p className="text-gray-500 dark:text-dark-text-secondary mb-8">You have multiple roles. Please choose how you'd like to proceed for this session.</p>
-                <div className="space-y-4">
-                    {user.groups.map(group => {
-                        const details = roleDetails[group] || { icon: User, name: group };
-                        const isSelected = selectedRole === group;
-                        return (
-                            <button
-                                key={group}
-                                onClick={() => setSelectedRole(group)}
-                                className={`w-full flex items-center justify-center gap-3 p-4 border-2 rounded-lg transition-all ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-400'}`}
-                            >
-                                <details.icon className={`h-6 w-6 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
-                                <span className={`text-lg font-semibold ${isSelected ? 'text-blue-800' : 'text-gray-700'}`}>{details.name}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-                <button
-                    onClick={handleProceed}
-                    disabled={!selectedRole}
-                    className="w-full mt-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                    Proceed
-                </button>
-            </div>
-        </div>
-    );
-};
 
 
 function App() {
@@ -188,6 +127,7 @@ function AppContent() {
 
   return (
     <>
+    <RoleSelectionWrapper>
       <Routes>
         <Route 
           path="/" 
@@ -196,16 +136,14 @@ function AppContent() {
               <Navigate to={getRedirectPath(user)} replace />
             ) : (
               <AuthPage />
-              
             )
           } 
         />
         
         <Route path="/google-callback" element={<OAuthCallbackPage />} />
         
-        {/* Add the new route for role selection */}
-        <Route path="/select-role" element={<RoleSelectionPage />} />
-
+        {/* The RoleSelectionWrapper handles the UI for /select-role implicitly when no activeRole exists */}
+        <Route path="/select-role" element={<Navigate to="/" replace />} />
 
         <Route element={<MainLayout />}>
           <Route
@@ -239,6 +177,7 @@ function AppContent() {
       
       {/* Add ConfigStatus for debugging in development */}
       {import.meta.env.DEV && <ConfigStatus />}
+    </RoleSelectionWrapper>
     </>
   );
 }
