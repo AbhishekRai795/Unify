@@ -267,6 +267,7 @@ export const chapterHeadAPI = {
     certificateType: 'participation' | '1st' | '2nd' | '3rd';
     eventName: string;
     chapterName: string;
+    headName?: string;
     date: string;
   }) => {
     const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/certificates/issue`, {
@@ -285,6 +286,7 @@ export const chapterHeadAPI = {
     certificateType: 'participation' | '1st' | '2nd' | '3rd';
     eventName: string;
     chapterName: string;
+    headName?: string;
     date: string;
   }>) => {
     const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/certificates/issue`, {

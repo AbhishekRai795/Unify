@@ -17,7 +17,7 @@ const RoleToggle: React.FC = () => {
 
   const roleDetails: { [key: string]: { icon: React.ElementType, name: string, color: string } } = {
     student: { icon: User, name: 'Student', color: 'blue' },
-    'chapter-head': { icon: Shield, name: 'Chapter Head', color: 'purple' },
+    'chapter-head': { icon: Shield, name: 'Community Head', color: 'purple' },
     admin: { icon: UserCog, name: 'Admin', color: 'red' },
   };
 

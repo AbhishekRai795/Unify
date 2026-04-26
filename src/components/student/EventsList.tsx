@@ -157,7 +157,7 @@ const EventsList: React.FC = () => {
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
             {activeTab === 'live' 
-              ? 'Stay updated with exciting events across all chapters' 
+              ? 'Stay updated with exciting events across all communities' 
               : 'View successfully concluded events and their highlights'
             }
           </p>
@@ -521,7 +521,7 @@ const EventsList: React.FC = () => {
                     studentName={showCertPreview.cert.studentName}
                     eventName={showCertPreview.cert.eventName}
                     chapterName={showCertPreview.cert.chapterName}
-                    headName={showCertPreview.cert.headName || 'Chapter Head'}
+                    headName={showCertPreview.cert.headName || 'Head'}
                     date={showCertPreview.cert.date}
                     certificateType={showCertPreview.cert.certificateType}
                   />

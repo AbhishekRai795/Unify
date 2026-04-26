@@ -111,7 +111,7 @@ const HeadDashboard: React.FC = () => {
   const stats: { icon: React.ElementType; label: string; value: number; color: StatColor; link: string }[] = [
     {
       icon: Users,
-      label: 'My Chapters',
+      label: 'My Communities',
       value: dashboardStats?.totalChapters || 0,
       color: 'blue',
       link: '/head/chapters'
@@ -310,7 +310,7 @@ const HeadDashboard: React.FC = () => {
                         <Settings className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Manage Chapters</p>
+                      <p className="font-semibold text-gray-900 dark:text-dark-text-primary">Manage Communities</p>
                       <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Open/close registrations</p>
                     </div>
                   </div>
@@ -518,7 +518,7 @@ const HeadDashboard: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* My Chapters */}
+          {/* My Communities */}
           <motion.div 
             className={`
               p-6 rounded-2xl shadow-lg border transition-all duration-300 backdrop-blur-md h-[500px] flex flex-col
@@ -530,11 +530,11 @@ const HeadDashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">My Chapters</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">My Communities</h2>
               <Link
                 to="/head/chapters"
                 className="p-2 rounded-lg bg-indigo-50 dark:bg-accent-500/10 text-indigo-600 dark:text-accent-400 hover:bg-indigo-100 dark:hover:bg-accent-500/20 transition-all group"
-                title="View All Chapters"
+                title="View All Communities"
               >
                 <BookOpen className="h-5 w-5" />
               </Link>

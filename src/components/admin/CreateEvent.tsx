@@ -111,7 +111,7 @@ const CreateEvent: React.FC = () => {
             text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
-            Post a new event to engage with students across chapters.
+            Post a new event to engage with students across communities.
           </p>
         </div>
 
@@ -176,7 +176,7 @@ const CreateEvent: React.FC = () => {
             {/* Chapter */}
             <div>
               <label htmlFor="chapterId" className="block text-sm font-medium text-gray-700 mb-2">
-                Chapter *
+                Community (Chapter/Club) *
               </label>
               <select
                 id="chapterId"
@@ -186,10 +186,10 @@ const CreateEvent: React.FC = () => {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Select a chapter</option>
+                <option value="">Select a community</option>
                 {chapters.map(chapter => (
                   <option key={chapter.chapterId} value={chapter.chapterId}>
-                    {chapter.chapterName}
+                    {chapter.chapterName} ({(chapter as any).type === 'club' ? 'Club' : 'Chapter'})
                   </option>
                 ))}
               </select>

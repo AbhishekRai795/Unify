@@ -86,6 +86,7 @@ export const handler = async (event) => {
       chapterName, 
       headEmail, 
       headName,
+      type,            // NEW: 'chapter' or 'club'
       isPaid,          // NEW: Boolean flag for paid/free chapter
       registrationFee  // NEW: Fee amount in paise (e.g., 50000 = ₹500)
     } = body;
@@ -128,6 +129,7 @@ export const handler = async (event) => {
     const chapterItem = {
       chapterId,
       chapterName,
+      type: type || 'chapter',
       headEmail: headEmail || null,
       headName: headName || null,
       status: 'active',

@@ -14,7 +14,8 @@ const corsHeaders = {
 };
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS' || event.requestContext?.http?.method === 'OPTIONS') {
+  const method = event.httpMethod || event.requestContext?.http?.method;
+  if (method === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
 
@@ -64,6 +65,7 @@ export const handler = async (event) => {
         memberCount: chapter.memberCount?.N || "0",
         isPaid: chapter.isPaid?.BOOL || false,
         registrationFee: chapter.registrationFee?.N ? parseInt(chapter.registrationFee.N, 10) : 0,
+        type: chapter.type?.S || 'chapter',
         isRegistered: true
       }));
 

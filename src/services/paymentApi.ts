@@ -136,6 +136,7 @@ export const paymentAPI = {
     chapterName: string;
     headEmail?: string;
     headName?: string;
+    type?: 'chapter' | 'club';
     isPaid: boolean;
     registrationFee?: number;
   }) => {

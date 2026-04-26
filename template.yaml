@@ -1053,6 +1053,101 @@ Resources:
         Component: ChapterProfile
 
   # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Student Available Chapters
+  # GET /api/student/chapters/available
+  # ──────────────────────────────────────────────────────────────────────────
+  GetStudentAvailableChaptersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-get-available-chapters-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/get-available-chapters/
+      Description: Returns active chapters/clubs that a student can register for
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+      Events:
+        GetAvailableChaptersApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/student/chapters/available
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: StudentPortal
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Student My Chapters
+  # GET /api/student/chapters/my
+  # ──────────────────────────────────────────────────────────────────────────
+  GetStudentMyChaptersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-get-my-chapters-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/get-my-chapters/
+      Description: Returns chapters/clubs where the student is registered
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+      Events:
+        GetMyChaptersApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/student/chapters/my
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: StudentPortal
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: Student Dashboard
+  # GET /api/student/dashboard
+  # ──────────────────────────────────────────────────────────────────────────
+  GetStudentDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-get-student-dashboard-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/get-student-dashboard/
+      Description: Aggregates dashboard data for the student portal
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBReadPolicy:
+            TableName: Unify-Users
+        - DynamoDBReadPolicy:
+            TableName: !Ref EventPaymentsTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - dynamodb:Scan
+              - dynamodb:Query
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Activities
+      Events:
+        GetStudentDashboardApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/student/dashboard
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuth
+      Tags:
+        Application: Unify
+        Component: StudentPortal
+
+  # ──────────────────────────────────────────────────────────────────────────
   # Lambda X: Event Profile API
   # GET /api/events/{eventId}/profile (public read)
   # PUT /api/chapterhead/events/{eventId}/profile (chapter-head edit)

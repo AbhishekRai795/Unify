@@ -101,23 +101,24 @@ const ChapterPublicProfile: React.FC = () => {
 
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       
+      const typeLabel = chapter?.type === 'club' ? 'Club' : 'Chapter';
       const canShareFiles =
         !!blob &&
         typeof navigator.canShare === 'function' &&
         navigator.canShare({ files: [new File([blob], 'profile.png', { type: 'image/png' })] });
 
       if (blob && navigator.share && canShareFiles) {
-        const file = new File([blob], `${chapter?.chapterName || 'chapter'}-profile.png`, { type: 'image/png' });
+        const file = new File([blob], `${chapter?.chapterName || typeLabel.toLowerCase()}-profile.png`, { type: 'image/png' });
         await navigator.share({
           title: `${chapter?.chapterName} Profile`,
-          text: `Check out the ${chapter?.chapterName} chapter on Unify!`,
+          text: `Check out the ${chapter?.chapterName} ${typeLabel.toLowerCase()} on Unify!`,
           files: [file],
         });
       } else if (blob) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${chapter?.chapterName || 'chapter'}-profile.png`;
+        link.download = `${chapter?.chapterName || typeLabel.toLowerCase()}-profile.png`;
         link.click();
         URL.revokeObjectURL(url);
         
@@ -154,13 +155,15 @@ const ChapterPublicProfile: React.FC = () => {
     }
   };
 
+  const typeLabel = chapter?.type === 'club' ? 'Club' : 'Chapter';
+
   return (
     <PublicProfileLayout
       isDark={isDark}
       profileRef={profileRef}
       posterImageUrl={profile.posterImageUrl}
-      posterAlt="Chapter Banner"
-      badgeText="University Chapter"
+      posterAlt={`${typeLabel} Banner`}
+      badgeText={`University ${typeLabel}`}
       title={chapter?.chapterName || chapter?.name || profile?.chapterName || profile?.name || 'Our Community'}
       metaContent={(
         <>

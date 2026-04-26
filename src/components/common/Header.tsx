@@ -157,7 +157,7 @@ const Header: React.FC = () => {
                       : 'text-gray-500 bg-white'
                     }
                   `}>
-                    {user.activeRole.replace('-', ' ')}
+                    {user.activeRole === 'chapter-head' ? 'Community Head' : user.activeRole.replace('-', ' ')}
                   </span>
                   {user.activeRole === 'student' && (
                     <button

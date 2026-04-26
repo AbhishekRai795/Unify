@@ -149,13 +149,13 @@ const ManageChapters: React.FC = () => {
               : 'text-[#1a1f36]'
             }
           `}>
-            Manage Chapters
+            Manage Communities
           </h1>
           <p className={`
             text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
-            Control registration status and view chapter details for your assigned chapters.
+            Control registration status and view community details for your assigned chapters and clubs.
           </p>
         </motion.div>
 
@@ -168,8 +168,8 @@ const ManageChapters: React.FC = () => {
           {chapters.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Chapters Assigned</h3>
-              <p className="text-gray-500">You don't have any chapters assigned to manage yet.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Communities Assigned</h3>
+              <p className="text-gray-500">You don't have any communities assigned to manage yet.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -177,7 +177,7 @@ const ManageChapters: React.FC = () => {
                 <thead className="bg-gray-50/80">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Chapter
+                      Community
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -194,113 +194,115 @@ const ManageChapters: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {chapters.map((chapter, index) => (
-                    <motion.tr 
-                      key={chapter.chapterId}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="hover:bg-gray-50/50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                            <span className="text-white font-semibold text-sm">
-                              {chapter.chapterName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {chapter.chapterName}
+                  {chapters.map((chapter, index) => {
+                    const typeLabel = (chapter as any).type === 'club' ? 'Club' : 'Chapter';
+                    return (
+                      <motion.tr 
+                        key={chapter.chapterId}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="hover:bg-gray-50/50 transition-colors duration-200"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                              <span className="text-white font-semibold text-sm">
+                                {chapter.chapterName.charAt(0).toUpperCase()}
+                              </span>
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Head: {chapter.headName}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {chapter.chapterName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {typeLabel} Head: {chapter.headName}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          chapter.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {chapter.status}
-                        </span>
-                      </td>
-                      
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-gray-400" />
-                          {chapter.memberCount}
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          chapter.registrationStatus === 'open'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {chapter.registrationStatus === 'open' ? 'Open' : 'Closed'}
-                        </span>
-                      </td>
-                      
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedChapter(chapter.chapterId);
-                              setShowDetailsModal(true);
-                            }}
-                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            chapter.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {chapter.status}
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-1 text-gray-400" />
+                            {chapter.memberCount}
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            chapter.registrationStatus === 'open'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {chapter.registrationStatus === 'open' ? 'Open' : 'Closed'}
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedChapter(chapter.chapterId);
+                                setShowDetailsModal(true);
+                              }}
+                              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
 
-                          <button
-                            onClick={() => {
-                              navigate(`/head/chapters/profile/${chapter.chapterId}`);
-                            }}
-                            className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200"
-                            title="Edit Chapter Profile"
-                          >
-                            <BookOpen className="h-4 w-4" />
-                          </button>
+                            <button
+                              onClick={() => {
+                                navigate(`/head/chapters/profile/${chapter.chapterId}`);
+                              }}
+                              className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+                              title="Edit Community Profile"
+                            >
+                              <BookOpen className="h-4 w-4" />
+                            </button>
 
-                          <button
-                            onClick={() => {
-                              alert(`Edit clicked for chapter: ${chapter.chapterName}`);
-                              handleEditChapterHead(chapter);
-                            }}
-                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
-                            title="Edit Chapter Head"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          
-                          <button
-                            onClick={() => handleToggleRegistration(chapter.chapterId, chapter.registrationStatus || 'closed')}
-                            disabled={updating === chapter.chapterId}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                              chapter.registrationStatus === 'open'
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            } ${updating === chapter.chapterId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            {updating === chapter.chapterId
-                              ? 'Updating...'
-                              : chapter.registrationStatus === 'open'
-                                ? 'Close Registration'
-                                : 'Open Registration'
-                            }
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
+                            <button
+                              onClick={() => {
+                                handleEditChapterHead(chapter);
+                              }}
+                              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
+                              title={`Edit ${typeLabel} Head`}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleToggleRegistration(chapter.chapterId, chapter.registrationStatus || 'closed')}
+                              disabled={updating === chapter.chapterId}
+                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                chapter.registrationStatus === 'open'
+                                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
+                              } ${updating === chapter.chapterId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {updating === chapter.chapterId
+                                ? 'Updating...'
+                                : chapter.registrationStatus === 'open'
+                                  ? 'Close Registration'
+                                  : 'Open Registration'
+                              }
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -314,7 +316,7 @@ const ManageChapters: React.FC = () => {
             setShowDetailsModal(false);
             setSelectedChapter(null);
           }}
-          title="Chapter Details"
+          title="Community Details"
           size="lg"
         >
           {selectedChapterData && (
@@ -330,7 +332,7 @@ const ManageChapters: React.FC = () => {
                     {selectedChapterData.chapterName}
                   </h3>
                   <p className="text-gray-600">
-                    Chapter Head: {selectedChapterData.headName}
+                    {(selectedChapterData as any).type === 'club' ? 'Club' : 'Chapter'} Head: {selectedChapterData.headName}
                   </p>
                 </div>
               </div>
@@ -338,7 +340,7 @@ const ManageChapters: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Chapter Information</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Community Information</h4>
                     <div className="space-y-2">
                       <div className="flex items-center text-sm text-gray-700">
                         <Users className="h-4 w-4 mr-2 text-blue-600" />
@@ -373,7 +375,7 @@ const ManageChapters: React.FC = () => {
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Chapter ID</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">Community ID</h4>
                     <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">
                       {selectedChapterData.chapterId}
                     </code>

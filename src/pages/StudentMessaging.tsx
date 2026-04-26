@@ -23,7 +23,7 @@ const StudentMessaging: React.FC = () => {
   return (
     <MessagingSection
       title="Messaging"
-      subtitle="Stay connected with your chapter heads in real time."
+      subtitle="Stay connected with your community heads in real time."
       chapterIds={chapterIds}
       backPath="/student/dashboard"
     />

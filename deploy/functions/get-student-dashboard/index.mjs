@@ -14,7 +14,8 @@ const corsHeaders = {
 };
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
+  const method = event.httpMethod || event.requestContext?.http?.method;
+  if (method === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: corsHeaders,
@@ -133,10 +134,14 @@ export const handler = async (event) => {
       totalAvailableChapters: allChapters.Items?.length || 0,
       eventsAttended,
       attendedEvents,
-      registeredChapters: registeredChapters.map(chapter => ({
-        name: chapter,
-        registeredAt: user.createdAt?.S || new Date().toISOString()
-      })),
+      registeredChapters: registeredChapters.map(chapterName => {
+        const chapterData = allChapters.Items?.find(c => c.chapterName?.S === chapterName);
+        return {
+          name: chapterName,
+          type: chapterData?.type?.S || 'chapter',
+          registeredAt: user.createdAt?.S || new Date().toISOString()
+        };
+      }),
       recentActivities,
       userEmail: userEmail,
       userName: user.name?.S || 'Unknown User'

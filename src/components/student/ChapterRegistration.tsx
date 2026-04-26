@@ -20,24 +20,28 @@ const ChapterRegistration: React.FC = () => {
   });
 
   const chapter = chapters.find(c => c.id === chapterId);
+  const typeLabel = chapter ? ((chapter as any).type === 'club' ? 'Club' : 'Chapter') : 'Community';
 
   if (!chapter) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Chapter Not Found</h2>
-          <p className="text-gray-600 mb-6">The chapter you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Not Found</h2>
+          <p className="text-gray-600 mb-6">The {typeLabel.toLowerCase()} you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/student/chapters')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
           >
-            Back to Chapters
+            Back to Communities
           </button>
         </div>
       </div>
     );
   }
+
+
+
 
   if (!chapter.isRegistrationOpen) {
     return (
@@ -60,7 +64,7 @@ const ChapterRegistration: React.FC = () => {
             onClick={() => navigate('/student/chapters')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
           >
-            Back to Chapters
+            Back to Communities
           </button>
         </div>
       </div>
@@ -106,13 +110,14 @@ const ChapterRegistration: React.FC = () => {
           className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors duration-200"
         >
           <ArrowLeft className="h-5 w-5" />
-          <span>Back to Chapters</span>
+          <span>Back to Communities</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Chapter Information */}
           <div className="lg:col-span-1">
             <div className="bg-white/80 backdrop-blur-md rounded-xl border border-white/20 p-6 sticky top-8">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{typeLabel} Information</h3>
               {chapter.imageUrl && (
                 <img
                   src={encodeS3Url(chapter.imageUrl)}
@@ -225,7 +230,7 @@ const ChapterRegistration: React.FC = () => {
                 {/* Motivation */}
                 <div>
                   <label htmlFor="motivation" className="block text-sm font-medium text-gray-700 mb-2">
-                    Why do you want to join this chapter? *
+                    Why do you want to join this {typeLabel.toLowerCase()}? *
                   </label>
                   <textarea
                     id="motivation"
@@ -235,7 +240,7 @@ const ChapterRegistration: React.FC = () => {
                     required
                     rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Share your motivation for joining this chapter..."
+                    placeholder={`Share your motivation for joining this ${typeLabel.toLowerCase()}...`}
                   />
                 </div>
 
@@ -268,7 +273,7 @@ const ChapterRegistration: React.FC = () => {
                     required
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="What are your goals and expectations from this chapter?"
+                    placeholder={`What are your goals and expectations from this ${typeLabel.toLowerCase()}?`}
                   />
                 </div>
 
@@ -312,9 +317,9 @@ const ChapterRegistration: React.FC = () => {
                     <div className="text-sm text-blue-800">
                       <p className="font-medium mb-1">Registration Terms</p>
                       <p>
-                        By submitting this registration, you agree to actively participate in chapter 
-                        activities and follow the chapter guidelines. Your application will be reviewed 
-                        by the chapter admin and you will be notified of the decision via email.
+                        By submitting this registration, you agree to actively participate in {typeLabel.toLowerCase()} 
+                        activities and follow the {typeLabel.toLowerCase()} guidelines. Your application will be reviewed 
+                        by the {typeLabel.toLowerCase()} admin and you will be notified of the decision via email.
                       </p>
                     </div>
                   </div>
@@ -348,12 +353,12 @@ const ChapterRegistration: React.FC = () => {
                   </button>
                 </div>
               </form>
-            </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default ChapterRegistration;

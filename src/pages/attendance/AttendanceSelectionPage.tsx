@@ -54,7 +54,7 @@ const AttendanceSelectionPage: React.FC = () => {
           </h1>
           <p className={`text-lg max-w-2xl mx-auto font-normal flex items-center justify-center gap-2 ${subtleClass}`}>
             <ShieldCheck className="w-5 h-5 text-green-500" />
-            Track and manage attendance for <span className="text-blue-600 font-medium">{profile?.chapterName || 'your chapter'}</span>
+            Track and manage attendance for <span className="text-blue-600 font-medium">{profile?.chapterName || 'your community'}</span>
           </p>
         </motion.div>
 

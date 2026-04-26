@@ -141,6 +141,8 @@ const EditChapter: React.FC = () => {
     loadChapterData();
   }, [chapterId, chapters, user]);
 
+  const typeLabel = (chapter as any)?.type === 'club' ? 'Club' : 'Chapter';
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -155,7 +157,7 @@ const EditChapter: React.FC = () => {
     if (!isAdminUser()) {
       setNotification({
         type: 'error',
-        message: 'Only administrators can modify chapter head assignments'
+        message: `Only administrators can modify ${typeLabel.toLowerCase()} head assignments`
       });
       setTimeout(() => setNotification(null), 3000);
       return;
@@ -164,7 +166,7 @@ const EditChapter: React.FC = () => {
     if (!formData.headEmail.trim()) {
       setNotification({
         type: 'error',
-        message: 'Chapter head email is required'
+        message: `${typeLabel} head email is required`
       });
       setTimeout(() => setNotification(null), 3000);
       return;
@@ -173,7 +175,7 @@ const EditChapter: React.FC = () => {
     if (!chapterId) {
       setNotification({
         type: 'error',
-        message: 'Chapter ID is missing'
+        message: `${typeLabel} ID is missing`
       });
       setTimeout(() => setNotification(null), 3000);
       return;
@@ -195,7 +197,7 @@ const EditChapter: React.FC = () => {
 
       setNotification({
         type: 'success',
-        message: 'Chapter head updated successfully!'
+        message: `${typeLabel} head updated successfully!`
       });
 
       // Refresh data and navigate back after a short delay
@@ -212,8 +214,8 @@ const EditChapter: React.FC = () => {
       }, 2000);
 
     } catch (error: any) {
-      console.error('Error updating chapter head:', error);
-      const errorMsg = error?.error || error?.message || 'Failed to update chapter head';
+      console.error(`Error updating ${typeLabel.toLowerCase()} head:`, error);
+      const errorMsg = error?.error || error?.message || `Failed to update ${typeLabel.toLowerCase()} head`;
       setNotification({
         type: 'error',
         message: errorMsg
@@ -301,7 +303,7 @@ const EditChapter: React.FC = () => {
             className="flex items-center text-blue-600 hover:text-blue-700 mb-4 transition-colors duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Chapters
+            Back to {typeLabel === 'Club' ? 'Clubs' : 'Chapters'}
           </button>
           
           <div className="flex items-center space-x-4">
@@ -311,7 +313,7 @@ const EditChapter: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit Chapter Head</h1>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit {typeLabel} Head</h1>
               <p className={isDark ? 'text-dark-text-secondary' : 'text-gray-600'}>{chapter?.chapterName}</p>
             </div>
           </div>
@@ -325,7 +327,7 @@ const EditChapter: React.FC = () => {
         >
           <div className="p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Current Chapter Head</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Current {typeLabel} Head</h2>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <User className="h-5 w-5 text-gray-500" />
@@ -344,7 +346,7 @@ const EditChapter: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="headEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  New Chapter Head Email *
+                  New {typeLabel} Head Email *
                 </label>
                 <div className="relative">
                   <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -358,20 +360,20 @@ const EditChapter: React.FC = () => {
                     className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
                     }`}
-                    placeholder="Enter new chapter head email"
+                    placeholder={`Enter new ${typeLabel.toLowerCase()} head email`}
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
                   {isAdminUser() 
-                    ? 'This email will be used to assign chapter head role to the user'
-                    : 'Only administrators can modify chapter head assignments'
+                    ? `This email will be used to assign ${typeLabel.toLowerCase()} head role to the user`
+                    : `Only administrators can modify ${typeLabel.toLowerCase()} head assignments`
                   }
                 </p>
               </div>
 
               <div>
                 <label htmlFor="headName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Chapter Head Name (Optional)
+                  {typeLabel} Head Name (Optional)
                 </label>
                 <div className="relative">
                   <User className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -384,11 +386,11 @@ const EditChapter: React.FC = () => {
                     className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
                     }`}
-                    placeholder="Enter chapter head full name"
+                    placeholder={`Enter ${typeLabel.toLowerCase()} head full name`}
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  Display name for the chapter head (can be updated later)
+                  Display name for the {typeLabel.toLowerCase()} head (can be updated later)
                 </p>
               </div>
 
@@ -399,7 +401,7 @@ const EditChapter: React.FC = () => {
                   
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="font-medium text-gray-700">Paid Chapter</p>
+                      <p className="font-medium text-gray-700">Paid {typeLabel}</p>
                       <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -449,12 +451,12 @@ const EditChapter: React.FC = () => {
                     <div>
                       <h3 className="text-sm font-medium text-yellow-800">Important</h3>
                       <p className="text-sm text-yellow-700 mt-1">
-                        Changing the chapter head will:
+                        Changing the {typeLabel.toLowerCase()} head will:
                       </p>
                       <ul className="text-sm text-yellow-700 mt-2 list-disc list-inside space-y-1">
                         <li>Remove the current head from the chapter_head role</li>
                         <li>Assign the chapter_head role to the new email address</li>
-                        <li>Update the chapter information to point to the new head</li>
+                        <li>Update the {typeLabel.toLowerCase()} information to point to the new head</li>
                       </ul>
                     </div>
                   </div>
@@ -464,12 +466,12 @@ const EditChapter: React.FC = () => {
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
                     <div>
-                      <h3 className="text-sm font-medium text-blue-800">Chapter Head View</h3>
+                      <h3 className="text-sm font-medium text-blue-800">{typeLabel} Head View</h3>
                       <p className="text-sm text-blue-700 mt-1">
-                        You are viewing this chapter's information as a chapter head. Only administrators can modify chapter head assignments.
+                        You are viewing this {typeLabel.toLowerCase()}'s information as a {typeLabel.toLowerCase()} head. Only administrators can modify {typeLabel.toLowerCase()} head assignments.
                       </p>
                       <p className="text-sm text-blue-700 mt-2">
-                        If you need to transfer your chapter head role to someone else, please contact an administrator.
+                        If you need to transfer your {typeLabel.toLowerCase()} head role to someone else, please contact an administrator.
                       </p>
                     </div>
                   </div>
