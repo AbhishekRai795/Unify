@@ -222,29 +222,29 @@ const EditEventProfile: React.FC = () => {
     <div className={`min-h-screen pb-20 ${pageClass}`}>
       {/* Header Section */}
       <div className={`border-b sticky top-0 z-30 ${headerClass}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => navigate('/head/events/manage')}
               className={`group flex items-center text-sm font-medium transition-all duration-200 ${isDark ? 'text-dark-text-secondary hover:text-dark-text-primary' : 'text-slate-600 hover:text-slate-900'}`}
               title="Back to Dashboard"
             >
               <div className={`p-2 mr-2 rounded-lg border transition-all ${isDark ? 'bg-dark-bg border-dark-border group-hover:border-accent-500/50 group-hover:bg-accent-600/10' : 'bg-white border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50'}`}>
-                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeft className="h-4 w-4" />
               </div>
-              Back to Dashboard
+              <span className="hidden sm:inline">Back to Dashboard</span>
             </button>
-            <div className={`h-8 w-px mx-2 invisible sm:visible ${isDark ? 'bg-dark-border' : 'bg-slate-200'}`}></div>
+            <div className={`h-8 w-px mx-2 hidden sm:block ${isDark ? 'bg-dark-border' : 'bg-slate-200'}`}></div>
             <div>
-              <h1 className={`text-lg font-bold leading-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Event About Page</h1>
-              <p className={`text-xs ${isDark ? 'text-dark-text-muted' : 'text-slate-500'}`}>Edit the information displayed to students</p>
+              <h1 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-dark-text-primary' : 'text-slate-900'}`}>Event About Page</h1>
+              <p className={`text-xs ${isDark ? 'text-dark-text-muted' : 'text-slate-500'}`}>Edit public profile</p>
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 p-1 rounded-lg ${tabWrapClass}`}>
+          <div className={`flex items-center gap-1 p-1 rounded-lg ${tabWrapClass}`}>
             <button
               onClick={() => setActiveTab('edit')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              className={`px-3 py-1.5 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all ${
                 activeTab === 'edit' ? tabActiveClass : tabIdleClass
               }`}
             >
@@ -252,11 +252,11 @@ const EditEventProfile: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('preview')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              className={`px-3 py-1.5 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all ${
                 activeTab === 'preview' ? tabActiveClass : tabIdleClass
               }`}
             >
-              Live Preview
+              Preview
             </button>
           </div>
         </div>
@@ -349,9 +349,9 @@ const EditEventProfile: React.FC = () => {
             </div>
 
               {/* Middle/Right Columns: Form Content */}
-              <div className="xl:col-span-3 space-y-8">
+              <div className="xl:col-span-3 space-y-6 sm:space-y-8">
                 {/* Basic Information */}
-                <div className={`p-6 rounded-2xl shadow-sm border ${panelClass}`}>
+                <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border ${panelClass}`}>
                   <div className="flex items-center gap-2 mb-4">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                       <Info className="h-4 w-4" />
@@ -359,7 +359,7 @@ const EditEventProfile: React.FC = () => {
                     <h3 className={`font-bold ${panelTitleClass}`}>Basic Information</h3>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="md:col-span-2">
                       <label className={`block text-sm font-semibold mb-1 ${labelClass}`}>About the Event</label>
                       <textarea
@@ -408,9 +408,9 @@ const EditEventProfile: React.FC = () => {
                 </div>
 
                 {/* Grid for Highlights, Achievements, Contacts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   {/* Highlights & Achievements */}
-                  <div className={`p-6 rounded-2xl shadow-sm border ${panelClass}`}>
+                  <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border ${panelClass}`}>
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                         <Award className="h-4 w-4" />
@@ -442,7 +442,7 @@ const EditEventProfile: React.FC = () => {
                   </div>
 
                   {/* Contact & Socials */}
-                  <div className={`p-6 rounded-2xl shadow-sm border ${panelClass}`}>
+                  <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border ${panelClass}`}>
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
                         <Globe className="h-4 w-4" />
@@ -453,7 +453,7 @@ const EditEventProfile: React.FC = () => {
                       <div>
                         <label className={`block text-sm font-semibold mb-1 ${labelClass}`}>Support Email/Link</label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                           <input 
                             value={formState.contact} 
                             onChange={(e) => onFieldChange('contact', e.target.value)} 
@@ -462,7 +462,7 @@ const EditEventProfile: React.FC = () => {
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <input 
                             value={formState.instagram} 
@@ -500,21 +500,21 @@ const EditEventProfile: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 pb-12">
-                  <p className={`text-[10px] italic ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-12">
+                  <p className={`text-xs italic text-center sm:text-left ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>
                     Changes take effect immediately on student dashboard after save.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 w-full sm:w-auto">
                     <button 
                       type="button" 
                       onClick={() => navigate('/head/events/manage')} 
-                      className={`px-6 py-2.5 rounded-xl font-semibold transition-colors ${isDark ? 'text-dark-text-secondary hover:bg-dark-bg' : 'text-slate-600 hover:bg-slate-100'}`}
+                      className={`w-1/2 sm:w-auto px-6 py-2.5 rounded-xl font-semibold transition-colors ${isDark ? 'text-dark-text-secondary hover:bg-dark-bg' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                       Cancel
                     </button>
                     <button 
                       type="submit" 
-                      className="px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-70"
+                      className="w-1/2 sm:w-auto px-8 sm:px-10 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                       disabled={saving}
                     >
                       {saving ? (
@@ -545,8 +545,8 @@ const EditEventProfile: React.FC = () => {
                 title={eventData?.title || 'Event Preview'}
                 metaContent={(
                   <>
-                    <span className="flex items-center gap-2.5 text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {eventData?.isOnline ? 'Online Event' : (eventData?.location || 'Venue to be announced')}</span>
-                    <span className="flex items-center gap-2.5 text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {eventData?.chapterName || 'Unify Chapter'}</span>
+                    <span className="flex items-center gap-2.5 text-base sm:text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {eventData?.isOnline ? 'Online Event' : (eventData?.location || 'Venue to be announced')}</span>
+                    <span className="flex items-center gap-2.5 text-base sm:text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {eventData?.chapterName || 'Unify Chapter'}</span>
                   </>
                 )}
                 ctaLabel={`Register Now • ${eventData?.isPaid ? `₹${eventData?.registrationFee ?? 0}` : 'Free'}`}
@@ -562,37 +562,37 @@ const EditEventProfile: React.FC = () => {
                   initial={{ opacity: 0, y: 28 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`lg:col-span-3 p-8 md:p-10 rounded-3xl border shadow-lg shadow-slate-200/10 backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                  className={`lg:col-span-3 p-6 sm:p-8 md:p-10 rounded-3xl border shadow-lg shadow-slate-200/10 backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                 >
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="h-9 w-1.5 rounded-full bg-blue-600" />
-                    <h2 className={`text-2xl md:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Event At A Glance</h2>
+                    <div className="h-8 sm:h-9 w-1.5 rounded-full bg-blue-600" />
+                    <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Event At A Glance</h2>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Date</p>
-                      <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                    <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+                      <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Date</p>
+                      <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {eventData?.startDateTime ? format(new Date(eventData.startDateTime), 'MMM do, yyyy') : 'To be announced'}
                       </p>
                       <Calendar className="h-5 w-5 mt-3 text-blue-500" />
                     </div>
-                    <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Time</p>
-                      <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+                      <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Time</p>
+                      <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {eventData?.startDateTime ? format(new Date(eventData.startDateTime), 'p') : 'To be announced'}
                       </p>
                       <Clock className="h-5 w-5 mt-3 text-indigo-500" />
                     </div>
-                    <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Location</p>
-                      <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+                      <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Location</p>
+                      <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {eventData?.isOnline ? 'Online Event' : (eventData?.location || 'Physical Venue')}
                       </p>
                       <MapPin className="h-5 w-5 mt-3 text-fuchsia-500" />
                     </div>
-                    <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Entry</p>
-                      <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+                      <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Entry</p>
+                      <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {eventData?.isPaid ? `Paid • INR ${eventData?.registrationFee ?? 0}` : 'Free Access'}
                       </p>
                       <CircleDollarSign className="h-5 w-5 mt-3 text-emerald-500" />
@@ -604,18 +604,18 @@ const EditEventProfile: React.FC = () => {
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`lg:col-span-2 p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                  className={`lg:col-span-2 p-8 sm:p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                 >
-                  <h2 className={`text-3xl md:text-4xl font-black mb-7 flex items-center gap-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    <div className="h-10 w-2 bg-blue-600 rounded-full" />
+                  <h2 className={`text-2xl sm:text-3xl md:text-4xl font-black mb-6 sm:mb-7 flex items-center gap-3 sm:gap-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <div className="h-9 sm:h-10 w-1.5 sm:w-2 bg-blue-600 rounded-full" />
                     Event Narrative
                   </h2>
-                  <p className={`text-lg md:text-xl leading-relaxed whitespace-pre-line font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
+                  <p className={`text-base sm:text-lg md:text-xl leading-relaxed whitespace-pre-line font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
                     {previewProfile.about || 'This event is designed to bring together brilliant minds for a session of learning, networking, and growth.'}
                   </p>
                   {previewProfile.eventDetails && (
-                    <div className={`mt-8 pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100'}`}>
-                      <p className={`text-base md:text-lg leading-relaxed ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
+                    <div className={`mt-6 sm:mt-8 pt-6 sm:pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100'}`}>
+                      <p className={`text-sm sm:text-base md:text-lg leading-relaxed ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
                         {previewProfile.eventDetails}
                       </p>
                     </div>
@@ -626,29 +626,29 @@ const EditEventProfile: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`p-8 md:p-10 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                  className={`p-6 sm:p-8 md:p-10 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                 >
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div>
-                      <div className="flex items-center gap-4 mb-4">
+                      <div className="flex items-center gap-3 sm:gap-4 mb-4">
                         <div className="p-3 bg-blue-600 rounded-2xl text-white"><Target className="h-5 w-5" /></div>
-                        <h4 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Purpose</h4>
+                        <h4 className={`text-xl sm:text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Purpose</h4>
                       </div>
                       <p className={`text-sm leading-relaxed font-semibold ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
                         {previewProfile.mission || 'Driving innovation through collaborative experiences.'}
                       </p>
                     </div>
-                    <div className={`pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
-                      <div className="flex items-center gap-4 mb-4">
+                    <div className={`pt-6 sm:pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
+                      <div className="flex items-center gap-3 sm:gap-4 mb-4">
                         <div className="p-3 bg-indigo-600 rounded-2xl text-white"><Eye className="h-5 w-5" /></div>
-                        <h4 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>What You Will Gain</h4>
+                        <h4 className={`text-xl sm:text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>What You Will Gain</h4>
                       </div>
                       <p className={`text-sm leading-relaxed font-semibold ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
                         {previewProfile.vision || 'Gain insights, build connections, and walk away with actionable knowledge.'}
                       </p>
                     </div>
                     {previewHighlights.length > 0 && (
-                      <div className={`pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
+                      <div className={`pt-6 sm:pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
                         <div className="flex items-center gap-3 mb-4">
                           <Sparkles className="h-5 w-5 text-amber-500" />
                           <h5 className={`text-sm font-black uppercase tracking-[0.18em] ${isDark ? 'text-dark-text-muted' : 'text-slate-500'}`}>Top Highlights</h5>
@@ -668,15 +668,15 @@ const EditEventProfile: React.FC = () => {
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className={`lg:col-span-3 p-8 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                    className={`lg:col-span-3 p-6 sm:p-8 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                   >
                     <div className="flex items-center gap-3 mb-6">
                       <div className="h-8 w-1.5 rounded-full bg-fuchsia-500" />
                       <h3 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Event Moments</h3>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                       {previewProfile.galleryImageUrls.map((url: string, idx: number) => (
-                        <div key={idx} className={`rounded-[2.2rem] overflow-hidden bg-slate-100/50 border ${idx % 7 === 0 ? 'md:col-span-2 md:aspect-[8/3]' : 'aspect-[4/3]'} ${isDark ? 'border-dark-border/60' : 'border-white/40'}`}>
+                        <div key={idx} className={`rounded-xl sm:rounded-[2.2rem] overflow-hidden bg-slate-100/50 border aspect-square ${isDark ? 'border-dark-border/60' : 'border-white/40'}`}>
                           <img src={encodeS3Url(url)} alt={`Gallery ${idx}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
                         </div>
                       ))}
@@ -688,12 +688,12 @@ const EditEventProfile: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.98 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className={`lg:col-span-2 p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                  className={`lg:col-span-2 p-8 sm:p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                 >
-                  <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Highlights</h3>
+                  <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-8 sm:mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Highlights</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {previewHighlights.length > 0 ? previewHighlights.map((item, idx) => (
-                      <div key={idx} className={`flex items-start gap-4 p-6 rounded-[2rem] border font-bold text-sm transition-all ${isDark ? 'bg-dark-bg/50 border-dark-border/50 text-dark-text-secondary hover:bg-dark-bg/70' : 'bg-slate-50/30 border-slate-100/50 text-slate-700 shadow-sm hover:bg-slate-50/50'}`}>
+                      <div key={idx} className={`flex items-start gap-4 p-5 sm:p-6 rounded-2xl sm:rounded-[2rem] border font-bold text-sm transition-all ${isDark ? 'bg-dark-bg/50 border-dark-border/50 text-dark-text-secondary hover:bg-dark-bg/70' : 'bg-slate-50/30 border-slate-100/50 text-slate-700 shadow-sm hover:bg-slate-50/50'}`}>
                         <CheckCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </div>
@@ -705,12 +705,12 @@ const EditEventProfile: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.98 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className={`p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+                  className={`p-8 sm:p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
                 >
-                  <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Takeaways</h3>
-                  <div className="space-y-5">
+                  <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-8 sm:mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Takeaways</h3>
+                  <div className="space-y-4 sm:space-y-5">
                     {previewAchievements.length > 0 ? previewAchievements.map((item, idx) => (
-                      <div key={idx} className={`flex items-start gap-5 p-6 border-l-8 border-amber-500/80 rounded-r-[2.5rem] rounded-l-md font-bold text-sm transition-all ${isDark ? 'bg-amber-500/5 text-dark-text-secondary border-amber-500/20 hover:bg-amber-500/10' : 'bg-amber-50/40 shadow-sm text-amber-950 border-amber-100/50 hover:bg-amber-50/50'}`}>
+                      <div key={idx} className={`flex items-start gap-4 sm:gap-5 p-5 sm:p-6 border-l-4 sm:border-l-8 border-amber-500/80 rounded-r-2xl sm:rounded-r-[2.5rem] rounded-l-md font-bold text-sm transition-all ${isDark ? 'bg-amber-500/5 text-dark-text-secondary border-amber-500/20 hover:bg-amber-500/10' : 'bg-amber-50/40 shadow-sm text-amber-950 border-amber-100/50 hover:bg-amber-50/50'}`}>
                         <Award className="h-6 w-6 text-amber-500 shrink-0" />
                         <span>{item}</span>
                       </div>

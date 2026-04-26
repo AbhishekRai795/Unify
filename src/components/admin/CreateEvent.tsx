@@ -137,11 +137,11 @@ const CreateEvent: React.FC = () => {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className={`backdrop-blur-md rounded-xl border p-8 transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <form onSubmit={handleSubmit} className={`backdrop-blur-md rounded-xl border p-4 sm:p-6 lg:p-8 transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Title */}
             <div className="md:col-span-2">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="title" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Event Title *
               </label>
               <input
@@ -151,14 +151,14 @@ const CreateEvent: React.FC = () => {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                 placeholder="Enter event title"
               />
             </div>
 
             {/* Description */}
             <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Description *
               </label>
               <textarea
@@ -167,15 +167,15 @@ const CreateEvent: React.FC = () => {
                 value={formData.description}
                 onChange={handleChange}
                 required
-                rows={1}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[50px] max-h-[150px]"
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[50px] max-h-[150px] text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                 placeholder="Describe your event..."
               />
             </div>
 
             {/* Chapter */}
             <div>
-              <label htmlFor="chapterId" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="chapterId" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Community (Chapter/Club) *
               </label>
               <select
@@ -184,7 +184,7 @@ const CreateEvent: React.FC = () => {
                 value={formData.chapterId}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
               >
                 <option value="">Select a community</option>
                 {chapters.map(chapter => (
@@ -197,7 +197,7 @@ const CreateEvent: React.FC = () => {
 
             {/* Event Type */}
             <div>
-              <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="eventType" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Event Type *
               </label>
               <select
@@ -206,7 +206,7 @@ const CreateEvent: React.FC = () => {
                 value={formData.eventType}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
               >
                 <option value="workshop">Workshop</option>
                 <option value="seminar">Seminar</option>
@@ -218,7 +218,7 @@ const CreateEvent: React.FC = () => {
 
             {/* Start Date & Time */}
             <div>
-              <label htmlFor="startDateTime" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="startDateTime" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Start Date & Time *
               </label>
               <div className="relative">
@@ -230,14 +230,14 @@ const CreateEvent: React.FC = () => {
                   value={formData.startDateTime}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                 />
               </div>
             </div>
 
             {/* End Date & Time */}
             <div>
-              <label htmlFor="endDateTime" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="endDateTime" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 End Date & Time *
               </label>
               <div className="relative">
@@ -249,69 +249,71 @@ const CreateEvent: React.FC = () => {
                   value={formData.endDateTime}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                 />
               </div>
             </div>
 
             {/* Online/Offline Toggle & Location/Link */}
-            <div className="xl:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2 invisible">Type</label>
-              <div className="flex items-center space-x-3 h-[46px] px-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="isOnline"
-                  name="isOnline"
-                  checked={formData.isOnline}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isOnline" className="text-sm font-medium text-gray-700">
-                  Online Event
-                </label>
+            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="sm:col-span-1">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>Event Type</label>
+                <div className={`flex items-center space-x-3 h-[50px] px-4 rounded-lg ${isDark ? 'bg-dark-card border border-dark-border' : 'bg-gray-50 border border-gray-200'}`}>
+                  <input
+                    type="checkbox"
+                    id="isOnline"
+                    name="isOnline"
+                    checked={formData.isOnline}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isOnline" className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-700'}`}>
+                    Online Event
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div className="xl:col-span-1">
-              <label htmlFor={formData.isOnline ? "meetingLink" : "location"} className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.isOnline ? "Meeting Link" : "Location"} *
-              </label>
-              <div className="relative">
-                {formData.isOnline ? (
-                  <>
-                    <Video className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="url"
-                      id="meetingLink"
-                      name="meetingLink"
-                      value={formData.meetingLink}
-                      onChange={handleChange}
-                      required={formData.isOnline}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Meeting link"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      id="location"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      required={!formData.isOnline}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Location"
-                    />
-                  </>
-                )}
+              <div className="sm:col-span-2">
+                <label htmlFor={formData.isOnline ? "meetingLink" : "location"} className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
+                  {formData.isOnline ? "Meeting Link" : "Location"} *
+                </label>
+                <div className="relative">
+                  {formData.isOnline ? (
+                    <>
+                      <Video className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="url"
+                        id="meetingLink"
+                        name="meetingLink"
+                        value={formData.meetingLink}
+                        onChange={handleChange}
+                        required={formData.isOnline}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
+                        placeholder="Meeting link"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        id="location"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        required={!formData.isOnline}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
+                        placeholder="Location"
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Max Attendees */}
             <div>
-              <label htmlFor="maxAttendees" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="maxAttendees" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Max Attendees
               </label>
               <div className="relative">
@@ -323,53 +325,54 @@ const CreateEvent: React.FC = () => {
                   value={formData.maxAttendees}
                   onChange={handleChange}
                   min="1"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                   placeholder="Unlimited"
                 />
               </div>
             </div>
 
-            {/* Registration Required */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 invisible">Reg</label>
-              <div className="flex items-center space-x-3 h-[46px] px-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="registrationRequired"
-                  name="registrationRequired"
-                  checked={formData.registrationRequired}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="registrationRequired" className="text-sm font-medium text-gray-700">
-                  Registration Required
-                </label>
-              </div>
-            </div>
-
-            {/* Registration Deadline */}
-            {formData.registrationRequired && (
+            {/* Registration Required & Deadline */}
+            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="registrationDeadline" className="block text-sm font-medium text-gray-700 mb-2">
-                  Reg Deadline
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>Registration</label>
+                <div className={`flex items-center space-x-3 h-[50px] px-4 rounded-lg ${isDark ? 'bg-dark-card border border-dark-border' : 'bg-gray-50 border border-gray-200'}`}>
                   <input
-                    type="datetime-local"
-                    id="registrationDeadline"
-                    name="registrationDeadline"
-                    value={formData.registrationDeadline}
+                    type="checkbox"
+                    id="registrationRequired"
+                    name="registrationRequired"
+                    checked={formData.registrationRequired}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
+                  <label htmlFor="registrationRequired" className={`text-sm font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-700'}`}>
+                    Registration Required
+                  </label>
                 </div>
               </div>
-            )}
+
+              {formData.registrationRequired && (
+                <div>
+                  <label htmlFor="registrationDeadline" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
+                    Reg Deadline
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="datetime-local"
+                      id="registrationDeadline"
+                      name="registrationDeadline"
+                      value={formData.registrationDeadline}
+                      onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Tags */}
-            <div className="md:col-span-1">
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+            <div>
+              <label htmlFor="tags" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Tags (Separated by commas)
               </label>
               <div className="relative">
@@ -380,15 +383,15 @@ const CreateEvent: React.FC = () => {
                   name="tags"
                   value={formData.tags}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                   placeholder="tech, social..."
                 />
               </div>
             </div>
 
             {/* Image URL */}
-            <div className="md:col-span-1">
-              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+            <div>
+              <label htmlFor="imageUrl" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                 Image URL
               </label>
               <div className="relative">
@@ -399,14 +402,14 @@ const CreateEvent: React.FC = () => {
                   name="imageUrl"
                   value={formData.imageUrl}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${isDark ? 'bg-dark-card border-dark-border' : 'border-gray-300'}`}
                   placeholder="https://..."
                 />
               </div>
             </div>
 
             {/* Paid vs Free Toggle */}
-            <div className="col-span-full xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div className={`md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl ${isDark ? 'bg-dark-card border border-dark-border' : 'bg-gray-50 border border-gray-200'}`}>
               <div className="flex items-center">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <div className="relative inline-flex items-center cursor-pointer">
@@ -420,14 +423,14 @@ const CreateEvent: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900">Paid Event</span>
+                    <span className={`text-sm font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Paid Event</span>
                   </div>
                 </label>
               </div>
 
               {formData.isPaid && (
                 <div className="flex items-center space-x-2">
-                  <label htmlFor="registrationFee" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  <label htmlFor="registrationFee" className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-dark-text-secondary' : 'text-gray-700'}`}>
                     Fee:
                   </label>
                   <div className="relative flex-1">
@@ -439,7 +442,7 @@ const CreateEvent: React.FC = () => {
                       value={formData.registrationFee}
                       onChange={handleChange}
                       placeholder="0.00"
-                      className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all"
+                      className={`w-full pl-7 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all text-gray-900 ${isDark ? 'bg-dark-surface border-dark-border' : 'border-gray-300'}`}
                       required={formData.isPaid}
                       min="1"
                     />
@@ -449,18 +452,18 @@ const CreateEvent: React.FC = () => {
             </div>
 
             {/* Submit Buttons */}
-            <div className="col-span-full flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+            <div className="md:col-span-2 flex flex-col sm:flex-row items-center justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate('/head/dashboard')}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                className={`w-full sm:w-auto px-6 py-3 border rounded-lg transition-colors duration-200 ${isDark ? 'border-dark-border text-dark-text-primary hover:bg-dark-card' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-10 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
+                className="w-full sm:w-auto px-10 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 {isLoading ? 'Creating...' : 'Create Event'}
               </button>

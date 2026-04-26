@@ -170,8 +170,8 @@ const EventPublicProfile: React.FC = () => {
       title={event?.title || profile?.title || 'Amazing Event'}
       metaContent={(
         <>
-          <span className="flex items-center gap-2.5 text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {event?.isOnline ? 'Online Universe' : (event?.location || 'Unify Network')}</span>
-          <span className="flex items-center gap-2.5 text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {event?.chapterName || 'Unify Community'}</span>
+          <span className="flex items-center gap-2.5 text-base sm:text-lg"><MapPin className="h-5 w-5 text-blue-500" /> {event?.isOnline ? 'Online Universe' : (event?.location || 'Unify Network')}</span>
+          <span className="flex items-center gap-2.5 text-base sm:text-lg"><Users className="h-5 w-5 text-indigo-500" /> by {event?.chapterName || 'Unify Community'}</span>
         </>
       )}
       ctaLabel={`Register Now • ${event?.isPaid ? `₹${event.registrationFee}` : 'Free'}`}
@@ -187,184 +187,78 @@ const EventPublicProfile: React.FC = () => {
         initial={{ opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className={`lg:col-span-3 p-8 md:p-10 rounded-3xl border shadow-lg shadow-slate-200/10 backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
+        className={`lg:col-span-3 p-6 sm:p-8 md:p-10 rounded-3xl border shadow-lg shadow-slate-200/10 backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
       >
         <div className="flex items-center gap-3 mb-6">
-          <div className="h-9 w-1.5 rounded-full bg-blue-600" />
-          <h2 className={`text-2xl md:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Event At A Glance</h2>
+          <div className="h-8 sm:h-9 w-1.5 rounded-full bg-blue-600" />
+          <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Event At A Glance</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Date</p>
-            <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {event?.startDateTime ? format(new Date(event.startDateTime), 'MMM do, yyyy') : 'To be announced'}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+            <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Date</p>
+            <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {event?.date ? format(new Date(event.date), 'do MMMM, yyyy') : 'To be announced'}
             </p>
-            <Calendar className="h-5 w-5 mt-3 text-blue-500" />
           </div>
-
-          <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Time</p>
-            <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {event?.startDateTime ? format(new Date(event.startDateTime), 'p') : 'To be announced'}
-            </p>
-            <Clock className="h-5 w-5 mt-3 text-indigo-500" />
+          <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+            <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Time</p>
+            <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{event?.time || 'To be decided'}</p>
           </div>
-
-          <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Location</p>
-            <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {event?.isOnline ? 'Online Event' : (event?.location || 'Physical Venue')}
-            </p>
-            <MapPin className="h-5 w-5 mt-3 text-fuchsia-500" />
+          <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+            <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Mode</p>
+            <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{event?.isOnline ? 'Online' : 'Offline'}</p>
           </div>
-
-          <div className={`rounded-[2rem] p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Entry</p>
-            <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {event?.isPaid ? `Paid • INR ${event?.registrationFee ?? 0}` : 'Free Access'}
-            </p>
-            <CircleDollarSign className="h-5 w-5 mt-3 text-emerald-500" />
+          <div className={`rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 border ${isDark ? 'bg-dark-bg/60 border-dark-border/50' : 'bg-slate-50/70 border-slate-100'}`}>
+            <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Entry</p>
+            <p className={`text-base sm:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{event?.isPaid ? 'Paid' : 'Free'}</p>
           </div>
         </div>
-      </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className={`lg:col-span-2 p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
-      >
-        <h2 className={`text-3xl md:text-4xl font-black mb-7 flex items-center gap-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          <div className="h-10 w-2 bg-blue-600 rounded-full" />
-          Event Narrative
-        </h2>
-        <p className={`text-lg md:text-xl leading-relaxed whitespace-pre-line font-medium ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
-          {profile.about || 'This event is designed to bring together brilliant minds for a session of learning, networking, and growth.'}
-        </p>
+        <div className="mt-10 sm:mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-8 sm:h-9 w-1.5 rounded-full bg-indigo-600" />
+            <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>About The Event</h2>
+          </div>
+          <div className={`prose prose-lg max-w-none ${isDark ? 'prose-invert' : ''} text-base sm:text-lg`}>
+            {profile.about || "More details coming soon. Stay tuned!"}
+          </div>
+        </div>
 
-        {profile.eventDetails && (
-          <div className={`mt-8 pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100'}`}>
-            <p className={`text-base md:text-lg leading-relaxed ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
-              {profile.eventDetails}
-            </p>
+        {highlights.length > 0 && (
+          <div className="mt-10 sm:mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-8 sm:h-9 w-1.5 rounded-full bg-amber-600" />
+              <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Event Highlights</h2>
+            </div>
+            <ul className="space-y-4">
+              {highlights.map((highlight: string, index: number) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Sparkles className={`h-6 w-6 mt-1 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
+                  <span className={`text-base sm:text-lg ${isDark ? 'text-dark-text-primary' : 'text-slate-800'}`}>{highlight}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {achievements.length > 0 && (
+          <div className="mt-10 sm:mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-8 sm:h-9 w-1.5 rounded-full bg-emerald-600" />
+              <h2 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Key Achievements</h2>
+            </div>
+            <ul className="space-y-4">
+              {achievements.map((achievement: string, index: number) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Award className={`h-6 w-6 mt-1 flex-shrink-0 ${isDark ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                  <span className={`text-base sm:text-lg ${isDark ? 'text-dark-text-primary' : 'text-slate-800'}`}>{achievement}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className={`p-8 md:p-10 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
-      >
-        <div className="space-y-8">
-          <div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-600 rounded-2xl text-white">
-                <Target className="h-5 w-5" />
-              </div>
-              <h4 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Purpose</h4>
-            </div>
-            <p className={`text-sm leading-relaxed font-semibold ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
-              {profile.mission || 'Driving innovation through collaborative experiences.'}
-            </p>
-          </div>
-
-          <div className={`pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-indigo-600 rounded-2xl text-white">
-                <Eye className="h-5 w-5" />
-              </div>
-              <h4 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>What You Will Gain</h4>
-            </div>
-            <p className={`text-sm leading-relaxed font-semibold ${isDark ? 'text-dark-text-secondary' : 'text-slate-600'}`}>
-              {profile.vision || 'Gain insights, build connections, and walk away with actionable knowledge.'}
-            </p>
-          </div>
-
-          {highlights.length > 0 && (
-            <div className={`pt-7 border-t ${isDark ? 'border-dark-border/40' : 'border-slate-100/80'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="h-5 w-5 text-amber-500" />
-                <h5 className={`text-sm font-black uppercase tracking-[0.18em] ${isDark ? 'text-dark-text-muted' : 'text-slate-500'}`}>Top Highlights</h5>
-              </div>
-              <div className="space-y-3">
-                {highlights.slice(0, 3).map((item: string, idx: number) => (
-                  <div key={idx} className={`rounded-2xl px-4 py-3 text-sm font-semibold border ${isDark ? 'bg-dark-bg/60 border-dark-border/50 text-dark-text-secondary' : 'bg-slate-50/80 border-slate-100 text-slate-700'}`}>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-
-          {profile.galleryImageUrls && profile.galleryImageUrls.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className={`lg:col-span-3 p-8 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-8 w-1.5 rounded-full bg-fuchsia-500" />
-                <h3 className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Event Moments</h3>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {profile.galleryImageUrls.map((url: string, idx: number) => (
-                  <div key={idx} className={`rounded-[2.2rem] overflow-hidden bg-slate-100/50 border ${idx % 7 === 0 ? 'md:col-span-2 md:aspect-[8/3]' : 'aspect-[4/3]'} ${isDark ? 'border-dark-border/60' : 'border-white/40'}`}>
-                    <img src={encodeS3Url(url)} alt={`Gallery ${idx}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`lg:col-span-2 p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
-          >
-            <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Highlights</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {highlights.length > 0 ? (
-                highlights.map((item: string, idx: number) => (
-                  <div key={idx} className={`flex items-start gap-4 p-6 rounded-[2rem] border font-bold text-sm transition-all ${isDark ? 'bg-dark-bg/50 border-dark-border/50 text-dark-text-secondary hover:bg-dark-bg/70' : 'bg-slate-50/30 border-slate-100/50 text-slate-700 shadow-sm hover:bg-slate-50/50'}`}>
-                    <CheckCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </div>
-                ))
-              ) : (
-                <div className={`col-span-full text-center py-10 font-bold italic ${isDark ? 'text-dark-text-muted' : 'text-slate-300'}`}>No markers yet</div>
-              )}
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`p-10 md:p-12 rounded-3xl shadow-lg shadow-slate-200/10 border backdrop-blur-xl h-full transition-colors duration-300 ${isDark ? 'bg-dark-surface/80 border-dark-border/50' : 'bg-white/80 border-white/60'}`}
-          >
-            <h3 className={`font-black text-xs uppercase tracking-[0.3em] mb-10 ${isDark ? 'text-dark-text-muted' : 'text-slate-400'}`}>Takeaways</h3>
-            <div className="space-y-5">
-              {achievements.length > 0 ? (
-                achievements.map((item: string, idx: number) => (
-                  <div key={idx} className={`flex items-start gap-5 p-6 border-l-8 border-amber-500/80 rounded-r-[2.5rem] rounded-l-md font-bold text-sm transition-all ${isDark ? 'bg-amber-500/5 text-dark-text-secondary border-amber-500/20 hover:bg-amber-500/10' : 'bg-amber-50/40 shadow-sm text-amber-950 border-amber-100/50 hover:bg-amber-50/50'}`}>
-                    <Award className="h-6 w-6 text-amber-500 shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))
-              ) : (
-                <div className={`text-center py-10 font-bold italic ${isDark ? 'text-dark-text-muted' : 'text-slate-300'}`}>Future milestones</div>
-              )}
-            </div>
-          </motion.div>
-
     </PublicProfileLayout>
   );
 };

@@ -137,14 +137,14 @@ const EventsList: React.FC = () => {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
             <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-accent-400' : 'bg-blue-500'}`} />
             <div className={`h-[2px] w-12 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
           </div>
           <h1 className={`
-            text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
+            text-3xl sm:text-4xl font-bold mb-4 transition-all duration-300 tracking-tight
             ${isDark 
               ? 'text-dark-text-primary' 
               : 'text-[#1a1f36]'
@@ -153,7 +153,7 @@ const EventsList: React.FC = () => {
             {activeTab === 'live' ? 'Live Events' : 'Past Events'}
           </h1>
           <p className={`
-            text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
+            text-base sm:text-lg max-w-2xl mx-auto transition-colors duration-300 font-normal
             ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}
           `}>
             {activeTab === 'live' 
@@ -171,17 +171,17 @@ const EventsList: React.FC = () => {
             : 'bg-white/80 border-white/20 shadow-xl shadow-blue-500/5'
           }
         `}>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             {/* Left side: Type filters */}
-            <div className="flex flex-wrap items-center gap-4">
-              <span className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'}`}>Filter by type:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-dark-text-secondary' : 'text-slate-500'} hidden sm:block`}>Filter:</span>
               <div className="flex flex-wrap gap-2">
                 {eventTypes.map(type => (
                   <button
                     key={type}
                     onClick={() => setSelectedType(type)}
                     className={`
-                      px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300
+                      px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300
                       ${selectedType === type
                         ? (isDark 
                             ? 'bg-accent-600 text-white shadow-lg shadow-accent-500/30' 
@@ -194,7 +194,7 @@ const EventsList: React.FC = () => {
                       }
                     `}
                   >
-                    {type === 'all' ? 'All Events' : type.charAt(0).toUpperCase() + type.slice(1)}
+                    {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
                   </button>
                 ))}
               </div>
@@ -268,48 +268,48 @@ const EventsList: React.FC = () => {
                     : 'bg-white/80 border-white/20'
                   }
                 `}>
-                  <div className="md:flex">
+                  <div className="md:flex rounded-2xl overflow-hidden">
                     {event.imageUrl && (
-                      <div className="md:w-80 h-48 md:h-auto">
+                      <div className="md:w-64 lg:w-80 h-48 md:h-auto flex-shrink-0">
                         <img 
                           src={encodeS3Url(event.imageUrl)} 
                           alt={event.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     )}
                     
-                    <div className="flex-1 p-6">
-                      <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1 p-4 sm:p-6">
+                      <div className="flex items-start justify-between mb-3 sm:mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.eventType)}`}>
                               {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}
                             </span>
                             {isPastEvent ? (
-                              <div className="flex items-center space-x-1 text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                              <div className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
                                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                <span className="text-xs font-medium">Ended</span>
+                                <span>Ended</span>
                               </div>
                             ) : (
-                              <div className="flex items-center space-x-1 text-green-600">
+                              <div className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700'}`}>
                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-xs font-medium">Live</span>
+                                <span>Live</span>
                               </div>
                             )}
                             {isRegistered && (
-                              <div className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                              <div className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold ${isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-600'}`}>
                                 <CheckCircle className="h-3 w-3" />
-                                <span className="text-xs font-bold">Registered</span>
+                                <span>Registered</span>
                               </div>
                             )}
                           </div>
                           
-                          <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+                          <h3 className={`text-lg sm:text-xl font-bold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
                             {event.title}
                           </h3>
                           
-                          <p className={`mb-3 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <p className={`text-sm mb-3 ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
                             {event.description}
                           </p>
                           
@@ -322,38 +322,38 @@ const EventsList: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                          <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
+                        <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-blue-500'}`} />
                           <span>
                             {format(new Date(event.startDateTime), 'PPP')}
                           </span>
                         </div>
                         
-                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                          <Clock className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                        <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <Clock className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-indigo-500'}`} />
                           <span>
                             {format(new Date(event.startDateTime), 'p')} - {format(new Date(event.endDateTime), 'p')}
                           </span>
                         </div>
                         
-                        <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                        <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
                           {event.isOnline ? (
                             <>
-                              <Video className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                              <Video className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-purple-500'}`} />
                               <span>Online Event</span>
                             </>
                           ) : (
                             <>
-                              <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                              <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-pink-500'}`} />
                               <span>{event.location}</span>
                             </>
                           )}
                         </div>
                         
-                        {event.maxAttendees && (
-                          <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                            <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : ''}`} />
+                        {event.maxAttendees > 0 && (
+                          <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                            <Users className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-teal-500'}`} />
                             <span>
                               {event.currentAttendees} / {event.maxAttendees} attendees
                             </span>
@@ -361,7 +361,7 @@ const EventsList: React.FC = () => {
                         )}
                       </div>
 
-                      {event.tags.length > 0 && (
+                      {event.tags && event.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {event.tags.map((tag, index) => (
                             <span key={index} className={`
@@ -378,14 +378,14 @@ const EventsList: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center flex-wrap gap-3">
                           {event.registrationRequired && (
                             <button
                               onClick={() => handleRegister(event)}
                               disabled={isPastEvent || registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
                               className={`
-                                px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm
+                                px-5 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-sm text-sm
                                 ${isPastEvent
                                   ? 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed'
                                   : isDark 
@@ -402,19 +402,19 @@ const EventsList: React.FC = () => {
                                     ? 'Registering...' 
                                     : isRegistrationClosed
                                       ? 'Registration Closed'
-                                      : (event.maxAttendees && event.currentAttendees >= event.maxAttendees)
+                                      : (event.maxAttendees > 0 && event.currentAttendees >= event.maxAttendees)
                                         ? 'Full'
                                         : 'Register'
                               }
                             </button>
                           )}
                           
-                          {event.isOnline && event.meetingLink && (
+                          {event.isOnline && event.meetingLink && isRegistered && (
                             <a
                               href={event.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={`flex items-center space-x-1 font-medium transition-colors duration-200 ${isDark ? 'text-accent-400 hover:text-accent-300' : 'text-blue-600 hover:text-blue-700'}`}
+                              className={`flex items-center space-x-1 font-medium transition-colors duration-200 text-sm ${isDark ? 'text-accent-400 hover:text-accent-300' : 'text-blue-600 hover:text-blue-700'}`}
                             >
                               <ExternalLink className="h-4 w-4" />
                               <span>Join Meeting</span>
@@ -423,9 +423,9 @@ const EventsList: React.FC = () => {
 
                           {/* Know More About It Button */}
                           <button
-                            onClick={() => window.open(`/student/events/${encodeURIComponent(eventId)}/about`, '_blank')}
+                            onClick={() => window.open(`/events/profile/${encodeURIComponent(eventId)}`, '_blank')}
                             className={`
-                              px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 shadow-sm
+                              px-4 py-2 rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 shadow-sm text-sm
                               ${isDark
                                 ? 'border border-accent-500/30 text-accent-300 bg-accent-500/10 hover:bg-accent-500/20'
                                 : 'border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100'
@@ -443,10 +443,10 @@ const EventsList: React.FC = () => {
                               return (
                                 <button
                                   onClick={() => setShowCertPreview({ event, cert: issuedCert })}
-                                  className="px-4 py-2.5 rounded-xl font-bold transition-all duration-300 bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20 flex items-center gap-2"
+                                  className="px-4 py-2 rounded-lg font-bold transition-all duration-300 bg-amber-500 text-white hover:bg-amber-600 shadow-lg shadow-amber-500/20 flex items-center gap-2 text-sm"
                                 >
                                   <Award className="h-4 w-4" />
-                                  Download Certificate
+                                  Certificate
                                 </button>
                               );
                             }
@@ -454,9 +454,9 @@ const EventsList: React.FC = () => {
                           })()}
                         </div>
                         
-                        {event.registrationDeadline && (
-                          <div className={`text-xs ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
-                            Registration deadline: {format(new Date(event.registrationDeadline), 'PPp')}
+                        {event.registrationDeadline && !isPastEvent && (
+                          <div className={`text-xs text-right flex-shrink-0 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
+                            Ends: {format(new Date(event.registrationDeadline), 'PPp')}
                           </div>
                         )}
                       </div>
@@ -468,17 +468,17 @@ const EventsList: React.FC = () => {
           </div>
         ) : (
           <div className={`
-            p-12 text-center rounded-2xl backdrop-blur-md border transition-all duration-300
+            p-8 sm:p-12 text-center rounded-2xl backdrop-blur-md border transition-all duration-300
             ${isDark 
               ? 'bg-dark-surface/30 border-accent-500/20 shadow-accent-500/10' 
               : 'bg-white/80 border-white/20'
             }
           `}>
-            <Calendar className={`h-16 w-16 mx-auto mb-4 ${isDark ? 'text-dark-text-muted' : 'text-gray-300'}`} />
-            <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+            <Calendar className={`h-12 sm:h-16 w-12 sm:w-16 mx-auto mb-4 ${isDark ? 'text-dark-text-muted' : 'text-gray-300'}`} />
+            <h3 className={`text-base sm:text-lg font-semibold mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
               No {activeTab} events
             </h3>
-            <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+            <p className={`text-sm sm:text-base ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
               {activeTab === 'live' 
                 ? 'There are no live events at the moment. Check back later for updates!' 
                 : 'No ended events found in the records.'
@@ -504,11 +504,11 @@ const EventsList: React.FC = () => {
         {showCertPreview && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setShowCertPreview(null)} />
-            <div className="relative bg-white rounded-3xl p-6 shadow-2xl max-w-4xl w-full animate-scale-in">
-              <div className="flex justify-between items-center mb-6">
+            <div className="relative bg-white rounded-3xl p-4 sm:p-6 shadow-2xl max-w-4xl w-full animate-scale-in">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900">Your Certificate</h2>
-                  <p className="text-slate-500">Congratulations on your achievement!</p>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900">Your Certificate</h2>
+                  <p className="text-sm sm:text-base text-slate-500">Congratulations on your achievement!</p>
                 </div>
                 <button onClick={() => setShowCertPreview(null)} className="p-2 hover:bg-gray-100 rounded-full">
                   <X className="h-6 w-6 text-gray-400" />
@@ -516,7 +516,7 @@ const EventsList: React.FC = () => {
               </div>
 
               <div className="relative aspect-video w-full mb-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.35] sm:scale-[0.45] md:scale-[0.6] lg:scale-[0.7] xl:scale-[0.8] origin-center shadow-xl transition-transform">
+                <div id="certificate-to-download" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.3] xs:scale-[0.35] sm:scale-[0.45] md:scale-[0.6] lg:scale-[0.7] xl:scale-[0.8] origin-center shadow-xl transition-transform">
                   <CertificateTemplate
                     studentName={showCertPreview.cert.studentName}
                     eventName={showCertPreview.cert.eventName}
@@ -570,7 +570,7 @@ const EventsList: React.FC = () => {
                   setDownloadingCert(null);
                 }}
                 disabled={downloadingCert === showCertPreview.cert.eventId}
-                className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2"
               >
                 {downloadingCert === showCertPreview.cert.eventId ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
