@@ -407,14 +407,87 @@ export const handler = async (event) => {
 
     // 4. Student Stats
     if (method === "GET" && path.includes("/api/attendance/stats")) {
-       const attended = await docClient.send(new QueryCommand({
-         TableName: process.env.ATTENDANCE_TABLE,
-         IndexName: "UserIndex",
-         KeyConditionExpression: "userId = :u",
-         ExpressionAttributeValues: { ":u": userId }
-       }));
+       try {
+         // 1. Get Chapters the student belongs to
+         const myChapters = await docClient.send(new QueryCommand({
+           TableName: process.env.REGISTRATION_TABLE || "ChapterPayments",
+           IndexName: "UserIdIndex",
+           KeyConditionExpression: "userId = :u",
+           ExpressionAttributeValues: { ":u": userId }
+         }));
+         
+         const chapterIds = [...new Set((myChapters.Items || []).map(item => item.chapterId))];
+         
+         // 2. Get Student's attendance records
+         const [attendedMeetings, attendedEvents] = await Promise.all([
+           docClient.send(new QueryCommand({
+             TableName: process.env.ATTENDANCE_TABLE,
+             IndexName: "UserIndex",
+             KeyConditionExpression: "userId = :u",
+             ExpressionAttributeValues: { ":u": userId }
+           })),
+           docClient.send(new QueryCommand({
+             TableName: process.env.EVENT_ATTENDANCE_TABLE,
+             IndexName: "UserIndex",
+             KeyConditionExpression: "userId = :u",
+             ExpressionAttributeValues: { ":u": userId }
+           }))
+         ]);
+         
+         const presentMeetingIds = new Set((attendedMeetings.Items || []).map(a => a.meetingId));
+         const presentEventIds = new Set((attendedEvents.Items || []).map(a => a.eventId));
+         
+         // 3. Fetch all meetings and events for these chapters
+         let allMeetings = [];
+         let allEvents = [];
+         
+         if (chapterIds.length > 0) {
+           const results = await Promise.all(chapterIds.map(async (cid) => {
+             const [mRes, eRes] = await Promise.all([
+               docClient.send(new QueryCommand({
+                 TableName: process.env.MEETINGS_TABLE,
+                 KeyConditionExpression: "chapterId = :c",
+                 ExpressionAttributeValues: { ":c": cid }
+               })),
+               docClient.send(new QueryCommand({
+                 TableName: process.env.EVENTS_TABLE,
+                 KeyConditionExpression: "chapterId = :c",
+                 ExpressionAttributeValues: { ":c": cid }
+               }))
+             ]);
+             return { meetings: mRes.Items || [], events: eRes.Items || [] };
+           }));
+           
+           results.forEach(res => {
+             allMeetings.push(...res.meetings);
+             allEvents.push(...res.events);
+           });
+         }
+         
+         // 4. Map with isPresent flag
+         const enrichedMeetings = allMeetings.map(m => ({
+           ...m,
+           isPresent: presentMeetingIds.has(m.meetingId)
+         })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
+         
+         const enrichedEvents = allEvents.map(e => ({
+           ...e,
+           isPresent: presentEventIds.has(e.eventId)
+         })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
 
-       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ attendedCount: attended.Items?.length || 0, attendance: attended.Items }) };
+         return { 
+           statusCode: 200, 
+           headers: corsHeaders, 
+           body: JSON.stringify({ 
+             attendedCount: presentMeetingIds.size + presentEventIds.size, 
+             meetings: enrichedMeetings,
+             events: enrichedEvents
+           }) 
+         };
+       } catch (err) {
+         console.error(`[ATTENDANCE] Error fetching stats: ${err.message}`);
+         return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ message: "Error fetching attendance stats" }) };
+       }
     }
 
     // 5. List Meetings (Chapter Head)
