@@ -43,34 +43,34 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4 sm:p-6 lg:p-8 transition-all duration-300 font-sans">
-      <div className="bg-white dark:bg-dark-surface rounded-[2rem] shadow-2xl max-w-[95%] w-full max-h-[90vh] overflow-hidden flex flex-col relative border border-white/40 dark:border-dark-border ring-1 ring-black/5">
+    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-0 sm:p-6 lg:p-8 transition-all duration-300 font-sans">
+      <div className="bg-white dark:bg-dark-surface rounded-t-3xl sm:rounded-[2rem] shadow-2xl w-full sm:max-w-6xl h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col relative border border-white/40 dark:border-dark-border ring-1 ring-black/5">
         
         {/* Top Header / Decoration Area */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 opacity-10 dark:opacity-20 pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="relative z-10 px-8 py-8 border-b border-gray-100 dark:border-dark-border flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-                <Wallet size={24} />
+        <div className="relative z-10 px-4 py-5 sm:px-8 sm:py-8 border-b border-gray-100 dark:border-dark-border flex justify-between items-start gap-4">
+          <div className="min-w-0">
+            <div className="flex items-start sm:items-center gap-3 mb-1">
+              <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none flex-shrink-0">
+                <Wallet size={22} />
               </div>
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">Student Wallet</h2>
+              <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">Student Wallet</h2>
             </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium ml-12">Track your rewards and manage point-based registrations</p>
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 font-medium sm:ml-12 max-w-2xl">Track your rewards and manage point-based registrations</p>
           </div>
           <button
             onClick={onClose}
-            className="p-3 rounded-2xl hover:bg-white dark:hover:bg-dark-surface hover:shadow-xl dark:hover:shadow-none text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-dark-border"
+            className="p-2 sm:p-3 rounded-2xl hover:bg-white dark:hover:bg-dark-surface hover:shadow-xl dark:hover:shadow-none text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-dark-border flex-shrink-0"
           >
-            <X size={28} />
+            <X size={24} />
           </button>
         </div>
 
         {/* Main Dashboard Content */}
-        <div className="flex-1 flex overflow-hidden relative z-10">
-          <div className="max-w-[1400px] mx-auto w-full flex flex-col lg:flex-row h-full overflow-hidden">
+        <div className="flex-1 flex min-h-0 overflow-y-auto lg:overflow-hidden relative z-10 custom-scrollbar">
+          <div className="max-w-[1400px] mx-auto w-full flex flex-col lg:flex-row h-auto lg:h-full overflow-visible lg:overflow-hidden">
             
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center space-y-4">
@@ -90,9 +90,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
             ) : (
               <>
                 {/* Left Sidebar: Fixed/Sticky Balance & Stats */}
-                <div className="w-full lg:w-[380px] p-6 lg:p-8 flex-shrink-0 border-r border-gray-50 dark:border-dark-border bg-gray-50/30 dark:bg-transparent overflow-y-auto lg:overflow-y-visible">
-                  <div className="space-y-6">
-                    <div className="bg-gray-900 dark:bg-indigo-950 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden group">
+                <div className="w-full lg:w-[380px] p-4 sm:p-6 lg:p-8 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-50 dark:border-dark-border bg-gray-50/30 dark:bg-transparent overflow-visible lg:overflow-y-auto custom-scrollbar">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-gray-900 dark:bg-indigo-950 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-white shadow-xl relative overflow-hidden group">
                       <div className="absolute -top-20 -right-20 w-48 h-48 bg-indigo-500/20 rounded-full blur-[80px]"></div>
                       <div className="relative z-10 space-y-4">
                         <div className="flex justify-between items-center">
@@ -100,7 +100,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                           <Wallet size={16} className="text-indigo-400/40" />
                         </div>
                         <div>
-                          <h4 className="text-5xl font-bold tracking-tighter leading-none">{balance ?? 0}</h4>
+                          <h4 className="text-4xl sm:text-5xl font-bold tracking-tighter leading-none">{balance ?? 0}</h4>
                           <p className="text-indigo-300 text-xs font-bold mt-1 opacity-80 uppercase tracking-widest">Points</p>
                         </div>
                         <div className="pt-4 border-t border-white/10 flex gap-4">
@@ -119,7 +119,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                     </div>
 
                     {/* Insights */}
-                    <div className="bg-white dark:bg-dark-surface/50 rounded-[1.5rem] p-6 border border-gray-100 dark:border-dark-border shadow-sm">
+                    <div className="bg-white dark:bg-dark-surface/50 rounded-2xl sm:rounded-[1.5rem] p-4 sm:p-6 border border-gray-100 dark:border-dark-border shadow-sm">
                       <h5 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-1.5">
                         <Filter size={12} /> Insights
                       </h5>
@@ -138,9 +138,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                 </div>
 
                 {/* Right Area: Scrollable Activity Log */}
-                <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-                  <div className="px-6 lg:px-10 py-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between bg-white/50 dark:bg-transparent">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                <div className="flex-1 flex flex-col overflow-visible lg:overflow-hidden min-w-0">
+                  <div className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between gap-3 bg-white/50 dark:bg-transparent">
+                    <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
                       <History size={20} className="text-indigo-600" /> Recent Activity
                     </h3>
                     <div className="flex items-center gap-4">
@@ -150,9 +150,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-3 custom-scrollbar">
+                  <div className="flex-1 overflow-visible lg:overflow-y-auto p-4 sm:p-6 lg:p-10 space-y-3 custom-scrollbar">
                     {transactions.length === 0 ? (
-                      <div className="text-center py-20 bg-gray-50/50 dark:bg-dark-bg/10 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-dark-border flex flex-col items-center">
+                      <div className="text-center py-14 sm:py-20 px-4 bg-gray-50/50 dark:bg-dark-bg/10 rounded-2xl sm:rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-dark-border flex flex-col items-center">
                         <div className="w-16 h-16 bg-white dark:bg-dark-surface rounded-2xl flex items-center justify-center text-2xl shadow-lg mb-4">⚓</div>
                         <h4 className="text-lg font-bold text-gray-400">No activity yet</h4>
                         <p className="text-xs text-gray-300 mt-1 uppercase tracking-widest font-bold">Awaiting Generation</p>
@@ -161,7 +161,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                       transactions.map((tx) => (
                         <div 
                           key={tx.transactionId} 
-                          className="group bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border hover:border-indigo-100 dark:hover:border-indigo-500/30 rounded-2xl p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-600/5"
+                          className="group bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border hover:border-indigo-100 dark:hover:border-indigo-500/30 rounded-2xl p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3 sm:gap-4 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-600/5"
                         >
                           <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm ${
                             tx.type === 'CREDIT' 
@@ -188,7 +188,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                             </p>
                           </div>
 
-                          <div className="flex-shrink-0 text-right">
+                          <div className="w-full sm:w-auto flex-shrink-0 text-left sm:text-right pl-16 sm:pl-0">
                             <div className={`text-xl font-bold tabular-nums ${
                               tx.type === 'CREDIT' ? 'text-green-500' : 'text-gray-900 dark:text-white'
                             }`}>

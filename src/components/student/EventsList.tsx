@@ -326,7 +326,14 @@ const EventsList: React.FC = () => {
                         <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
                           <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-blue-500'}`} />
                           <span>
-                            {format(new Date(event.startDateTime), 'PPP')}
+                            Starts: {format(new Date(event.startDateTime), 'PPP')}
+                          </span>
+                        </div>
+
+                        <div className={`flex items-center ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
+                          <Calendar className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-cyan-500'}`} />
+                          <span>
+                            Ends: {format(new Date(event.endDateTime || event.startDateTime), 'PPP')}
                           </span>
                         </div>
                         
