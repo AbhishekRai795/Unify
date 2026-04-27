@@ -65,12 +65,11 @@ export const chapterHeadAPI = {
 
   // Toggle chapter registration status
   toggleChapterRegistration: async (chapterId: string, isOpen: boolean) => {
-    const response = await fetch(`${API_BASE_URL}/chapterhead/toggle-registration`, {
-      method: 'PUT',
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapters/${encodeURIComponent(chapterId)}`, {
+      method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        chapterId,
-        status: isOpen ? 'open' : 'closed'
+        registrationOpen: isOpen
       }),
     });
     return handleResponse(response);

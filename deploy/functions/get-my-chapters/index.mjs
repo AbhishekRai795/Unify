@@ -66,6 +66,7 @@ export const handler = async (event) => {
         isPaid: chapter.isPaid?.BOOL || false,
         registrationFee: chapter.registrationFee?.N ? parseInt(chapter.registrationFee.N, 10) : 0,
         type: chapter.type?.S || 'chapter',
+        registrationOpen: chapter.registrationOpen?.BOOL ?? true,
         isRegistered: true
       }));
 

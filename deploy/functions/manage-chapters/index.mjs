@@ -22,21 +22,30 @@ const COGNITO_GROUP = "chapter-head";
  * Robustly parses Cognito groups from JWT claims
  */
 function parseGroups(claims) {
-  const rawGroups = claims['cognito:groups'];
+  console.log('Extracting groups from claims:', JSON.stringify(claims));
+  const rawGroups = claims['cognito:groups'] || claims['groups'];
+  console.log('rawGroups value:', rawGroups, 'type:', typeof rawGroups);
+  
   if (!rawGroups) return [];
   if (Array.isArray(rawGroups)) return rawGroups;
   
   if (typeof rawGroups === 'string') {
     const trimmed = rawGroups.trim();
-    if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || trimmed.includes('"')) {
+    if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || trimmed.includes('"') || trimmed.includes(',')) {
       try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return trimmed.replace(/^\[|\]$/g, '').split(',').map(g => g.trim().replace(/^"|"$/g, '')).filter(Boolean);
+        // Handle JSON array string
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+          const parsed = JSON.parse(trimmed);
+          return Array.isArray(parsed) ? parsed : [trimmed];
+        }
+        // Handle comma separated string
+        return trimmed.split(',').map(g => g.trim().replace(/^"|"$/g, '')).filter(Boolean);
+      } catch (e) {
+        console.error('Error parsing groups string:', e);
+        return trimmed.split(',').map(g => g.trim()).filter(Boolean);
       }
     } else {
-      return trimmed.split(',').map(g => g.trim()).filter(Boolean);
+      return [trimmed];
     }
   }
   return [];
@@ -51,16 +60,42 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: corsHeaders };
   }
 
-  // 1. Admin Verification
-  const claims = event.requestContext?.authorizer?.jwt?.claims || {};
+  const authorizer = event.requestContext?.authorizer;
+  const claims = authorizer?.jwt?.claims || authorizer?.claims || {};
   const groups = parseGroups(claims);
   
-  if (!groups.includes('admin')) {
-    console.error('Forbidden: User groups:', groups);
+  // Case-insensitive group check from token
+  let isAdmin = groups.some(g => typeof g === 'string' && g.toLowerCase() === 'admin');
+  let isChapterHead = groups.some(g => typeof g === 'string' && g.toLowerCase() === 'chapter-head');
+
+  const userEmail = claims.email || claims['cognito:username'] || claims.sub || claims.username;
+
+  // FALLBACK: If token groups are missing, check the ChapterHead table directly
+  if (!isAdmin && !isChapterHead && userEmail) {
+    console.log(`Debug: Token groups missing. Checking ChapterHead table for: ${userEmail}`);
+    try {
+      const headCheck = await docClient.send(new GetCommand({ 
+        TableName: CHAPTER_HEAD_TABLE, 
+        Key: { email: userEmail } 
+      }));
+      if (headCheck.Item) {
+        console.log('Debug: User found in ChapterHead table. Granting chapter-head access.');
+        isChapterHead = true;
+      }
+    } catch (dbErr) {
+      console.error('Error checking ChapterHead table:', dbErr);
+    }
+  }
+
+  console.log('Auth Summary:', { userEmail, isAdmin, isChapterHead, tokenGroups: groups });
+
+  // Check for ANY valid authentication
+  if (!userEmail) {
+    console.error('Unauthorized: No user identifiers in token');
     return {
-      statusCode: 403,
+      statusCode: 401,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Forbidden: Admin access required' })
+      body: JSON.stringify({ error: 'Unauthorized: Valid login required' })
     };
   }
 
@@ -84,11 +119,13 @@ export const handler = async (event) => {
     
     // a. Create Chapter (POST /api/chapters or path contains "create")
     if (method === 'POST' && (path.endsWith('/chapters') || path.includes('/create-chapter'))) {
+      if (!isAdmin) throw new Error('Forbidden: Admin access required');
       return await createChapterAction(body);
     }
 
     // b. Assign Chapter Head (POST /api/chapters/{id}/head or path contains "assign-head")
     if (method === 'POST' && (path.endsWith('/head') || path.includes('/assign-chapter-head'))) {
+      if (!isAdmin) throw new Error('Forbidden: Admin access required');
       const targetId = chapterId || body.chapterId;
       if (!targetId) throw new Error('chapterId is required');
       return await assignChapterHeadAction(targetId, body);
@@ -96,6 +133,7 @@ export const handler = async (event) => {
 
     // c. Remove Chapter Head (DELETE /api/chapters/{id}/head or path contains "remove-head" or "head-by-email")
     if ((method === 'DELETE' || method === 'POST') && (path.endsWith('/head') || path.includes('/remove-chapter-head') || path.includes('/head-by-email'))) {
+      if (!isAdmin) throw new Error('Forbidden: Admin access required');
       const targetId = chapterId || body.chapterId;
       // If path contains an email (from head-by-email/{email}), we might be removing by email
       if (!targetId && (pathParameters.email || path.includes('/head-by-email/'))) {
@@ -114,11 +152,12 @@ export const handler = async (event) => {
     // e. Update Chapter (PUT/PATCH /api/chapters/{id} or path contains "update")
     if ((method === 'PUT' || method === 'PATCH' || (method === 'POST' && path.includes('/update-chapter'))) && (chapterId || body.chapterId)) {
       const targetId = chapterId || body.chapterId;
-      return await updateChapterAction(targetId, body);
+      return await updateChapterAction(targetId, body, claims, isAdmin, isChapterHead);
     }
 
     // e. Delete Chapter (DELETE /api/chapters/{id} or path contains "delete-chapter")
     if (method === 'DELETE' && chapterId && !path.endsWith('/head')) {
+      if (!isAdmin) throw new Error('Forbidden: Admin access required');
       return await deleteChapterAction(chapterId);
     }
 
@@ -264,8 +303,8 @@ async function createChapterAction(data) {
 /**
  * ACTION: Update Chapter (Generic)
  */
-async function updateChapterAction(chapterId, data) {
-  const { chapterName, headEmail, headName, isPaid, registrationFee, type } = data;
+async function updateChapterAction(chapterId, data, userClaims, isAdmin, isChapterHead) {
+  const { chapterName, headEmail, headName, isPaid, registrationFee, type, registrationOpen } = data;
   const now = new Date().toISOString();
 
   const current = await docClient.send(new GetCommand({ TableName: CHAPTERS_TABLE, Key: { chapterId } }));
@@ -273,6 +312,37 @@ async function updateChapterAction(chapterId, data) {
     const err = new Error('Chapter not found');
     err.statusCode = 404;
     throw err;
+  }
+
+  // Authorization Check: Chapter Heads can ONLY toggle registrationOpen for their OWN chapter
+  if (!isAdmin) {
+    if (!isChapterHead) {
+      const err = new Error('Forbidden: Admin or Chapter Head access required');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    const userEmail = userClaims.email || userClaims['cognito:username'] || userClaims.sub || userClaims.username;
+    const headEmail = current.Item.headEmail;
+
+    console.log('Ownership Check:', { userEmail, headEmail, isAdmin, isChapterHead });
+
+    if (headEmail !== userEmail) {
+      const err = new Error(`Forbidden: You (${userEmail}) can only manage your own community (${headEmail})`);
+      err.statusCode = 403;
+      throw err;
+    }
+    
+    // Chapter heads can ONLY update registrationOpen
+    const allowedKeys = ['registrationOpen'];
+    const keys = Object.keys(data).filter(k => data[k] !== undefined);
+    const forbiddenKeys = keys.filter(k => !allowedKeys.includes(k));
+    
+    if (forbiddenKeys.length > 0) {
+      const err = new Error(`Forbidden: Chapter Heads can only update: ${allowedKeys.join(', ')}`);
+      err.statusCode = 403;
+      throw err;
+    }
   }
 
   const oldHeadEmail = current.Item.headEmail;
@@ -305,6 +375,10 @@ async function updateChapterAction(chapterId, data) {
   if (type !== undefined) {
     updateExp += ", #type = :type";
     expValues[":type"] = type;
+  }
+  if (registrationOpen !== undefined) {
+    updateExp += ", registrationOpen = :regOpen";
+    expValues[":regOpen"] = Boolean(registrationOpen);
   }
 
   const updateParams = {
