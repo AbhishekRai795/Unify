@@ -309,7 +309,7 @@ const Header: React.FC = () => {
                       text-sm capitalize
                       ${isDark ? 'text-primary-300' : 'text-gray-500'}
                     `}>
-                      {user.activeRole.replace('-', ' ')}
+                      {user.activeRole === 'chapter-head' ? 'Community Head' : user.activeRole.replace('-', ' ')}
                     </div>
                   </div>
                 </div>

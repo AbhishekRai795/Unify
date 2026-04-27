@@ -27,7 +27,7 @@ const ChapterCalendarPage: React.FC = () => {
   return (
     <div className={`min-h-screen pb-12 transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'}`}>
       {/* Navigation - Aligned with logo */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
         <div className="mb-4 flex justify-between items-center">
           <button
             onClick={() => navigate('/head/dashboard')}

@@ -420,7 +420,7 @@ const HeadDashboard: React.FC = () => {
             variants={itemVariants}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg sm:text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-800'}`}>Chapter Meetings</h2>
+              <h2 className={`text-lg sm:text-xl font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-800'}`}>Community Meetings</h2>
               <Video className={`h-5 w-5 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`} />
             </div>
             <div className="h-[calc(100%-3rem)]">
@@ -502,7 +502,12 @@ const HeadDashboard: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium line-clamp-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
-                          {activity.message}
+                          {(activity.message || '').replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2})/, (match, date, hh, mm, ss) => {
+                            let hour = parseInt(hh, 10);
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            hour = hour % 12 || 12;
+                            return `${date}, ${hour}:${mm} ${ampm}`;
+                          })}
                         </p>
                         <p className={`text-xs mt-1 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                           {new Date(activity.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}

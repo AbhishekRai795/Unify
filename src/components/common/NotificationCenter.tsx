@@ -182,7 +182,12 @@ const NotificationCenter: React.FC = () => {
                             {notification.title}
                           </p>
                           <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                            {notification.message}
+                            {notification.message.replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2})/, (match, date, hh, mm, ss) => {
+                              let hour = parseInt(hh, 10);
+                              const ampm = hour >= 12 ? 'PM' : 'AM';
+                              hour = hour % 12 || 12;
+                              return `${date}, ${hour}:${mm} ${ampm}`;
+                            })}
                           </p>
                           <div className="flex items-center space-x-2 mt-2">
                             <Clock className="h-3 w-3 text-gray-400" />

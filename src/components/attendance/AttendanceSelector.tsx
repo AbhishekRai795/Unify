@@ -129,7 +129,7 @@ const AttendanceSelector: React.FC<AttendanceSelectorProps> = ({ onSelect }) => 
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-dark-border/50' : 'divide-slate-100'}`}>
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="wait">
                 {filteredItems().length === 0 ? (
                   <motion.tr
                     key="empty-state"
@@ -150,7 +150,7 @@ const AttendanceSelector: React.FC<AttendanceSelectorProps> = ({ onSelect }) => 
                       key={activeTab === 'meetings' ? (item.meetingId || `m-${index}`) : (item.eventId || `e-${index}`)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      exit={{ opacity: 0 }}
                       transition={{ delay: index * 0.05 }}
                       className={`group transition-all ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'} cursor-pointer`}
                       onClick={() => onSelect(activeTab === 'meetings' ? item.meetingId : `event-${item.eventId}`)}

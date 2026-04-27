@@ -72,13 +72,19 @@ export const studentAPI = {
   // Health check
   healthCheck: async () => {
     try {
+      const headers = getAuthHeaders();
+      
       // First try the dedicated health endpoint (if deployed).
       const healthResponse = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
+        headers
       });
 
-      if (healthResponse.ok) {
-        return healthResponse.json();
+      // Accept 2xx (OK) or 401/403 (Reachable but restricted)
+      if (healthResponse.ok || healthResponse.status === 401 || healthResponse.status === 403) {
+        return healthResponse.ok 
+          ? await healthResponse.json() 
+          : { status: 'ok', message: 'API reachable', endpoint: '/health', httpStatus: healthResponse.status };
       }
 
       // Some deployments do not expose /health. In that case, verify connectivity
@@ -86,6 +92,7 @@ export const studentAPI = {
       if (healthResponse.status === 404) {
         const fallbackResponse = await fetch(`${API_BASE_URL}/get-chapters`, {
           method: 'GET',
+          headers
         });
 
         if (fallbackResponse.ok || fallbackResponse.status === 401 || fallbackResponse.status === 403) {
@@ -96,6 +103,8 @@ export const studentAPI = {
             httpStatus: fallbackResponse.status,
           };
         }
+        
+        throw new Error(`Fallback connectivity check failed with status ${fallbackResponse.status}`);
       }
 
       throw new Error(`Health check failed with status ${healthResponse.status}`);
