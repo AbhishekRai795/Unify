@@ -216,7 +216,7 @@ const ManageChapters: React.FC = () => {
                                 {chapter.chapterName}
                               </div>
                               <div className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-500'}`}>
-                                {typeLabel} Head: {chapter.headName}
+                                Community Head: {chapter.headName}
                               </div>
                             </div>
                           </div>
@@ -245,7 +245,7 @@ const ManageChapters: React.FC = () => {
                               ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-800')
                               : (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-100 text-red-800')
                           }`}>
-                            {chapter.registrationStatus === 'open' ? 'Open' : 'Closed'}
+                            {chapter.registrationStatus === 'open' ? 'Registration Open' : 'Registration Closed'}
                           </span>
                         </td>
                         
@@ -277,7 +277,7 @@ const ManageChapters: React.FC = () => {
                                 handleEditChapterHead(chapter);
                               }}
                               className={`p-2 rounded-lg transition-all duration-200 ${isDark ? 'text-green-400 hover:bg-green-500/10' : 'text-green-600 hover:bg-green-50'}`}
-                              title={`Edit ${typeLabel} Head`}
+                              title={`Edit Community Head`}
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
@@ -296,10 +296,10 @@ const ManageChapters: React.FC = () => {
                               ) : chapter.registrationStatus === 'open' ? (
                                 <>
                                   <span className="sm:hidden"><X className="h-4 w-4 mx-auto" /></span>
-                                  <span className="hidden sm:inline">Close</span>
+                                  <span className="hidden sm:inline">Close Registration</span>
                                 </>
                               ) : (
-                                'Open'
+                                'Open Registration'
                               )}
                             </button>
                           </div>
@@ -336,7 +336,7 @@ const ManageChapters: React.FC = () => {
                     {selectedChapterData.chapterName}
                   </h3>
                   <p className={`${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
-                    {(selectedChapterData as any).type === 'club' ? 'Club' : 'Chapter'} Head: {selectedChapterData.headName}
+                    Community Head: {selectedChapterData.headName}
                   </p>
                 </div>
               </div>
@@ -373,7 +373,7 @@ const ManageChapters: React.FC = () => {
                           ? (isDark ? 'bg-green-500/10 text-green-300' : 'bg-green-100 text-green-800')
                           : (isDark ? 'bg-red-500/10 text-red-300' : 'bg-red-100 text-red-800')
                       }`}>
-                        {selectedChapterData.registrationStatus === 'open' ? 'Open' : 'Closed'}
+                        {selectedChapterData.registrationStatus === 'open' ? 'Registration Open' : 'Registration Closed'}
                       </span>
                     </div>
                   </div>

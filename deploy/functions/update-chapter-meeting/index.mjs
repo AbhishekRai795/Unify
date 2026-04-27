@@ -181,7 +181,7 @@ export const handler = async (event) => {
 
     // 6. Dispatch Notifications if details changed
     if (detailsChanged && studentsToNotify.length > 0) {
-      const msgSuffix = `for ${new Date(startDateTime || meeting.startDateTime).toLocaleString()}.`;
+      const msgSuffix = `for ${new Date(startDateTime || meeting.startDateTime).toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' })}.`;
       const notificationPromises = studentsToNotify.map(student => {
         if (!student.userId) return Promise.resolve();
         

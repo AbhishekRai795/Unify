@@ -16,17 +16,12 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Download,
   Megaphone,
   BookOpen,
   Award,
-  UserCheck,
-  Camera,
   X
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { paymentAPI } from '../../services/paymentApi';
-import { attendanceAPI } from '../../services/attendanceApi';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceManager from '../attendance/AttendanceManager';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,6 +51,7 @@ interface EventRegistration {
 }
 
 const ManageEvents: React.FC = () => {
+  const navigate = useNavigate();
   const { isDark } = useTheme();
   const { fetchMyEvents, updateEvent, deleteEvent, chapters } = useChapterHead();
   const [events, setEvents] = useState<Event[]>([]);
@@ -67,11 +63,6 @@ const ManageEvents: React.FC = () => {
   // Edit State
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [selectedEventForRegistrations, setSelectedEventForRegistrations] = useState<Event | null>(null);
-  const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>([]);
-  const [eventAttendance, setEventAttendance] = useState<any[]>([]);
-  const [isLoadingRegistrations, setIsLoadingRegistrations] = useState(false);
-  const [registrationsError, setRegistrationsError] = useState<string | null>(null);
 
   // Attendance State
   const [showAttendanceManager, setShowAttendanceManager] = useState(false);
@@ -128,69 +119,11 @@ const ManageEvents: React.FC = () => {
     }
   };
 
-  const handleViewRegistrations = async (eventItem: Event) => {
-    setSelectedEventForRegistrations(eventItem);
-    setIsLoadingRegistrations(true);
-    setRegistrationsError(null);
-    setEventRegistrations([]);
-    setEventAttendance([]);
-    try {
-      const [regRes, attRes] = await Promise.all([
-        paymentAPI.getEventRegistrationsForEvent(eventItem.eventId),
-        attendanceAPI.getEventAttendance(eventItem.eventId)
-      ]);
-      setEventRegistrations(regRes.registrations || []);
-      setEventAttendance(attRes.attendance || []);
-    } catch (err: any) {
-      setRegistrationsError(err?.message || 'Failed to load event data');
-    } finally {
-      setIsLoadingRegistrations(false);
-    }
+  const handleViewRegistrations = (eventItem: Event) => {
+    navigate(`/head/events/manage/viewregistration?eventId=${encodeURIComponent(eventItem.eventId)}`);
   };
 
-  const escapeCsvCell = (value: unknown) => {
-    const str = String(value ?? '');
-    if (str.includes('"') || str.includes(',') || str.includes('\n')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
 
-  const handleExportRegistrationsCsv = () => {
-    if (!selectedEventForRegistrations || eventRegistrations.length === 0) return;
-
-    const rows = [
-      ['Event Title', selectedEventForRegistrations.title],
-      ['Event ID', selectedEventForRegistrations.eventId],
-      [],
-      ['Student Name', 'Email', 'Status', 'Attendance', 'Joined At', 'User ID'],
-      ...eventRegistrations.map((reg) => {
-        const isPresent = eventAttendance.some(a => a.userId === reg.userId);
-        return [
-          reg.studentName || '',
-          reg.studentEmail || '',
-          reg.paymentStatus || 'REGISTERED',
-          isPresent ? 'PRESENT' : 'ABSENT',
-          reg.joinedAt ? new Date(reg.joinedAt).toLocaleString() : '',
-          reg.userId || ''
-        ];
-      })
-    ];
-
-    const csvContent = rows
-      .map((row) => row.map((cell) => escapeCsvCell(cell)).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `event-registrations-${selectedEventForRegistrations.eventId}-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -421,111 +354,12 @@ const ManageEvents: React.FC = () => {
                   >
                     View Registrations
                   </button>
-                  <button 
-                    onClick={async () => {
-                      try {
-                        const res = await attendanceAPI.getEventAttendance(event.eventId);
-                        if (res.meetings && res.meetings.length > 0) {
-                          setManagingMeetingId(res.meetings[0].meetingId);
-                          setShowAttendanceManager(true);
-                        } else {
-                          alert("No meeting found for this event. Please schedule one in the Calendar first.");
-                        }
-                      } catch (err) {
-                        alert("Failed to find associated meeting.");
-                      }
-                    }}
-                    className="flex items-center text-xs font-semibold text-green-600 hover:text-green-700 ml-4"
-                  >
-                    <UserCheck className="h-3 w-3 mr-1" />
-                    Live Attendance
-                  </button>
+
                   <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {selectedEventForRegistrations && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-            onClick={() => setSelectedEventForRegistrations(null)}
-          />
-          <div className="relative bg-white rounded-3xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl animate-scale-in">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between z-10">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Event Registrations</h2>
-                <p className="text-sm text-gray-500">{selectedEventForRegistrations.title}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExportRegistrationsCsv}
-                  disabled={isLoadingRegistrations || eventRegistrations.length === 0}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Download className="h-4 w-4" />
-                  Export CSV
-                </button>
-                <button
-                  onClick={() => setSelectedEventForRegistrations(null)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <XCircle className="h-5 w-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {isLoadingRegistrations ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
-                </div>
-              ) : registrationsError ? (
-                <div className="text-red-600 bg-red-50 border border-red-200 rounded-xl p-4">{registrationsError}</div>
-              ) : eventRegistrations.length === 0 ? (
-                <div className="text-center py-10 text-gray-500">No registrations for this event yet.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Student</th>
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Email</th>
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Attendance</th>
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">Joined</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {eventRegistrations.map((reg, idx) => (
-                        <tr key={`${reg.userId}-${idx}`} className="border-b border-gray-100">
-                          <td className="px-4 py-3 text-gray-900">{reg.studentName || reg.userId}</td>
-                          <td className="px-4 py-3 text-gray-700">{reg.studentEmail || '-'}</td>
-                          <td className="px-4 py-3 text-gray-700">{reg.paymentStatus || 'REGISTERED'}</td>
-                          <td className="px-4 py-3">
-                            {eventAttendance.some(a => a.userId === reg.userId) ? (
-                              <span className="inline-flex items-center text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded">
-                                <UserCheck className="h-3 w-3 mr-1" />
-                                PRESENT
-                              </span>
-                            ) : (
-                              <span className="text-gray-400 text-xs italic">ABSENT</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">
-                            {reg.joinedAt ? new Date(reg.joinedAt).toLocaleString() : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       )}
 

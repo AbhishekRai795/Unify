@@ -485,7 +485,12 @@ const Dashboard: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary line-clamp-2">
-                          {activity.message}
+                          {(activity.message || '').replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2})/, (match, date, hh, mm, ss) => {
+                            let hour = parseInt(hh, 10);
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            hour = hour % 12 || 12;
+                            return `${date}, ${hour}:${mm} ${ampm}`;
+                          })}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
                           {new Date(activity.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
@@ -521,7 +526,7 @@ const Dashboard: React.FC = () => {
               <Link
                 to="/student/chapters"
                 className="p-2 rounded-lg bg-indigo-50 dark:bg-accent-500/10 text-indigo-600 dark:text-accent-400 hover:bg-indigo-100 dark:hover:bg-accent-500/20 transition-all group"
-                title="View All Chapters"
+                title="View All Communities"
               >
                 <BookOpen className="h-5 w-5" />
               </Link>
@@ -555,13 +560,13 @@ const Dashboard: React.FC = () => {
                             e.stopPropagation();
                             const recipientId = getHeadRecipientId(chapter) || resolveRecipientIdFromConversations(chapter);
                             if (!recipientId) {
-                              alert('Chat is available, but this chapter head user is not fully linked yet.');
+                              alert('Chat is available, but this community head user is not fully linked yet.');
                               return;
                             }
                             setActiveConversation({
                               chapterId: getChapterId(chapter),
                               recipientId,
-                              recipientName: chapter.headName || chapter.chapterHead || 'Chapter Head'
+                              recipientName: chapter.headName || chapter.chapterHead || 'Community Head'
                             });
                             setIsWidgetOpen(true);
                           }}

@@ -96,7 +96,7 @@ export const handler = async (event) => {
                 notificationId: `cancel-${meetingId}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                 type: "alert",
                 title: `Meeting Cancelled: ${meeting.title}`,
-                message: `The meeting scheduled for ${new Date(meeting.startDateTime).toLocaleString()} has been cancelled.`,
+                message: `The meeting scheduled for ${new Date(meeting.startDateTime).toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' })} has been cancelled.`,
                 isRead: false,
                 createdAt: new Date().toISOString()
               }

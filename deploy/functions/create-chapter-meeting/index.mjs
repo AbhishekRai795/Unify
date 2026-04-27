@@ -174,7 +174,7 @@ export const handler = async (event) => {
     };
 
     if (studentsToNotify.length > 0) {
-      const msgSuffix = `for ${new Date(startDateTime).toLocaleString()}.`;
+      const msgSuffix = `for ${new Date(startDateTime).toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' })}.`;
       const notificationPromises = studentsToNotify.map(student => {
         if (!student.userId) return Promise.resolve();
         

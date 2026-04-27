@@ -313,7 +313,7 @@ const EditChapter: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit {typeLabel} Head</h1>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit Community Head</h1>
               <p className={isDark ? 'text-dark-text-secondary' : 'text-gray-600'}>{chapter?.chapterName}</p>
             </div>
           </div>
@@ -327,7 +327,7 @@ const EditChapter: React.FC = () => {
         >
           <div className="p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Current {typeLabel} Head</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Current Community Head</h2>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <User className="h-5 w-5 text-gray-500" />
@@ -346,7 +346,7 @@ const EditChapter: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="headEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  New {typeLabel} Head Email *
+                  New Community Head Email *
                 </label>
                 <div className="relative">
                   <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -373,7 +373,7 @@ const EditChapter: React.FC = () => {
 
               <div>
                 <label htmlFor="headName" className="block text-sm font-medium text-gray-700 mb-2">
-                  {typeLabel} Head Name (Optional)
+                  Community Head Name (Optional)
                 </label>
                 <div className="relative">
                   <User className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -466,9 +466,9 @@ const EditChapter: React.FC = () => {
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
                     <div>
-                      <h3 className="text-sm font-medium text-blue-800">{typeLabel} Head View</h3>
+                      <h3 className="text-sm font-medium text-blue-800">Community Head View</h3>
                       <p className="text-sm text-blue-700 mt-1">
-                        You are viewing this {typeLabel.toLowerCase()}'s information as a {typeLabel.toLowerCase()} head. Only administrators can modify {typeLabel.toLowerCase()} head assignments.
+                        You are viewing this {typeLabel.toLowerCase()}'s information as a community head. Only administrators can modify community head assignments.
                       </p>
                       <p className="text-sm text-blue-700 mt-2">
                         If you need to transfer your {typeLabel.toLowerCase()} head role to someone else, please contact an administrator.

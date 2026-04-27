@@ -133,7 +133,7 @@ export const CreateChapterWithPayment: React.FC = () => {
   const headingClass = isDark ? 'text-dark-text-primary' : 'text-[#1a1f36]';
 
   return (
-    <div className={`h-full flex flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
+    <div className={`min-h-screen lg:h-auto flex flex-col transition-colors duration-300 ${pageClass}`}>
       {/* Top Alignment Bar for Back Button */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
         <motion.div 
@@ -153,26 +153,26 @@ export const CreateChapterWithPayment: React.FC = () => {
       </div>
 
       {/* Scrollable Form Content */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-12">
-        <div className="max-w-3xl mx-auto">
+      <div className="flex-1 overflow-y-auto lg:overflow-hidden custom-scrollbar px-4 pb-4 sm:pb-12">
+        <div className="max-w-5xl mx-auto">
 
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
+          className="text-center mb-4"
         >
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className={`h-[2px] w-8 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
-            <div className={`p-3 rounded-2xl shadow-lg ${isDark ? 'bg-dark-surface text-accent-400 border border-dark-border' : 'bg-white text-blue-600 border border-slate-100'}`}>
-              {initialType === 'club' ? <Trophy size={24} /> : <Shield size={24} />}
+          <div className="flex items-center justify-center space-x-3 mb-2">
+            <div className={`h-[1px] w-6 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            <div className={`p-2 rounded-xl shadow-md ${isDark ? 'bg-dark-surface text-accent-400 border border-dark-border' : 'bg-white text-blue-600 border border-slate-100'}`}>
+              {initialType === 'club' ? <Trophy size={18} /> : <Shield size={18} />}
             </div>
-            <div className={`h-[2px] w-8 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
+            <div className={`h-[1px] w-6 rounded-full ${isDark ? 'bg-accent-500/30' : 'bg-blue-200'}`} />
           </div>
-          <h1 className={`text-4xl font-black tracking-tight mb-2 ${headingClass}`}>
+          <h1 className={`text-2xl font-bold tracking-tight mb-1 ${headingClass}`}>
             Initialize {typeLabel}
           </h1>
-          <p className={isDark ? 'text-dark-text-secondary' : 'text-slate-500 font-medium'}>
+          <p className={`text-xs ${isDark ? 'text-dark-text-secondary' : 'text-slate-500 font-medium'}`}>
             Deploy a new governance unit to the institution network.
           </p>
         </motion.div>
@@ -205,11 +205,11 @@ export const CreateChapterWithPayment: React.FC = () => {
           transition={{ delay: 0.1 }}
           className={`backdrop-blur-md rounded-3xl border overflow-hidden transition-all duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70 shadow-2xl' : 'bg-white/80 border-white/40 shadow-xl shadow-blue-500/5'}`}
         >
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <h3 className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
-                  <Info size={14} /> Basic Information
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
+                  <Info size={12} /> Basic Information
                 </h3>
                 
                 <div className="space-y-4">
@@ -270,9 +270,9 @@ export const CreateChapterWithPayment: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <h3 className={`text-xs font-black uppercase tracking-widest flex items-center gap-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
-                  <CreditCard size={14} /> Financial Configuration
+              <div className="space-y-4">
+                <h3 className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${isDark ? 'text-accent-400' : 'text-blue-600'}`}>
+                  <CreditCard size={12} /> Financial Configuration
                 </h3>
 
                 <div className={`p-6 rounded-2xl border transition-all ${formData.isPaid ? (isDark ? 'bg-accent-500/5 border-accent-500/30 shadow-lg shadow-accent-500/5' : 'bg-blue-50 border-blue-100 shadow-lg shadow-blue-500/5') : (isDark ? 'bg-dark-bg border-dark-border opacity-60' : 'bg-slate-50 border-slate-200 opacity-60')}`}>
@@ -331,24 +331,24 @@ export const CreateChapterWithPayment: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t border-slate-100 dark:border-dark-border">
+            <div className="flex gap-4 pt-4 border-t border-slate-100 dark:border-dark-border">
               <button
                 type="button"
                 onClick={() => navigate('/admin/dashboard')}
                 disabled={loading}
-                className={`flex-1 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isDark ? 'bg-dark-surface border border-dark-border text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-card' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${isDark ? 'bg-dark-surface border border-dark-border text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-card' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
               >
                 Decline
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className={`flex-[2] py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-2 transform hover:scale-[1.01] ${loading ? 'opacity-50 cursor-not-allowed' : ''} ${isDark ? 'bg-accent-600 text-white hover:bg-accent-700 shadow-accent-600/20' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'}`}
+                className={`flex-[2] py-3 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-2 transform hover:scale-[1.01] ${loading ? 'opacity-50 cursor-not-allowed' : ''} ${isDark ? 'bg-accent-600 text-white hover:bg-accent-700 shadow-accent-600/20' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'}`}
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Plus size={16} />
+                  <Plus size={14} />
                 )}
                 Initialize {typeLabel}
               </button>

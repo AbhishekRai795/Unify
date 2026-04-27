@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from 'date-fns';
-import { ChevronLeft, ChevronRight, Video, Calendar as CalendarIcon, ExternalLink, Loader2, X, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Video, Calendar as CalendarIcon, ExternalLink, Loader2, X, Clock, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { googleMeetAPI } from '../../services/googleMeetApi';
 
 import { useSmartPolling } from '../../hooks/useSmartPolling';
+import { useAuth } from '../../contexts/AuthContext';
+import { useChapterHead } from '../../contexts/ChapterHeadContext';
+import { useData } from '../../contexts/DataContext';
 
 interface Meeting {
   meetingId: string;
@@ -21,6 +24,9 @@ interface MeetingCalendarViewProps {
 }
 
 const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds }) => {
+  const { user } = useAuth();
+  const headContext = useChapterHead();
+  const studentContext = useData();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,8 +168,28 @@ const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds })
                   <span>{format(parseISO(selectedMeeting.startDateTime), 'eeee, MMMM d')}</span>
                 </div>
                 <div className="flex items-center space-x-2 pl-6">
-                  <span>{format(parseISO(selectedMeeting.startDateTime), 'HH:mm')} - {format(parseISO(selectedMeeting.endDateTime), 'HH:mm')}</span>
+                  <span>{format(parseISO(selectedMeeting.startDateTime), 'hh:mm a')} - {format(parseISO(selectedMeeting.endDateTime), 'hh:mm a')}</span>
                 </div>
+                
+                {(() => {
+                  let chapterName = '';
+                  if (user?.activeRole === 'chapter-head') {
+                    const chapter = headContext.chapters.find(c => c.chapterId === selectedMeeting.chapterId);
+                    chapterName = chapter?.chapterName || chapter?.name || '';
+                  } else {
+                    const chapter = studentContext.chapters.find(c => c.id === selectedMeeting.chapterId);
+                    chapterName = chapter?.name || chapter?.chapterName || '';
+                  }
+                  
+                  return chapterName ? (
+                    <div className="flex items-center space-x-2 mt-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="p-1 bg-indigo-100 rounded-md">
+                        <Users className="h-3.5 w-3.5 text-indigo-600" />
+                      </div>
+                      <span className="text-xs font-semibold text-indigo-700">Organized by: {chapterName}</span>
+                    </div>
+                  ) : null;
+                })()}
                 {selectedMeeting.description && (
                   <p className="mt-2 text-gray-500 italic leading-relaxed">
                     "{selectedMeeting.description}"

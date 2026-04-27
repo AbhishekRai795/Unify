@@ -141,7 +141,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
               ) : isLeft ? (
                 <>
                   <UserMinus className="h-3 w-3 mr-1" />
-                  Left Chapter
+                  Left {typeLabel}
                 </>
               ) : isKicked ? (
                 <>
@@ -176,7 +176,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({ chapter, onRegister, onLeave,
           
           <div className={`flex items-center text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-600'}`}>
             <MapPin className={`h-4 w-4 mr-2 ${isDark ? 'text-accent-400' : 'text-gray-400'}`} />
-            <span>Active Chapter</span>
+            <span>Active {typeLabel}</span>
           </div>
           
           {chapter.memberCount !== undefined && (

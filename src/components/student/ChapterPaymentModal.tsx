@@ -129,7 +129,7 @@ export const ChapterPaymentModal: React.FC<ChapterPaymentModalProps> = ({
         order_id: orderData.orderId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: 'Unify - Chapter Registration',
+        name: 'Unify - Community Registration',
         description: `Registration fee for ${chapterName}`,
         image: CHECKOUT_IMAGE_URL,
         prefill: {
