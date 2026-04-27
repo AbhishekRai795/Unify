@@ -102,8 +102,8 @@ const RoleSelectionWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
                 transition={{ delay: 0.1 * (index + 3) }}
                 onClick={() => handleRoleSelect(role)}
                 className={`
-                  relative group text-left p-8 rounded-3xl border-2 transition-all duration-300
-                  w-full md:w-[320px] lg:w-[350px]
+                  relative group text-center p-8 rounded-3xl border-2 transition-all duration-300
+                  w-full md:w-[320px] lg:w-[350px] flex flex-col items-center
                   ${isDark 
                     ? 'bg-dark-surface/50 border-dark-border/50 hover:border-accent-500/50 hover:bg-dark-card shadow-lg hover:shadow-accent-500/10' 
                     : 'bg-white border-white hover:border-blue-300 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10'
@@ -111,10 +111,10 @@ const RoleSelectionWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
                 `}
               >
                 <div className={`
-                  w-14 h-14 rounded-2xl mb-6 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg
+                  w-16 h-16 rounded-2xl mb-6 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg
                   bg-gradient-to-br ${details.gradient} text-white
                 `}>
-                  <Icon className="h-7 w-7" />
+                  <Icon className="h-8 w-8" />
                 </div>
 
                 <div className="space-y-2">
@@ -127,7 +127,7 @@ const RoleSelectionWrapper: React.FC<{ children: React.ReactNode }> = ({ childre
                 </div>
 
                 <div className={`
-                  mt-6 flex items-center text-sm font-bold uppercase tracking-wider transition-colors duration-300
+                  mt-6 flex items-center justify-center text-sm font-bold uppercase tracking-wider transition-colors duration-300
                   ${isDark ? 'text-accent-400 group-hover:text-accent-300' : 'text-blue-600 group-hover:text-blue-700'}
                 `}>
                   <span>Select Role</span>

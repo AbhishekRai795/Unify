@@ -35,7 +35,8 @@ const EditChapter: React.FC = () => {
     headEmail: '',
     headName: '',
     isPaid: false,
-    registrationFee: 0
+    registrationFee: 0,
+    registrationOpen: true
   });
 
   // Check user permissions
@@ -128,7 +129,8 @@ const EditChapter: React.FC = () => {
           headEmail: chapterData.headEmail || '',
           headName: chapterData.headName || '',
           isPaid: chapterData.isPaid || false,
-          registrationFee: chapterData.registrationFee ? chapterData.registrationFee / 100 : 0
+          registrationFee: chapterData.registrationFee ? chapterData.registrationFee / 100 : 0,
+          registrationOpen: chapterData.registrationOpen !== undefined ? chapterData.registrationOpen : true
         });
         setLoading(false);
       } catch (error: any) {
@@ -153,11 +155,11 @@ const EditChapter: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Only admins can actually submit changes
-    if (!isAdminUser()) {
+    // Only admins or the chapter head themselves can submit changes
+    if (!canEditChapter()) {
       setNotification({
         type: 'error',
-        message: `Only administrators can modify ${typeLabel.toLowerCase()} head assignments`
+        message: `You do not have permission to modify this ${typeLabel.toLowerCase()}`
       });
       setTimeout(() => setNotification(null), 3000);
       return;
@@ -189,10 +191,11 @@ const EditChapter: React.FC = () => {
       // Try using updateChapter directly instead of editChapterHead
       console.log('Trying updateChapter directly...');
       await adminApi.updateChapter(chapterId, {
-        headEmail: formData.headEmail.trim(),
-        headName: formData.headName.trim() || undefined,
-        isPaid: formData.isPaid,
-        registrationFee: formData.isPaid ? formData.registrationFee * 100 : 0
+        headEmail: isAdminUser() ? formData.headEmail.trim() : undefined,
+        headName: isAdminUser() ? (formData.headName.trim() || undefined) : undefined,
+        isPaid: isAdminUser() ? formData.isPaid : undefined,
+        registrationFee: isAdminUser() ? (formData.isPaid ? formData.registrationFee * 100 : 0) : undefined,
+        registrationOpen: formData.registrationOpen
       });
 
       setNotification({
@@ -397,48 +400,69 @@ const EditChapter: React.FC = () => {
               {/* Payment Configuration Options */}
               {isAdminUser() && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Configuration</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Community Settings</h3>
                   
-                  <div className="flex items-center justify-between mb-4">
+                  {/* Registration Toggle - Available to both Admin and Head */}
+                  <div className="flex items-center justify-between mb-6">
                     <div>
-                      <p className="font-medium text-gray-700">Paid {typeLabel}</p>
-                      <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
+                      <p className="font-medium text-gray-700">Registration Open</p>
+                      <p className="text-sm text-gray-500">Allow new students to join this {typeLabel.toLowerCase()}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={formData.isPaid}
-                        onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
+                        checked={formData.registrationOpen}
+                        onChange={(e) => setFormData(prev => ({ ...prev, registrationOpen: e.target.checked }))}
                         className="sr-only peer"
-                        disabled={!isAdminUser()}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                   </div>
 
-                  {formData.isPaid && (
-                    <div className="mt-4">
-                      <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
-                        Registration Fee (₹)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
-                        <input
-                          type="number"
-                          id="registrationFee"
-                          min="0"
-                          step="0.01"
-                          disabled={!isAdminUser()}
-                          value={formData.registrationFee}
-                          onChange={(e) => handleInputChange('registrationFee', e.target.value)}
-                          className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
-                          }`}
-                          placeholder="e.g. 100"
-                        />
+                  {isAdminUser() && (
+                    <>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-medium text-gray-700">Paid {typeLabel}</p>
+                          <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.isPaid}
+                            onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
+                            className="sr-only peer"
+                            disabled={!isAdminUser()}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
-                    </div>
+
+                      {formData.isPaid && (
+                        <div className="mt-4">
+                          <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
+                            Registration Fee (₹)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                            <input
+                              type="number"
+                              id="registrationFee"
+                              min="0"
+                              step="0.01"
+                              disabled={!isAdminUser()}
+                              value={formData.registrationFee}
+                              onChange={(e) => handleInputChange('registrationFee', e.target.value)}
+                              className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                              }`}
+                              placeholder="e.g. 100"
+                            />
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -485,14 +509,14 @@ const EditChapter: React.FC = () => {
                   onClick={handleCancel}
                   className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
                 >
-                  {isAdminUser() ? 'Cancel' : 'Back'}
+                  {canEditChapter() ? 'Cancel' : 'Back'}
                 </button>
-                {isAdminUser() && (
-                  <button
-                    type="submit"
-                    disabled={saving || !formData.headEmail.trim()}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
+                {canEditChapter() && (
+                    <button
+                      type="submit"
+                      disabled={saving || (isAdminUser() && !formData.headEmail.trim())}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
                     {saving ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

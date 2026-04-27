@@ -139,6 +139,7 @@ export const handler = async (event) => {
         return {
           name: chapterName,
           type: chapterData?.type?.S || 'chapter',
+          registrationOpen: chapterData?.registrationOpen?.BOOL ?? true,
           registeredAt: user.createdAt?.S || new Date().toISOString()
         };
       }),

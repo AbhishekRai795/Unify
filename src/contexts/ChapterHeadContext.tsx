@@ -26,7 +26,8 @@ interface ChapterDetails {
   memberCount: number;
   status: 'active' | 'inactive';
   updatedAt: string;
-  registrationStatus?: 'open' | 'closed';
+  registrationStatus?: 'open' | 'closed'; // legacy compatibility
+  registrationOpen?: boolean;
   type?: 'chapter' | 'club';
 }
 
@@ -127,7 +128,15 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     
     try {
       const response = await chapterHeadAPI.getMyChapters();
-      setChapters(response.chapters || []);
+      const mappedChapters = (response.chapters || []).map((c: any) => ({
+        ...c,
+        // Ensure registrationStatus is set for UI compatibility if needed, 
+        // but prioritize registrationOpen
+        registrationStatus: c.registrationOpen !== undefined 
+          ? (c.registrationOpen ? 'open' : 'closed') 
+          : c.registrationStatus
+      }));
+      setChapters(mappedChapters);
     } catch (error) {
       console.error('Error fetching chapters:', error);
       setError('Failed to fetch chapters');
@@ -177,7 +186,7 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
       // Update local state
       setChapters(prev => prev.map(chapter => 
         chapter.chapterId === chapterId 
-          ? { ...chapter, registrationStatus: isOpen ? 'open' : 'closed' }
+          ? { ...chapter, registrationOpen: isOpen, registrationStatus: isOpen ? 'open' : 'closed' }
           : chapter
       ));
       
