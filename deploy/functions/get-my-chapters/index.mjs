@@ -52,15 +52,30 @@ export const handler = async (event) => {
     const allChaptersResult = await dynamo.send(new ScanCommand({ TableName: CHAPTERS_TABLE }));
 
     // Filter to chapters the user is registered for
-    const userChapters = (allChaptersResult.Items || [])
-      .filter(chapter => registeredChapterNames.includes(chapter.chapterName?.S))
-      .map(chapter => ({
+    const filteredChapters = (allChaptersResult.Items || [])
+      .filter(chapter => registeredChapterNames.includes(chapter.chapterName?.S));
+
+    // Create an email -> userId map to find headIds
+    const allUsersResult = await dynamo.send(new ScanCommand({ TableName: USERS_TABLE }));
+    const emailToUserId = {};
+    (allUsersResult.Items || []).forEach(u => {
+      if (u.email?.S && u.userId?.S) {
+        emailToUserId[u.email.S] = u.userId.S;
+      }
+    });
+
+    const userChapters = filteredChapters.map(chapter => {
+      const headEmail = chapter.headEmail?.S || "";
+      const headId = emailToUserId[headEmail] || "";
+
+      return {
         id: chapter.chapterId?.S || 'unknown',
         name: chapter.chapterName?.S || 'Unknown Chapter',
         registeredAt: user.createdAt?.S || new Date().toISOString(),
         studentName: user.name?.S || 'Unknown',
         chapterHead: chapter.headName?.S || "Not assigned",
-        headEmail: chapter.headEmail?.S || "",
+        headEmail: headEmail,
+        headId: headId,
         status: chapter.status?.S || "active",
         memberCount: chapter.memberCount?.N || "0",
         isPaid: chapter.isPaid?.BOOL || false,
@@ -68,7 +83,8 @@ export const handler = async (event) => {
         type: chapter.type?.S || 'chapter',
         registrationOpen: chapter.registrationOpen?.BOOL ?? true,
         isRegistered: true
-      }));
+      };
+    });
 
     return {
       statusCode: 200,

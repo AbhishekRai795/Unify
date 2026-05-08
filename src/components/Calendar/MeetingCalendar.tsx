@@ -89,7 +89,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
     eventId: ''
   });
 
-  const [isOAuthConnected] = useState(true);
+  const [isOAuthConnected, setIsOAuthConnected] = useState(true);
 
   // Fetch meetings
   const fetchMeetings = async () => {
@@ -211,6 +211,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
       setIsModalOpen(false);
       fetchMeetings();
     } catch (err: any) {
+      if (err.message && (err.message.includes('expired') || err.message.includes('reconnect'))) {
+        setIsOAuthConnected(false);
+      }
       setError(err.message || 'Failed to save meeting');
     } finally {
       setIsLoading(false);
@@ -227,6 +230,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
       setIsModalOpen(false);
       fetchMeetings();
     } catch (err: any) {
+      if (err.message && (err.message.includes('expired') || err.message.includes('reconnect'))) {
+        setIsOAuthConnected(false);
+      }
       setError(err.message || 'Failed to delete meeting');
     } finally {
       setIsLoading(false);

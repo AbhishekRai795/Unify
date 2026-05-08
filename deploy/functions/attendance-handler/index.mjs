@@ -463,6 +463,20 @@ export const handler = async (event) => {
              allEvents.push(...res.events);
            });
          }
+
+         // Fetch user's registered events to filter out events they haven't paid/registered for
+         const myEvents = await docClient.send(new QueryCommand({
+           TableName: process.env.EVENT_PAYMENTS_TABLE || "EventPayments",
+           IndexName: "UserIdIndex",
+           KeyConditionExpression: "userId = :u",
+           ExpressionAttributeValues: { ":u": userId }
+         }));
+         
+         const registeredEventIds = new Set(
+           (myEvents.Items || [])
+             .filter(r => r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED")
+             .map(item => item.eventId)
+         );
          
          // 4. Map with isPresent flag
          const enrichedMeetings = allMeetings.map(m => ({
@@ -470,10 +484,13 @@ export const handler = async (event) => {
            isPresent: presentMeetingIds.has(m.meetingId)
          })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
          
-         const enrichedEvents = allEvents.map(e => ({
-           ...e,
-           isPresent: presentEventIds.has(e.eventId)
-         })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
+         const enrichedEvents = allEvents
+           .filter(e => registeredEventIds.has(e.eventId))
+           .map(e => ({
+             ...e,
+             isPresent: presentEventIds.has(e.eventId)
+           }))
+           .sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
 
          return { 
            statusCode: 200, 

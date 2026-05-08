@@ -7,13 +7,27 @@ const docClient = DynamoDBDocumentClient.from(client);
 export const handler = async (event) => {
   console.log("=== List Notifications ===");
   
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  };
+
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+  
   try {
     const userId = event.requestContext.authorizer?.jwt?.claims?.sub;
     
     // Fallback logic for userId if needed (e.g. if SAP ID is used as key)
     // For student role, we might expect SAP ID in some cases, but for consistency we use sub/id.
     if (!userId) {
-      return { statusCode: 401, body: JSON.stringify({ message: "Unauthorized" }) };
+      return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ message: "Unauthorized" }) };
     }
 
     const result = await docClient.send(new QueryCommand({

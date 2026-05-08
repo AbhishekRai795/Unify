@@ -9,10 +9,24 @@ const docClient = DynamoDBDocumentClient.from(client);
 export const handler = async (event) => {
   console.log("=== Create Chapter Meeting ===");
   
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  };
+
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const userId = event.requestContext.authorizer?.jwt?.claims?.sub;
     if (!userId) {
-      return { statusCode: 401, body: JSON.stringify({ message: "Unauthorized" }) };
+      return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ message: "Unauthorized" }) };
     }
 
     let body;
@@ -224,13 +238,22 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error("Error creating Google Meet:", error);
+    
+    // Check for Google OAuth token invalidation/expiration
+    if (error.message?.includes('invalid_grant') || error.response?.data?.error === 'invalid_grant') {
+      return {
+        statusCode: 403,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          message: "Google account connection expired or revoked. Please reconnect your account.", 
+          error: "invalid_grant" 
+        }),
+      };
+    }
+
     return {
       statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ message: "Failed to create meeting", error: error.message }),
     };
   }
