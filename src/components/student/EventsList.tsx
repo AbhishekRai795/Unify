@@ -387,7 +387,6 @@ const EventsList: React.FC = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center flex-wrap gap-3">
-                          {event.registrationRequired && (
                             <button
                               onClick={() => handleRegister(event)}
                               disabled={isPastEvent || registering === eventId || isRegistered || Boolean(event.maxAttendees && event.currentAttendees && event.currentAttendees >= event.maxAttendees) || isRegistrationClosed}
@@ -414,7 +413,6 @@ const EventsList: React.FC = () => {
                                         : 'Register'
                               }
                             </button>
-                          )}
                           
                           {event.isOnline && event.meetingLink && isRegistered && (
                             <a

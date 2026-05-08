@@ -18,6 +18,14 @@ const corsHeaders = {
 export const handler = async (event) => {
   console.log("List events request received");
 
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const claims = event.requestContext?.authorizer?.jwt?.claims;
 

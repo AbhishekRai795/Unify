@@ -104,10 +104,11 @@ const AuthForm: React.FC<{
     showPassword: boolean; setShowPassword: (show: boolean) => void;
     showConfirmPassword: boolean; setShowConfirmPassword: (show: boolean) => void;
     setIsLoginView: (isLogin: boolean) => void;
+    setShowForgotPasswordView: (show: boolean) => void;
     sapId: string; setSapId: (id: string) => void;
     year: string; setYear: (year: string) => void;
     error: string;
-}> = ({ isLogin, handleAuthAction, name, setName, email, setEmail, password, setPassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, setIsLoginView, sapId, setSapId, year, setYear, error }) => {
+}> = ({ isLogin, handleAuthAction, name, setName, email, setEmail, password, setPassword, confirmPassword, setConfirmPassword, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, setIsLoginView, setShowForgotPasswordView, sapId, setSapId, year, setYear, error }) => {
     
     return (
     <div className="w-full max-w-sm">
@@ -147,7 +148,13 @@ const AuthForm: React.FC<{
             
             {isLogin && (
                 <div className="text-right">
-                    <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-700">Forgot password?</a>
+                    <button 
+                        type="button"
+                        onClick={() => setShowForgotPasswordView(true)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                        Forgot password?
+                    </button>
                 </div>
             )}
 
@@ -219,6 +226,112 @@ const NewPasswordForm: React.FC<{
             <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
                 Set Password and Sign In
             </button>
+        </form>
+    </div>
+);
+
+// Forgot Password Form Component
+const ForgotPasswordForm: React.FC<{
+    handleForgotPasswordSubmit: (e: React.FormEvent) => void;
+    forgotPasswordEmail: string; setForgotPasswordEmail: (email: string) => void;
+    error: string;
+    setShowForgotPasswordView: (show: boolean) => void;
+}> = ({ handleForgotPasswordSubmit, forgotPasswordEmail, setForgotPasswordEmail, error, setShowForgotPasswordView }) => (
+    <div className="w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+            <Users className="h-8 w-8 text-blue-600" />
+            <span className="text-2xl font-bold text-gray-800">Unify</span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Forgot Password?</h2>
+        <p className="text-gray-500 mb-8">Enter your email address and we'll send you a code to reset your password.</p>
+        
+        <AnimatePresence>
+            {error && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-start gap-2 p-3 mb-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100"
+                >
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <span>{error}</span>
+                </motion.div>
+            )}
+        </AnimatePresence>
+        
+        <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+            <FormInput icon={Mail} type="email" placeholder="Email address" value={forgotPasswordEmail} onChange={(e) => setForgotPasswordEmail(e.target.value)} />
+            <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                Send Reset Code
+            </button>
+            <p className="text-gray-600 text-sm pt-4 text-center">
+                Remember your password?{' '}
+                <button type="button" onClick={() => setShowForgotPasswordView(false)} className="text-blue-600 hover:text-blue-700 font-semibold">
+                    Back to Sign In
+                </button>
+            </p>
+        </form>
+    </div>
+);
+
+// Reset Password Form Component
+const ResetPasswordForm: React.FC<{
+    handleResetPasswordSubmit: (e: React.FormEvent) => void;
+    verificationCode: string; setVerificationCode: (code: string) => void;
+    newPassword: string; setNewPassword: (password: string) => void;
+    confirmNewPassword: string; setConfirmNewPassword: (password: string) => void;
+    error: string;
+    showNewPassword: boolean; setShowNewPassword: (show: boolean) => void;
+    showConfirmNewPassword: boolean; setShowConfirmNewPassword: (show: boolean) => void;
+    setShowForgotPasswordView: (show: boolean) => void;
+    setForgotPasswordCodeSent: (sent: boolean) => void;
+}> = ({ handleResetPasswordSubmit, verificationCode, setVerificationCode, newPassword, setNewPassword, confirmNewPassword, setConfirmNewPassword, error, showNewPassword, setShowNewPassword, showConfirmNewPassword, setShowConfirmNewPassword, setShowForgotPasswordView, setForgotPasswordCodeSent }) => (
+    <div className="w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+            <Users className="h-8 w-8 text-blue-600" />
+            <span className="text-2xl font-bold text-gray-800">Unify</span>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Reset Password</h2>
+        <p className="text-gray-500 mb-8">Enter the verification code sent to your email and your new password.</p>
+        
+        <AnimatePresence>
+            {error && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-start gap-2 p-3 mb-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100"
+                >
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <span>{error}</span>
+                </motion.div>
+            )}
+        </AnimatePresence>
+        
+        <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+            <FormInput icon={Hash} placeholder="Verification Code" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+            <div className="space-y-1">
+                <FormInput icon={Lock} type={showNewPassword ? 'text' : 'password'} placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}>
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </FormInput>
+                {newPassword.length > 0 && <PasswordRequirements password={newPassword} />}
+            </div>
+            <FormInput icon={Lock} type={showConfirmNewPassword ? 'text' : 'password'} placeholder="Confirm New Password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}>
+                <button type="button" onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </FormInput>
+            <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                Reset Password
+            </button>
+            <p className="text-gray-600 text-sm pt-4 text-center">
+                Need to resend code?{' '}
+                <button type="button" onClick={() => setForgotPasswordCodeSent(false)} className="text-blue-600 hover:text-blue-700 font-semibold">
+                    Go back
+                </button>
+            </p>
         </form>
     </div>
 );
@@ -296,6 +409,12 @@ const AuthPage: React.FC = () => {
     const [newPasswordError, setNewPasswordError] = useState('');
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+    
+    // Forgot Password States
+    const [showForgotPasswordView, setShowForgotPasswordView] = useState(false);
+    const [forgotPasswordCodeSent, setForgotPasswordCodeSent] = useState(false);
+    const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
     
     const auth = useAuth();
 
@@ -522,6 +641,85 @@ const AuthPage: React.FC = () => {
         });
     };
 
+    const handleForgotPasswordSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!forgotPasswordEmail.trim()) {
+            setError('Please enter your email address');
+            return;
+        }
+        setLoading(true);
+        setError('');
+
+        const cognitoUser = new CognitoUser({
+            Username: forgotPasswordEmail.trim(),
+            Pool: userPool
+        });
+
+        cognitoUser.forgotPassword({
+            onSuccess: (data) => {
+                console.log('Forgot password code sent:', data);
+                setLoading(false);
+                setForgotPasswordCodeSent(true);
+            },
+            onFailure: (err) => {
+                console.error('Forgot password error:', err);
+                setLoading(false);
+                setError(err.message || 'Failed to send reset code');
+            }
+        });
+    };
+
+    const handleResetPasswordSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!verificationCode.trim()) {
+            setError('Please enter the verification code');
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        // Comprehensive password validation
+        const hasUpper = /[A-Z]/.test(newPassword);
+        const hasLower = /[a-z]/.test(newPassword);
+        const hasNumber = /\d/.test(newPassword);
+        const hasSpecial = /[@$!%*?&]/.test(newPassword);
+        const isLongEnough = newPassword.length >= 8;
+
+        if (!isLongEnough || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+            setError('Password does not meet the required complexity format.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        const cognitoUser = new CognitoUser({
+            Username: forgotPasswordEmail.trim(),
+            Pool: userPool
+        });
+
+        cognitoUser.confirmPassword(verificationCode.trim(), newPassword, {
+            onSuccess: () => {
+                console.log('Password reset successful');
+                setLoading(false);
+                setShowForgotPasswordView(false);
+                setForgotPasswordCodeSent(false);
+                setIsLoginView(true);
+                setEmail(forgotPasswordEmail);
+                setError('');
+                // Optionally show a success toast or message
+                alert('Password reset successful! Please sign in with your new password.');
+            },
+            onFailure: (err) => {
+                console.error('Reset password error:', err);
+                setLoading(false);
+                setError(err.message || 'Failed to reset password');
+            }
+        });
+    };
+
     const springTransition: Transition = { type: "spring", stiffness: 200, damping: 28 };
     
     const formContentVariants: Variants = {
@@ -614,6 +812,42 @@ const AuthPage: React.FC = () => {
                                     setShowConfirmNewPassword={setShowConfirmNewPassword}
                                 />
                             </motion.div>
+                        ) : showForgotPasswordView ? (
+                            <motion.div
+                                key={forgotPasswordCodeSent ? 'reset-password' : 'forgot-password'}
+                                variants={formContentVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="w-full flex justify-center px-4"
+                            >
+                                {forgotPasswordCodeSent ? (
+                                    <ResetPasswordForm 
+                                        handleResetPasswordSubmit={handleResetPasswordSubmit}
+                                        verificationCode={verificationCode}
+                                        setVerificationCode={setVerificationCode}
+                                        newPassword={newPassword}
+                                        setNewPassword={setNewPassword}
+                                        confirmNewPassword={confirmNewPassword}
+                                        setConfirmNewPassword={setConfirmNewPassword}
+                                        error={error}
+                                        showNewPassword={showNewPassword}
+                                        setShowNewPassword={setShowNewPassword}
+                                        showConfirmNewPassword={showConfirmNewPassword}
+                                        setShowConfirmNewPassword={setShowConfirmNewPassword}
+                                        setShowForgotPasswordView={setShowForgotPasswordView}
+                                        setForgotPasswordCodeSent={setForgotPasswordCodeSent}
+                                    />
+                                ) : (
+                                    <ForgotPasswordForm 
+                                        handleForgotPasswordSubmit={handleForgotPasswordSubmit}
+                                        forgotPasswordEmail={forgotPasswordEmail}
+                                        setForgotPasswordEmail={setForgotPasswordEmail}
+                                        error={error}
+                                        setShowForgotPasswordView={setShowForgotPasswordView}
+                                    />
+                                )}
+                            </motion.div>
                         ) : (
                             <motion.div
                                 key={isLoginView ? 'login' : 'signup'}
@@ -633,6 +867,7 @@ const AuthPage: React.FC = () => {
                                     showPassword={showPassword} setShowPassword={setShowPassword}
                                     showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
                                     setIsLoginView={setIsLoginView}
+                                    setShowForgotPasswordView={setShowForgotPasswordView}
                                     sapId={sapId} setSapId={setSapId}
                                     year={year} setYear={setYear}
                                     error={error}
@@ -644,39 +879,69 @@ const AuthPage: React.FC = () => {
             </div>
             
             <div className="lg:hidden w-full min-h-screen bg-white p-8 flex items-center justify-center">
-                 {newPasswordRequired ? (
-                     <NewPasswordForm 
-                        handleNewPasswordSubmit={handleNewPasswordSubmit}
-                        newPasswordName={newPasswordName}
-                        setNewPasswordName={setNewPasswordName}
-                        newPasswordChapterName={newPasswordChapterName}
-                        setNewPasswordChapterName={setNewPasswordChapterName}
-                        newPassword={newPassword}
-                        setNewPassword={setNewPassword}
-                        confirmNewPassword={confirmNewPassword}
-                        setConfirmNewPassword={setConfirmNewPassword}
-                        newPasswordError={newPasswordError}
-                        showNewPassword={showNewPassword}
-                        setShowNewPassword={setShowNewPassword}
-                        showConfirmNewPassword={showConfirmNewPassword}
-                        setShowConfirmNewPassword={setShowConfirmNewPassword}
-                    />
-                 ) : (
-                    <AuthForm 
-                        isLogin={isLoginView}
-                        handleAuthAction={handleAuthAction}
-                        name={name} setName={setName}
-                        email={email} setEmail={setEmail}
-                        password={password} setPassword={setPassword}
-                        confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
-                        showPassword={showPassword} setShowPassword={setShowPassword}
-                        showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
-                        setIsLoginView={setIsLoginView}
-                        sapId={sapId} setSapId={setSapId}
-                        year={year} setYear={setYear}
-                        error={error}
-                    />
-                 )}
+             {newPasswordRequired ? (
+                 <NewPasswordForm 
+                    handleNewPasswordSubmit={handleNewPasswordSubmit}
+                    newPasswordName={newPasswordName}
+                    setNewPasswordName={setNewPasswordName}
+                    newPasswordChapterName={newPasswordChapterName}
+                    setNewPasswordChapterName={setNewPasswordChapterName}
+                    newPassword={newPassword}
+                    setNewPassword={setNewPassword}
+                    confirmNewPassword={confirmNewPassword}
+                    setConfirmNewPassword={setConfirmNewPassword}
+                    newPasswordError={newPasswordError}
+                    showNewPassword={showNewPassword}
+                    setShowNewPassword={setShowNewPassword}
+                    showConfirmNewPassword={showConfirmNewPassword}
+                    setShowConfirmNewPassword={setShowConfirmNewPassword}
+                />
+             ) : showForgotPasswordView ? (
+                <div className="w-full flex justify-center px-4">
+                    {forgotPasswordCodeSent ? (
+                        <ResetPasswordForm 
+                            handleResetPasswordSubmit={handleResetPasswordSubmit}
+                            verificationCode={verificationCode}
+                            setVerificationCode={setVerificationCode}
+                            newPassword={newPassword}
+                            setNewPassword={setNewPassword}
+                            confirmNewPassword={confirmNewPassword}
+                            setConfirmNewPassword={setConfirmNewPassword}
+                            error={error}
+                            showNewPassword={showNewPassword}
+                            setShowNewPassword={setShowNewPassword}
+                            showConfirmNewPassword={showConfirmNewPassword}
+                            setShowConfirmNewPassword={setShowConfirmNewPassword}
+                            setShowForgotPasswordView={setShowForgotPasswordView}
+                            setForgotPasswordCodeSent={setForgotPasswordCodeSent}
+                        />
+                    ) : (
+                        <ForgotPasswordForm 
+                            handleForgotPasswordSubmit={handleForgotPasswordSubmit}
+                            forgotPasswordEmail={forgotPasswordEmail}
+                            setForgotPasswordEmail={setForgotPasswordEmail}
+                            error={error}
+                            setShowForgotPasswordView={setShowForgotPasswordView}
+                        />
+                    )}
+                </div>
+             ) : (
+                <AuthForm 
+                    isLogin={isLoginView}
+                    handleAuthAction={handleAuthAction}
+                    name={name} setName={setName}
+                    email={email} setEmail={setEmail}
+                    password={password} setPassword={setPassword}
+                    confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+                    showPassword={showPassword} setShowPassword={setShowPassword}
+                    showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
+                    setIsLoginView={setIsLoginView}
+                    setShowForgotPasswordView={setShowForgotPasswordView}
+                    sapId={sapId} setSapId={setSapId}
+                    year={year} setYear={setYear}
+                    error={error}
+                />
+             )}
             </div>
         </div>
     );

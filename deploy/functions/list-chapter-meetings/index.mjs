@@ -7,11 +7,25 @@ const docClient = DynamoDBDocumentClient.from(client);
 export const handler = async (event) => {
   console.log("=== List Chapter Meetings ===");
   
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  };
+
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: ""
+    };
+  }
+
   try {
     const { chapterId } = event.pathParameters || {};
     
     if (!chapterId) {
-      return { statusCode: 400, body: JSON.stringify({ message: "Missing chapterId path parameter" }) };
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ message: "Missing chapterId path parameter" }) };
     }
 
     // Query all meetings for this chapter
