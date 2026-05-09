@@ -28,6 +28,7 @@ interface ChapterDetails {
   updatedAt: string;
   registrationStatus?: 'open' | 'closed'; // legacy compatibility
   registrationOpen?: boolean;
+  tags?: string[];
   type?: 'chapter' | 'club';
 }
 
@@ -78,6 +79,7 @@ interface ChapterHeadContextType {
   fetchDashboardStats: () => Promise<void>;
   fetchRecentActivities: () => Promise<void>;
   toggleChapterRegistration: (chapterId: string, isOpen: boolean) => Promise<boolean>;
+  updateChapterTags: (chapterId: string, tags: string[]) => Promise<boolean>;
   updateRegistrationStatus: (registrationId: string, status: 'approved' | 'rejected', notes?: string) => Promise<boolean>;
   refreshData: () => Promise<void>;
   createEvent: (eventData: any) => Promise<boolean>;
@@ -201,6 +203,25 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     }
   };
 
+  const updateChapterTags = async (chapterId: string, tags: string[]): Promise<boolean> => {
+    try {
+      await chapterHeadAPI.updateChapterTags(chapterId, tags);
+
+      setChapters(prev => prev.map(chapter =>
+        chapter.chapterId === chapterId
+          ? { ...chapter, tags }
+          : chapter
+      ));
+
+      await fetchRecentActivities();
+      return true;
+    } catch (error) {
+      console.error('Error updating chapter tags:', error);
+      setError('Failed to update chapter tags');
+      return false;
+    }
+  };
+
   const updateRegistrationStatus = async (
     registrationId: string, 
     status: 'approved' | 'rejected', 
@@ -318,6 +339,7 @@ export const ChapterHeadProvider: React.FC<ChapterHeadProviderProps> = ({ childr
     fetchDashboardStats,
     fetchRecentActivities,
     toggleChapterRegistration,
+    updateChapterTags,
     updateRegistrationStatus,
     refreshData,
     createEvent,

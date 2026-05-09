@@ -13,10 +13,17 @@ stack_name = "unify-payment-stack"
 region = "ap-south-1"
 resolve_s3 = true
 s3_prefix = "unify-payment"
-capabilities = ["CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND"]
-confirm_changeset = true
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
+confirm_changeset = false
 no_fail_on_empty_changeset = true
-parameter_overrides = []
+# Credentials are NEVER stored here. 
+# They are injected at runtime via scripts/deploy-payment.sh using your local .env
+parameter_overrides = [
+  "RazorpayKeyId=UsePreviousValue",
+  "RazorpayKeySecret=UsePreviousValue",
+  "GoogleClientId=UsePreviousValue",
+  "GoogleClientSecret=UsePreviousValue"
+]
 
 [default.build]
 [default.build.parameters]

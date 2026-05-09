@@ -428,7 +428,7 @@ const EventsList: React.FC = () => {
 
                           {/* Know More About It Button */}
                           <button
-                            onClick={() => window.open(`/events/profile/${encodeURIComponent(eventId)}`, '_blank')}
+                            onClick={() => window.location.href = `/student/events/${encodeURIComponent(eventId)}/about`}
                             className={`
                               px-4 py-2 rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 shadow-sm text-sm
                               ${isDark

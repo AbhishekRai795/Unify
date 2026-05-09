@@ -77,6 +77,8 @@ Globals:
         MEETINGS_TABLE: ChapterMeetings
         GOOGLE_CLIENT_ID: !Ref GoogleClientId
         GOOGLE_CLIENT_SECRET: !Ref GoogleClientSecret
+        GEMINI_SECRET_NAME: unify/gemini/credentials
+        VECTORS_TABLE: !Ref UnifyVectorsTable
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resources
@@ -322,6 +324,33 @@ Resources:
           Value: Unify
         - Key: Component
           Value: EventProfiles
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # DynamoDB — UnifyVectors Table (for Hierarchical RAG Embeddings)
+  # ──────────────────────────────────────────────────────────────────────────
+  UnifyVectorsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: UnifyVectors
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: parentId
+          AttributeType: S
+        - AttributeName: chunkId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: parentId
+          KeyType: HASH
+        - AttributeName: chunkId
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: Vectors
   # Tracks event registrations and payment status
   # ──────────────────────────────────────────────────────────────────────────
   EventPaymentsTable:
@@ -644,6 +673,21 @@ Resources:
           Value: Payment
 
   # ──────────────────────────────────────────────────────────────────────────
+  # Secrets Manager — Gemini Credentials
+  # ──────────────────────────────────────────────────────────────────────────
+  GeminiApiKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: unify/gemini/credentials
+      Description: Gemini API credentials for Unify ChatBot
+      SecretString: '{"api_key": "AIzaSyB7QCnm4o88QIkmbQ2wvRK_cK83H2I0BE8"}'
+      Tags:
+        - Key: Application
+          Value: Unify
+        - Key: Component
+          Value: ChatBot
+
+  # ──────────────────────────────────────────────────────────────────────────
   # IAM Shared Policy for SecretsManager (attached per-function)
   # ──────────────────────────────────────────────────────────────────────────
   SecretsManagerPolicy:
@@ -657,7 +701,9 @@ Resources:
             Action:
               - secretsmanager:GetSecretValue
               - secretsmanager:DescribeSecret
-            Resource: !Ref RazorpayCredentialsSecret
+            Resource: 
+              - !Ref RazorpayCredentialsSecret
+              - !Ref GeminiApiKeySecret
 
   # ──────────────────────────────────────────────────────────────────────────
   # Lambda 1: Create Chapter With Payment Configuration
@@ -789,6 +835,45 @@ Resources:
             ApiId: !Ref PaymentHttpApi
             Path: /api/chapters/{chapterId}
             Method: OPTIONS
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Lambda: ChatBot Function
+  # Handles RAG ChatBot queries
+  # ──────────────────────────────────────────────────────────────────────────
+  ChatBotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub unify-chatbot-${Environment}
+      Handler: index.handler
+      CodeUri: deploy/functions/chatbot-handler/
+      Description: RAG ChatBot for Chapter Recommendations
+      Timeout: 60
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: Chapters
+        - DynamoDBCrudPolicy:
+            TableName: Unify-Users
+        - DynamoDBReadPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - !Ref SecretsManagerPolicy
+      Events:
+        ChatBotApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chatbot
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+        ChatBotOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PaymentHttpApi
+            Path: /api/chatbot
+            Method: OPTIONS
+      Tags:
+        Application: Unify
+        Component: ChatBot
 
   # ──────────────────────────────────────────────────────────────────────────
   # Lambda 2: Create Razorpay Order
@@ -1007,6 +1092,9 @@ Resources:
             TableName: ChapterHead
         - S3CrudPolicy:
             BucketName: !Ref UnifyChapterImagesBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - !Ref SecretsManagerPolicy
       Events:
         GetChapterProfileApi:
           Type: HttpApi
@@ -1127,6 +1215,10 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: Unify-Users
         - DynamoDBReadPolicy:
+            TableName: !Ref ChapterEventsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - DynamoDBReadPolicy:
             TableName: !Ref EventPaymentsTable
         - Statement:
             Effect: Allow
@@ -1174,6 +1266,9 @@ Resources:
             TableName: ChapterHead
         - S3CrudPolicy:
             BucketName: !Ref UnifyChapterImagesBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - !Ref SecretsManagerPolicy
       Events:
         GetEventProfileApi:
           Type: HttpApi
@@ -1346,6 +1441,9 @@ Resources:
             TableName: Chapters
         - DynamoDBCrudPolicy:
             TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - !Ref SecretsManagerPolicy
       Events:
         CreateEventApi:
           Type: HttpApi
@@ -1376,6 +1474,9 @@ Resources:
             TableName: !Ref ChapterEventsTable
         - DynamoDBCrudPolicy:
             TableName: Activities
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UnifyVectorsTable
+        - !Ref SecretsManagerPolicy
       Events:
         UpdateEventApi:
           Type: HttpApi

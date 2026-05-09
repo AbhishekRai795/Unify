@@ -49,7 +49,7 @@ async function debugToken() {
 }
 
 export const adminApi = {
-  async createChapter(payload: { chapterName: string; headEmail?: string; headName?: string; type?: 'chapter' | 'club' }) {
+  async createChapter(payload: { chapterName: string; headEmail?: string; headName?: string; type?: 'chapter' | 'club'; tags?: string[] }) {
     console.log('Creating chapter with payload:', payload);
     
     try {

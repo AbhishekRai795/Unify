@@ -139,6 +139,7 @@ export const paymentAPI = {
     type?: 'chapter' | 'club';
     isPaid: boolean;
     registrationFee?: number;
+    tags?: string[];
   }) => {
     const response = await fetch(`${PAYMENT_API_BASE_URL}/api/chapters/create-with-payment`, {
       method: 'POST',
