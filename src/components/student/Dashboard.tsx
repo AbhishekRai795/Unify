@@ -28,6 +28,7 @@ import MeetingCalendarView from './MeetingCalendarView';
 import { ChatBotWidget } from './ChatBotWidget';
 import { motion, Variants } from 'framer-motion';
 import { encodeS3Url } from '../../utils/s3Utils';
+import { chapterHeadAPI } from '../../services/chapterHeadApi';
 
 
 import { useSmartPolling } from '../../hooks/useSmartPolling';
@@ -88,6 +89,35 @@ const formatEventFee = (event: RecommendedEvent) => {
 
 const RecommendedEventsCarousel: React.FC<{ events: RecommendedEvent[]; isDark: boolean }> = ({ events, isDark }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [posterImages, setPosterImages] = useState<Record<string, string>>({});
+
+  // Fetch poster images from event profiles (same source as EventPublicProfile page)
+  useEffect(() => {
+    if (!events.length) return;
+
+    const fetchPosters = async () => {
+      const results: Record<string, string> = {};
+
+      await Promise.allSettled(
+        events.map(async (event) => {
+          const eid = event.eventId || event.id;
+          if (!eid) return;
+          try {
+            const result = await chapterHeadAPI.getEventProfile(eid);
+            if (result?.profile?.posterImageUrl) {
+              results[eid] = result.profile.posterImageUrl;
+            }
+          } catch {
+            // Profile may not exist for this event — that's fine
+          }
+        })
+      );
+
+      setPosterImages(results);
+    };
+
+    fetchPosters();
+  }, [events]);
 
   useEffect(() => {
     if (events.length <= 1) return;
@@ -127,12 +157,14 @@ const RecommendedEventsCarousel: React.FC<{ events: RecommendedEvent[]; isDark: 
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
         >
           {events.map((event, index) => {
-            const imageUrl = encodeS3Url(event.imageUrl);
+            const eid = event.eventId || event.id || '';
+            const posterUrl = posterImages[eid];
+            const imageUrl = encodeS3Url(posterUrl || event.imageUrl);
             const matchedTags = event.matchedTags || [];
             return (
               <Link
-                key={event.eventId || event.id || index}
-                to={`/student/events/${encodeURIComponent(event.eventId || event.id || '')}/about`}
+                key={eid || index}
+                to={`/student/events/${encodeURIComponent(eid)}/about`}
                 className="relative min-w-full h-[280px] sm:h-[340px] overflow-hidden group"
               >
                 {imageUrl ? (
