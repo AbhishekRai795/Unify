@@ -1,8 +1,9 @@
 // chapterProfile-payment/index.mjs
 // Lambda function to handle chapter profile retrieval, updates, and image uploads
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const dbClient = new DynamoDBClient({ region: "ap-south-1" });
@@ -12,7 +13,53 @@ const s3Client = new S3Client({ region: "ap-south-1" });
 const CHAPTERS_TABLE = "Chapters";
 const CHAPTER_PROFILES_TABLE = "ChapterProfiles";
 const CHAPTER_HEAD_TABLE = "ChapterHead";
+const VECTORS_TABLE = process.env.VECTORS_TABLE || "UnifyVectors";
 const IMAGES_BUCKET = process.env.IMAGES_BUCKET || ""; // Will be passed via template
+
+const secretsClient = new SecretsManagerClient({ region: "ap-south-1" });
+
+async function getGeminiApiKey() {
+  const secretName = process.env.GEMINI_SECRET_NAME || 'unify/gemini/credentials';
+  try {
+    const response = await secretsClient.send(new GetSecretValueCommand({ SecretId: secretName }));
+    if (response.SecretString) {
+      return JSON.parse(response.SecretString).api_key;
+    }
+  } catch (err) {
+    console.error("Failed to fetch Gemini API Key", err);
+  }
+  return null;
+}
+
+async function generateEmbeddings(apiKey, texts) {
+  if (!apiKey || !texts || texts.length === 0) return [];
+  const model = "models/gemini-embedding-001";
+  
+  try {
+    const embeddings = [];
+    for (const text of texts) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/${model}:embedContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: model,
+          content: { parts: [{ text: text }] }
+        })
+      });
+      const data = await response.json();
+      if (data.embedding) {
+        embeddings.push(data.embedding.values);
+      } else {
+        console.error("Gemini embedding individual error:", data);
+      }
+    }
+    return embeddings;
+  } catch (err) {
+    console.error("Failed to generate embeddings", err);
+  }
+  return [];
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -106,7 +153,10 @@ export const handler = async (event) => {
             adminName: chapter.adminName,
             memberCount: chapter.memberCount || 0,
             contactEmail: chapter.contactEmail,
-            isRegistrationOpen: chapter.isRegistrationOpen
+            isRegistrationOpen: chapter.isRegistrationOpen,
+            isPaid: chapter.isPaid || false,
+            registrationFee: chapter.registrationFee || 0,
+            type: chapter.type || 'chapter'
           }
         })
       };
@@ -201,6 +251,43 @@ export const handler = async (event) => {
         TableName: CHAPTER_PROFILES_TABLE,
         Item: profilePayload
       }));
+
+      // Generate and store embeddings for RAG
+      const chunksToEmbed = [];
+      if (profilePayload.about) chunksToEmbed.push({ id: 'about', text: `Chapter About: ${profilePayload.about}` });
+      if (profilePayload.mission) chunksToEmbed.push({ id: 'mission', text: `Chapter Mission: ${profilePayload.mission}` });
+      if (profilePayload.vision) chunksToEmbed.push({ id: 'vision', text: `Chapter Vision: ${profilePayload.vision}` });
+      if (profilePayload.highlights.length > 0) chunksToEmbed.push({ id: 'highlights', text: `Chapter Highlights: ${profilePayload.highlights.join('; ')}` });
+      if (profilePayload.achievements.length > 0) chunksToEmbed.push({ id: 'achievements', text: `Chapter Achievements: ${profilePayload.achievements.join('; ')}` });
+
+      if (chunksToEmbed.length > 0) {
+        const apiKey = await getGeminiApiKey();
+        if (apiKey) {
+          const vectors = await generateEmbeddings(apiKey, chunksToEmbed.map(c => c.text));
+          if (vectors && vectors.length === chunksToEmbed.length) {
+            const putRequests = chunksToEmbed.map((chunk, idx) => ({
+              PutRequest: {
+                Item: {
+                  parentId: chapterId,
+                  chunkId: chunk.id,
+                  section: chunk.id,
+                  text: chunk.text,
+                  vector: vectors[idx],
+                  type: 'chapter_profile'
+                }
+              }
+            }));
+            
+            // BatchWrite supports up to 25 items, we have max ~5
+            await ddb.send(new BatchWriteCommand({
+              RequestItems: {
+                [VECTORS_TABLE]: putRequests
+              }
+            }));
+            console.log(`Stored ${putRequests.length} vectors for chapter ${chapterId}`);
+          }
+        }
+      }
 
       return {
         statusCode: 200,

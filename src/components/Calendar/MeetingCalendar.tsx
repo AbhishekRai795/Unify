@@ -199,7 +199,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({ chapterId, isReadOnly
         startDateTime: start.toISOString(),
         endDateTime: end.toISOString(),
         sendInvites: formData.sendInvites,
-        eventId: formData.isForEvent ? formData.eventId : undefined
+        eventId: formData.isForEvent ? formData.eventId : null
       };
 
       if (editingMeeting) {

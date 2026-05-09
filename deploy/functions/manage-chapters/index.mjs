@@ -259,7 +259,7 @@ async function listChapterHeadsAction() {
  * ACTION: Create Chapter
  */
 async function createChapterAction(data) {
-  const { chapterName, headEmail, headName } = data;
+  const { chapterName, headEmail, headName, tags } = data;
   if (!chapterName) throw new Error('chapterName is required');
 
   const chapterId = randomUUID();
@@ -281,6 +281,7 @@ async function createChapterAction(data) {
     type: data.type === 'club' ? 'club' : 'chapter',
     headEmail: headEmail ? headEmail.trim().toLowerCase() : null,
     headName: headName || null,
+    tags: Array.isArray(tags) ? tags : [],
     status: 'active',
     memberCount: 0,
     createdAt: now,
@@ -304,7 +305,7 @@ async function createChapterAction(data) {
  * ACTION: Update Chapter (Generic)
  */
 async function updateChapterAction(chapterId, data, userClaims, isAdmin, isChapterHead) {
-  const { chapterName, headEmail, headName, isPaid, registrationFee, type, registrationOpen } = data;
+  const { chapterName, headEmail, headName, isPaid, registrationFee, type, registrationOpen, tags } = data;
   const now = new Date().toISOString();
 
   const current = await docClient.send(new GetCommand({ TableName: CHAPTERS_TABLE, Key: { chapterId } }));
@@ -333,8 +334,8 @@ async function updateChapterAction(chapterId, data, userClaims, isAdmin, isChapt
       throw err;
     }
     
-    // Chapter heads can ONLY update registrationOpen
-    const allowedKeys = ['registrationOpen'];
+    // Chapter heads can ONLY update registrationOpen and tags
+    const allowedKeys = ['registrationOpen', 'tags'];
     const keys = Object.keys(data).filter(k => data[k] !== undefined);
     const forbiddenKeys = keys.filter(k => !allowedKeys.includes(k));
     
@@ -379,6 +380,10 @@ async function updateChapterAction(chapterId, data, userClaims, isAdmin, isChapt
   if (registrationOpen !== undefined) {
     updateExp += ", registrationOpen = :regOpen";
     expValues[":regOpen"] = Boolean(registrationOpen);
+  }
+  if (tags !== undefined) {
+    updateExp += ", tags = :tags";
+    expValues[":tags"] = Array.isArray(tags) ? tags : [];
   }
 
   const updateParams = {

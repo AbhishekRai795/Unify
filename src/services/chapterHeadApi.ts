@@ -75,6 +75,16 @@ export const chapterHeadAPI = {
     return handleResponse(response);
   },
 
+  // Update chapter tags without granting full chapter edit access
+  updateChapterTags: async (chapterId: string, tags: string[]) => {
+    const response = await fetch(`${NEW_FEATURES_API_BASE_URL}/api/chapters/${encodeURIComponent(chapterId)}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ tags }),
+    });
+    return handleResponse(response);
+  },
+
   // Approve/Reject registration request
   updateRegistrationStatus: async (registrationId: string, status: 'approved' | 'rejected', notes?: string) => {
     const response = await fetch(`${API_BASE_URL}/chapterhead/registration/${registrationId}`, {

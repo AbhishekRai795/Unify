@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Calendar, 
   Users, 
@@ -12,7 +12,9 @@ import {
   Video,
   History,
   UserPlus,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  MapPin
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -23,7 +25,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import Loader from '../common/Loader';
 import ConversationsList from '../chat/ConversationsList';
 import MeetingCalendarView from './MeetingCalendarView';
+import { ChatBotWidget } from './ChatBotWidget';
 import { motion, Variants } from 'framer-motion';
+import { encodeS3Url } from '../../utils/s3Utils';
 
 
 import { useSmartPolling } from '../../hooks/useSmartPolling';
@@ -48,6 +52,168 @@ const itemVariants: Variants = {
       stiffness: 100,
     },
   },
+};
+
+interface RecommendedEvent {
+  id?: string;
+  eventId?: string;
+  chapterId?: string;
+  chapterName?: string;
+  title?: string;
+  description?: string;
+  eventType?: string;
+  imageUrl?: string;
+  location?: string;
+  isOnline?: boolean;
+  isPaid?: boolean;
+  registrationFee?: number;
+  startDateTime?: string;
+  endDateTime?: string;
+  matchedTags?: string[];
+  recommendationScore?: number;
+}
+
+const formatEventDate = (value?: string) => {
+  if (!value) return 'Date TBA';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Date TBA';
+  return date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+};
+
+const formatEventFee = (event: RecommendedEvent) => {
+  if (!event.isPaid) return 'Free';
+  const amount = Number(event.registrationFee || 0);
+  return `₹${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+};
+
+const RecommendedEventsCarousel: React.FC<{ events: RecommendedEvent[]; isDark: boolean }> = ({ events, isDark }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (events.length <= 1) return;
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((index) => (index + 1) % events.length);
+    }, 4500);
+    return () => window.clearInterval(intervalId);
+  }, [events.length]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [events.length]);
+
+  if (!events.length) return null;
+
+  return (
+    <motion.section variants={itemVariants} className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${isDark ? 'bg-accent-500/10 text-accent-400' : 'bg-blue-50 text-blue-600'}`}>
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Top Most Relevant Events</h2>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Fresh picks for you</p>
+          </div>
+        </div>
+        <Link to="/student/events" className="hidden sm:inline-flex items-center text-sm font-semibold text-blue-600 dark:text-accent-400 hover:underline">
+          View Events
+          <ArrowRight className="h-4 w-4 ml-1" />
+        </Link>
+      </div>
+
+      <div className={`relative overflow-hidden rounded-2xl border shadow-lg ${isDark ? 'border-accent-500/20 bg-dark-surface/40' : 'border-white/30 bg-white/60'}`}>
+        <div
+          className="flex transition-transform duration-700 ease-out"
+          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        >
+          {events.map((event, index) => {
+            const imageUrl = encodeS3Url(event.imageUrl);
+            const matchedTags = event.matchedTags || [];
+            return (
+              <Link
+                key={event.eventId || event.id || index}
+                to={`/student/events/${encodeURIComponent(event.eventId || event.id || '')}/about`}
+                className="relative min-w-full h-[280px] sm:h-[340px] overflow-hidden group"
+              >
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={event.title || 'Recommended event'}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className={`absolute inset-0 ${isDark ? 'bg-dark-bg' : 'bg-slate-900'}`} />
+                )}
+                
+                {/* Enhanced Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent sm:bg-gradient-to-r sm:from-black/80 sm:via-black/40 sm:to-transparent" />
+                
+                <div className="relative h-full flex flex-col justify-between p-6 sm:p-10 text-white">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1 rounded-full bg-accent-500/80 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                      Featured
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold backdrop-blur-sm">
+                      {event.eventType || 'Workshop'}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold backdrop-blur-sm">
+                      {formatEventFee(event)}
+                    </span>
+                    {matchedTags.slice(0, 2).map((tag) => (
+                      <span key={tag} className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold backdrop-blur-sm text-blue-100">
+                        {tag.replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="max-w-2xl mt-auto">
+                    <p className="text-xs sm:text-sm font-bold text-accent-400 mb-2 uppercase tracking-widest">{event.chapterName || 'Community'}</p>
+                    <h3 className="text-2xl sm:text-4xl font-black leading-tight line-clamp-2 mb-3 group-hover:text-accent-300 transition-colors">
+                      {event.title || 'Recommended Event'}
+                    </h3>
+                    <p className="hidden sm:block text-base text-white/70 line-clamp-2 mb-6 font-medium leading-relaxed">
+                      {event.description || 'Discover this exclusive event tailored to your interests and professional goals.'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-white/10">
+                    <div className="flex flex-wrap items-center gap-5 text-xs sm:text-sm text-white/80">
+                      <span className="inline-flex items-center gap-2 font-medium">
+                        <Calendar className="h-4 w-4 text-accent-400" />
+                        {formatEventDate(event.startDateTime)}
+                      </span>
+                      <span className="inline-flex items-center gap-2 font-medium">
+                        <MapPin className="h-4 w-4 text-accent-400" />
+                        {event.isOnline ? 'Online' : event.location || 'Venue TBA'}
+                      </span>
+                    </div>
+                    <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-slate-900 px-6 py-2.5 text-sm font-bold w-fit hover:bg-accent-500 hover:text-white transition-all duration-300 shadow-xl group-hover:translate-x-1">
+                      Open Event
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {events.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+            {events.map((event, index) => (
+              <button
+                key={event.eventId || event.id || index}
+                type="button"
+                aria-label={`Show recommendation ${index + 1}`}
+                onClick={() => setActiveIndex(index)}
+                className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-8 bg-white' : 'w-2.5 bg-white/45 hover:bg-white/70'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.section>
+  );
 };
 
 const Dashboard: React.FC = () => {
@@ -101,6 +267,14 @@ const Dashboard: React.FC = () => {
     fetchAttendanceStats();
   }, []);
 
+  useEffect(() => {
+    const handleInterestUpdate = () => {
+      fetchDashboard();
+    };
+    window.addEventListener('unify-interests-updated', handleInterestUpdate);
+    return () => window.removeEventListener('unify-interests-updated', handleInterestUpdate);
+  }, [fetchDashboard]);
+
   // Smart Polling for Events/Announcements
   useSmartPolling(fetchEvents, {
     activeInterval: 20000, // 20s
@@ -153,6 +327,28 @@ const Dashboard: React.FC = () => {
 
     return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [myChapters, eventRegistrations, pendingRegistrations, events]);
+
+  const recommendedEvents = useMemo(() => {
+    const rawEvents = Array.isArray(dashboardData?.recommendedEvents)
+      ? dashboardData.recommendedEvents
+      : [];
+    
+    const now = new Date();
+    return rawEvents.filter((event: RecommendedEvent) => {
+      const endDateTime = event.endDateTime;
+      const startDateTime = event.startDateTime;
+      
+      if (endDateTime) {
+        return new Date(endDateTime) >= now;
+      }
+      if (startDateTime) {
+        const startDate = new Date(startDateTime);
+        const estimatedEndDate = new Date(startDate.getTime() + 4 * 60 * 60 * 1000);
+        return estimatedEndDate >= now;
+      }
+      return true;
+    });
+  }, [dashboardData?.recommendedEvents]);
 
   if (isLoading && !dashboardData) {
     return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
@@ -211,6 +407,7 @@ const Dashboard: React.FC = () => {
         eventName: event?.title || event?.eventId || event?.id || 'Event'
       }));
     });
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-dark-bg' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       <motion.div 
@@ -417,6 +614,7 @@ const Dashboard: React.FC = () => {
           </motion.div>
         </motion.div>
 
+        <RecommendedEventsCarousel events={recommendedEvents} isDark={isDark} />
 
         {/* Second Row Grid - 3 Columns */}
         <motion.div 
@@ -485,7 +683,7 @@ const Dashboard: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary line-clamp-2">
-                          {(activity.message || '').replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2})/, (match, date, hh, mm, ss) => {
+                          {(activity.message || '').replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2})/, (_match: string, date: string, hh: string, mm: string, _ss: string) => {
                             let hour = parseInt(hh, 10);
                             const ampm = hour >= 12 ? 'PM' : 'AM';
                             hour = hour % 12 || 12;
@@ -594,6 +792,9 @@ const Dashboard: React.FC = () => {
           </motion.div>
         </motion.div>
       </motion.div>
+      
+      {/* Student Chatbot Widget */}
+      <ChatBotWidget />
     </div>
   );
 };

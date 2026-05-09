@@ -1,0 +1,7 @@
+{
+  "name": "unify-chatbot-handler",
+  "version": "1.0.0",
+  "description": "RAG Chatbot using Gemini API",
+  "main": "index.mjs",
+  "type": "module"
+}

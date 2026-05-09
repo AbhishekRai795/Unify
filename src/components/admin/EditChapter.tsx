@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../services/adminApi';
-import { paymentAPI } from '../../services/paymentApi';
 import Loader from '../common/Loader';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -36,7 +35,8 @@ const EditChapter: React.FC = () => {
     headName: '',
     isPaid: false,
     registrationFee: 0,
-    registrationOpen: true
+    registrationOpen: true,
+    tags: ''
   });
 
   // Check user permissions
@@ -130,7 +130,8 @@ const EditChapter: React.FC = () => {
           headName: chapterData.headName || '',
           isPaid: chapterData.isPaid || false,
           registrationFee: chapterData.registrationFee ? chapterData.registrationFee / 100 : 0,
-          registrationOpen: chapterData.registrationOpen !== undefined ? chapterData.registrationOpen : true
+          registrationOpen: chapterData.registrationOpen !== undefined ? chapterData.registrationOpen : true,
+          tags: Array.isArray(chapterData.tags) ? chapterData.tags.join(', ') : ''
         });
         setLoading(false);
       } catch (error: any) {
@@ -165,7 +166,7 @@ const EditChapter: React.FC = () => {
       return;
     }
     
-    if (!formData.headEmail.trim()) {
+    if (isAdminUser() && !formData.headEmail.trim()) {
       setNotification({
         type: 'error',
         message: `${typeLabel} head email is required`
@@ -189,18 +190,21 @@ const EditChapter: React.FC = () => {
 
       // Call the edit API (only works for admins)
       // Try using updateChapter directly instead of editChapterHead
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+
       console.log('Trying updateChapter directly...');
       await adminApi.updateChapter(chapterId, {
         headEmail: isAdminUser() ? formData.headEmail.trim() : undefined,
         headName: isAdminUser() ? (formData.headName.trim() || undefined) : undefined,
         isPaid: isAdminUser() ? formData.isPaid : undefined,
         registrationFee: isAdminUser() ? (formData.isPaid ? formData.registrationFee * 100 : 0) : undefined,
-        registrationOpen: formData.registrationOpen
+        registrationOpen: isAdminUser() ? formData.registrationOpen : undefined,
+        tags: tagsArray
       });
 
       setNotification({
         type: 'success',
-        message: `${typeLabel} head updated successfully!`
+        message: isAdminUser() ? `${typeLabel} updated successfully!` : 'Tags updated successfully!'
       });
 
       // Refresh data and navigate back after a short delay
@@ -316,7 +320,7 @@ const EditChapter: React.FC = () => {
               </span>
             </div>
             <div>
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Edit Community Head</h1>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>{isAdminUser() ? 'Edit Community Head' : 'Update Community Tags'}</h1>
               <p className={isDark ? 'text-dark-text-secondary' : 'text-gray-600'}>{chapter?.chapterName}</p>
             </div>
           </div>
@@ -329,84 +333,104 @@ const EditChapter: React.FC = () => {
           className={`backdrop-blur-md rounded-xl border overflow-hidden transition-colors duration-300 ${isDark ? 'bg-dark-surface/85 border-dark-border/70' : 'bg-white/80 border-white/20'}`}
         >
           <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Current Community Head</h2>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <User className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {chapter?.headName || 'Not assigned'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {chapter?.headEmail || 'No email'}
-                    </p>
+            {isAdminUser() && (
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Current Community Head</h2>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <User className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {chapter?.headName || 'Not assigned'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {chapter?.headEmail || 'No email'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="headEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  New Community Head Email *
-                </label>
-                <div className="relative">
-                  <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="email"
-                    id="headEmail"
-                    required
-                    disabled={!isAdminUser()}
-                    value={formData.headEmail}
-                    onChange={(e) => handleInputChange('headEmail', e.target.value)}
-                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
-                    }`}
-                    placeholder={`Enter new ${typeLabel.toLowerCase()} head email`}
-                  />
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {isAdminUser() 
-                    ? `This email will be used to assign ${typeLabel.toLowerCase()} head role to the user`
-                    : `Only administrators can modify ${typeLabel.toLowerCase()} head assignments`
-                  }
-                </p>
-              </div>
+              {isAdminUser() && (
+                <>
+                  <div>
+                    <label htmlFor="headEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                      New Community Head Email *
+                    </label>
+                    <div className="relative">
+                      <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      <input
+                        type="email"
+                        id="headEmail"
+                        required
+                        disabled={!isAdminUser()}
+                        value={formData.headEmail}
+                        onChange={(e) => handleInputChange('headEmail', e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                        }`}
+                        placeholder={`Enter new ${typeLabel.toLowerCase()} head email`}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      This email will be used to assign {typeLabel.toLowerCase()} head role to the user
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="headName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Community Head Name (Optional)
+                    </label>
+                    <div className="relative">
+                      <User className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      <input
+                        type="text"
+                        id="headName"
+                        disabled={!isAdminUser()}
+                        value={formData.headName}
+                        onChange={(e) => handleInputChange('headName', e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                        }`}
+                        placeholder={`Enter ${typeLabel.toLowerCase()} head full name`}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Display name for the {typeLabel.toLowerCase()} head (can be updated later)
+                    </p>
+                  </div>
+                </>
+              )}
 
               <div>
-                <label htmlFor="headName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Community Head Name (Optional)
+                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (Comma Separated)
                 </label>
                 <div className="relative">
-                  <User className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
-                    id="headName"
-                    disabled={!isAdminUser()}
-                    value={formData.headName}
-                    onChange={(e) => handleInputChange('headName', e.target.value)}
-                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
-                    }`}
-                    placeholder={`Enter ${typeLabel.toLowerCase()} head full name`}
+                    id="tags"
+                    value={formData.tags}
+                    onChange={(e) => handleInputChange('tags', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g. AI, Machine Learning, Python"
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  Display name for the {typeLabel.toLowerCase()} head (can be updated later)
+                  Used by the AI Chatbot to recommend this {typeLabel.toLowerCase()} to students.
                 </p>
               </div>
 
-              {/* Payment Configuration Options */}
               {isAdminUser() && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Community Settings</h3>
-                  
-                  {/* Registration Toggle - Available to both Admin and Head */}
+                  <h3 className={`text-lg font-medium mb-4 ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>Community Settings</h3>
+
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <p className="font-medium text-gray-700">Registration Open</p>
-                      <p className="text-sm text-gray-500">Allow new students to join this {typeLabel.toLowerCase()}</p>
+                      <p className={`font-medium ${isDark ? 'text-dark-text-primary' : 'text-gray-700'}`}>Registration Open</p>
+                      <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-500'}`}>Allow new students to join this {typeLabel.toLowerCase()}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -419,56 +443,52 @@ const EditChapter: React.FC = () => {
                     </label>
                   </div>
 
-                  {isAdminUser() && (
-                    <>
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="font-medium text-gray-700">Paid {typeLabel}</p>
-                          <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.isPaid}
-                            onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
-                            className="sr-only peer"
-                            disabled={!isAdminUser()}
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="font-medium text-gray-700">Paid {typeLabel}</p>
+                        <p className="text-sm text-gray-500">Require students to pay a fee to join</p>
                       </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.isPaid}
+                          onChange={(e) => setFormData(prev => ({ ...prev, isPaid: e.target.checked }))}
+                          className="sr-only peer"
+                          disabled={!isAdminUser()}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
 
-                      {formData.isPaid && (
-                        <div className="mt-4">
-                          <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
-                            Registration Fee (₹)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
-                            <input
-                              type="number"
-                              id="registrationFee"
-                              min="0"
-                              step="0.01"
-                              disabled={!isAdminUser()}
-                              value={formData.registrationFee}
-                              onChange={(e) => handleInputChange('registrationFee', e.target.value)}
-                              className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
-                              }`}
-                              placeholder="e.g. 100"
-                            />
-                          </div>
-                          <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
+                    {formData.isPaid && (
+                      <div className="mt-4">
+                        <label htmlFor="registrationFee" className="block text-sm font-medium text-gray-700 mb-2">
+                          Registration Fee (₹)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                          <input
+                            type="number"
+                            id="registrationFee"
+                            min="0"
+                            step="0.01"
+                            disabled={!isAdminUser()}
+                            value={formData.registrationFee}
+                            onChange={(e) => handleInputChange('registrationFee', e.target.value)}
+                            className={`w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                              !isAdminUser() ? 'bg-gray-100 cursor-not-allowed' : ''
+                            }`}
+                            placeholder="e.g. 100"
+                          />
                         </div>
-                      )}
-                    </>
-                  )}
+                        <p className="text-sm text-gray-500 mt-1">Amount students must pay via Razorpay to join</p>
+                      </div>
+                    )}
                 </div>
               )}
 
               {/* Warning Message - Different for admin vs chapter head */}
-              {isAdminUser() ? (
+              {isAdminUser() && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
@@ -482,21 +502,6 @@ const EditChapter: React.FC = () => {
                         <li>Assign the chapter_head role to the new email address</li>
                         <li>Update the {typeLabel.toLowerCase()} information to point to the new head</li>
                       </ul>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-                    <div>
-                      <h3 className="text-sm font-medium text-blue-800">Community Head View</h3>
-                      <p className="text-sm text-blue-700 mt-1">
-                        You are viewing this {typeLabel.toLowerCase()}'s information as a community head. Only administrators can modify community head assignments.
-                      </p>
-                      <p className="text-sm text-blue-700 mt-2">
-                        If you need to transfer your {typeLabel.toLowerCase()} head role to someone else, please contact an administrator.
-                      </p>
                     </div>
                   </div>
                 </div>

@@ -172,14 +172,11 @@ const MeetingCalendarView: React.FC<MeetingCalendarViewProps> = ({ chapterIds })
                 </div>
                 
                 {(() => {
-                  let chapterName = '';
-                  if (user?.activeRole === 'chapter-head') {
-                    const chapter = headContext.chapters.find(c => c.chapterId === selectedMeeting.chapterId);
-                    chapterName = chapter?.chapterName || chapter?.name || '';
-                  } else {
-                    const chapter = studentContext.chapters.find(c => c.id === selectedMeeting.chapterId);
-                    chapterName = chapter?.name || chapter?.chapterName || '';
-                  }
+                  const headChapter = headContext.chapters?.find(c => (c.chapterId || c.chapterID || c.id) === selectedMeeting.chapterId);
+                  const studentChapter = studentContext.myChapters?.find(c => (c.chapterId || c.chapterID || c.id) === selectedMeeting.chapterId);
+                  
+                  const chapterName = headChapter?.chapterName || headChapter?.name || 
+                                    studentChapter?.chapterName || studentChapter?.name || '';
                   
                   return chapterName ? (
                     <div className="flex items-center space-x-2 mt-2 p-2 bg-gray-50 rounded-lg border border-gray-100">

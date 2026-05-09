@@ -12,6 +12,7 @@ interface CreateChapterFormData {
   type: 'chapter' | 'club';
   isPaid: boolean;
   registrationFee: number;
+  tags: string;
 }
 
 import { 
@@ -50,7 +51,8 @@ export const CreateChapterWithPayment: React.FC = () => {
     headName: '',
     type: initialType,
     isPaid: false,
-    registrationFee: 0
+    registrationFee: 0,
+    tags: ''
   });
 
   // Update type if query param changes
@@ -99,6 +101,8 @@ export const CreateChapterWithPayment: React.FC = () => {
     try {
       setLoading(true);
 
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+
       if (formData.isPaid) {
         await paymentAPI.createChapterWithPayment({
           chapterName: formData.chapterName.trim(),
@@ -106,14 +110,16 @@ export const CreateChapterWithPayment: React.FC = () => {
           headName: formData.headName.trim() || undefined,
           type: formData.type,
           isPaid: true,
-          registrationFee: Math.round(formData.registrationFee * 100)
+          registrationFee: Math.round(formData.registrationFee * 100),
+          tags: tagsArray
         });
       } else {
         await adminApi.createChapter({
           chapterName: formData.chapterName.trim(),
           headEmail: formData.headEmail.trim() || undefined,
           headName: formData.headName.trim() || undefined,
-          type: formData.type
+          type: formData.type,
+          tags: tagsArray
         });
       }
 
@@ -263,6 +269,24 @@ export const CreateChapterWithPayment: React.FC = () => {
                         onChange={handleInputChange}
                         disabled={loading}
                         placeholder="head@university.edu"
+                        className={`w-full pl-10 pr-4 py-3 border rounded-xl text-sm transition-all outline-none ${isDark ? 'bg-dark-bg border-dark-border focus:border-accent-500 text-dark-text-primary' : 'bg-slate-50 border-slate-200 focus:border-blue-500 text-slate-800'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-dark-text-muted' : 'text-slate-500'}`}>
+                      Tags (Comma Separated)
+                    </label>
+                    <div className="relative">
+                      <LayoutGrid className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        type="text"
+                        name="tags"
+                        value={formData.tags}
+                        onChange={handleInputChange}
+                        disabled={loading}
+                        placeholder="e.g. AI, Machine Learning, Python"
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl text-sm transition-all outline-none ${isDark ? 'bg-dark-bg border-dark-border focus:border-accent-500 text-dark-text-primary' : 'bg-slate-50 border-slate-200 focus:border-blue-500 text-slate-800'}`}
                       />
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, Edit2, BookOpen, ArrowLeft, X } from 'lucide-react';
+import { Users, Eye, Mail, Calendar, AlertCircle, CheckCircle, RefreshCw, BookOpen, ArrowLeft, X, Tag, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useChapterHead } from '../../contexts/ChapterHeadContext';
@@ -13,6 +13,7 @@ const ManageChapters: React.FC = () => {
   const { 
     chapters, 
     toggleChapterRegistration, 
+    updateChapterTags,
     isLoading, 
     error, 
     refreshData 
@@ -20,6 +21,9 @@ const ManageChapters: React.FC = () => {
   
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [tagSaving, setTagSaving] = useState(false);
+  const [showTagsModal, setShowTagsModal] = useState(false);
+  const [tagInput, setTagInput] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
@@ -55,10 +59,49 @@ const ManageChapters: React.FC = () => {
     }
   };
 
-  const handleEditChapterHead = (chapter: any) => {
-    console.log('Edit button clicked for chapter:', chapter.chapterId);
-    console.log('Navigating to:', `/head/chapters/edit/${chapter.chapterId}`);
-    navigate(`/head/chapters/edit/${chapter.chapterId}`);
+  const openTagsModal = (chapter: any) => {
+    setSelectedChapter(chapter.chapterId);
+    setTagInput(Array.isArray(chapter.tags) ? chapter.tags.join(', ') : '');
+    setShowTagsModal(true);
+  };
+
+  const closeTagsModal = () => {
+    if (tagSaving) return;
+    setShowTagsModal(false);
+    setSelectedChapter(null);
+    setTagInput('');
+  };
+
+  const handleSaveTags = async () => {
+    if (!selectedChapter) return;
+
+    const tags = tagInput
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean);
+
+    setTagSaving(true);
+    try {
+      const success = await updateChapterTags(selectedChapter, tags);
+      setNotification({
+        type: success ? 'success' : 'error',
+        message: success ? 'Tags updated successfully' : 'Failed to update tags'
+      });
+      setTimeout(() => setNotification(null), 3000);
+      if (success) {
+        setShowTagsModal(false);
+        setSelectedChapter(null);
+        setTagInput('');
+      }
+    } catch (error) {
+      setNotification({
+        type: 'error',
+        message: 'An error occurred while updating tags'
+      });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setTagSaving(false);
+    }
   };
 
   const selectedChapterData = chapters.find(c => c.chapterId === selectedChapter);
@@ -273,13 +316,12 @@ const ManageChapters: React.FC = () => {
                             </button>
 
                             <button
-                              onClick={() => {
-                                handleEditChapterHead(chapter);
-                              }}
-                              className={`p-2 rounded-lg transition-all duration-200 ${isDark ? 'text-green-400 hover:bg-green-500/10' : 'text-green-600 hover:bg-green-50'}`}
-                              title={`Edit Community Head`}
+                              onClick={() => openTagsModal(chapter)}
+                              className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3 py-2 sm:py-1 rounded-lg text-xs font-medium transition-all duration-200 ${isDark ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}`}
+                              title="Add Tags"
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Tag className="h-3.5 w-3.5" />
+                              Add Tags
                             </button>
                             
                             <button
@@ -394,6 +436,80 @@ const ManageChapters: React.FC = () => {
                 <div className={`text-sm ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`}>
                   Updated: {new Date(selectedChapterData.updatedAt).toLocaleDateString()}
                 </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Add Tags Modal */}
+        <Modal
+          isOpen={showTagsModal}
+          onClose={closeTagsModal}
+          title="Add Tags"
+          size="md"
+        >
+          {selectedChapterData && (
+            <div className="space-y-5 p-1">
+              <div>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-dark-text-primary' : 'text-gray-900'}`}>
+                  {selectedChapterData.chapterName}
+                </h3>
+                <p className={`text-sm ${isDark ? 'text-dark-text-secondary' : 'text-gray-500'}`}>
+                  Enter tags separated by commas.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="chapter-tags" className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-text-primary' : 'text-gray-700'}`}>
+                  Tags
+                </label>
+                <div className="relative">
+                  <Tag className={`h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-dark-text-muted' : 'text-gray-400'}`} />
+                  <input
+                    id="chapter-tags"
+                    type="text"
+                    value={tagInput}
+                    onChange={(event) => setTagInput(event.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      isDark
+                        ? 'bg-dark-card border-dark-border text-dark-text-primary placeholder:text-dark-text-muted'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    placeholder="AI, Machine Learning, Python"
+                    disabled={tagSaving}
+                  />
+                </div>
+              </div>
+
+              <div className={`flex items-center justify-end gap-3 pt-4 border-t ${isDark ? 'border-dark-border' : 'border-gray-200'}`}>
+                <button
+                  type="button"
+                  onClick={closeTagsModal}
+                  disabled={tagSaving}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                    isDark ? 'bg-dark-card text-dark-text-secondary hover:bg-dark-border' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveTags}
+                  disabled={tagSaving}
+                  className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {tagSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Tags
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

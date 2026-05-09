@@ -306,7 +306,7 @@ export const handler = async (event) => {
               }));
               
               const paidRegs = (regs.Items || []).filter(r => 
-                r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || 
+                r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || r.paymentStatus === "NA" ||
                 r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED"
               );
 
@@ -474,15 +474,27 @@ export const handler = async (event) => {
          
          const registeredEventIds = new Set(
            (myEvents.Items || [])
-             .filter(r => r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED")
+             .filter(r => 
+               r.paymentStatus === "COMPLETED" || r.paymentStatus === "SUCCESS" || r.paymentStatus === "NA" ||
+               r.status === "SUCCESS" || r.status === "APPROVED" || r.status === "COMPLETED"
+             )
              .map(item => item.eventId)
          );
          
-         // 4. Map with isPresent flag
-         const enrichedMeetings = allMeetings.map(m => ({
-           ...m,
-           isPresent: presentMeetingIds.has(m.meetingId)
-         })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
+         // 4. Map with isPresent flag and Filter meetings by event registration if applicable
+         const enrichedMeetings = allMeetings
+           .filter(m => {
+             // If it's a specific event meeting, user must be registered for that event
+             if (m.eventId && m.eventId !== "null" && m.eventId !== "") {
+               return registeredEventIds.has(m.eventId);
+             }
+             // If it's a chapter-wide meeting, they see it (they are already in the chapter as per step 1)
+             return true;
+           })
+           .map(m => ({
+             ...m,
+             isPresent: presentMeetingIds.has(m.meetingId)
+           })).sort((a, b) => new Date(b.startDateTime || b.createdAt).getTime() - new Date(a.startDateTime || a.createdAt).getTime());
          
          const enrichedEvents = allEvents
            .filter(e => registeredEventIds.has(e.eventId))

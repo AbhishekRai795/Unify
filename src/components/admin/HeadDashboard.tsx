@@ -8,6 +8,7 @@ import { useChat } from '../../contexts/ChatContext';
 import ConversationsList from '../chat/ConversationsList';
 import MeetingCalendarView from '../student/MeetingCalendarView';
 import Loader from '../common/Loader';
+import { useData } from '../../contexts/DataContext';
 
 import { chapterHeadAPI } from '../../services/chapterHeadApi';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -51,6 +52,7 @@ const HeadDashboard: React.FC = () => {
     error,
     refreshData
   } = useChapterHead();
+  const { myChapters, fetchMyChapters } = useData();
   const { setActiveChapterId, refreshConversations } = useChat();
   const [managedEvents, setManagedEvents] = useState<any[]>([]);
 
@@ -70,9 +72,24 @@ const HeadDashboard: React.FC = () => {
     [profile?.chapterId, profile?.chapterID, chapterList]
   );
 
+  const studentChapterIds = useMemo(
+    () => Array.from(new Set(
+      (myChapters || [])
+        .map((chapter) => getChapterId(chapter))
+        .filter(Boolean)
+    )) as string[],
+    [myChapters]
+  );
+
+  const calendarChapterIds = useMemo(
+    () => Array.from(new Set([...headChapterIds, ...studentChapterIds])),
+    [headChapterIds, studentChapterIds]
+  );
+
   useEffect(() => {
     if (user?.activeRole === 'chapter-head') {
       refreshData();
+      fetchMyChapters();
     }
   }, [user?.activeRole]);
 
@@ -424,7 +441,7 @@ const HeadDashboard: React.FC = () => {
               <Video className={`h-5 w-5 ${isDark ? 'text-dark-text-muted' : 'text-gray-500'}`} />
             </div>
             <div className="h-[calc(100%-3rem)]">
-              <MeetingCalendarView chapterIds={headChapterIds} />
+              <MeetingCalendarView chapterIds={calendarChapterIds} />
             </div>
           </motion.div>
         </motion.div>
